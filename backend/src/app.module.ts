@@ -11,6 +11,8 @@ import { WorkflowModule } from './workflow/workflow.module';
 import { ProjectModule } from './modules/project/project.module';
 import { CustomerModule } from './modules/customer/customer.module';
 import { OrganizationModule } from './modules/organization/organization.module';
+import { PersonnelModule } from './modules/personnel/personnel.module';
+import { KnowledgeModule } from './modules/knowledge/knowledge.module';
 import { FormModule } from './modules/form/form.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { NotificationModule } from './modules/notification/notification.module';
@@ -41,6 +43,8 @@ import { join } from 'path';
     ProjectModule,
     CustomerModule,
     OrganizationModule,
+    PersonnelModule,
+    KnowledgeModule,
     FormModule,
     DashboardModule,
     NotificationModule,

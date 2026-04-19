@@ -7,6 +7,7 @@ import { AuthGuard } from '@nestjs/passport';
 export class OrganizationController {
   constructor(private readonly organizationService: OrganizationService) {}
 
+  // 部门相关端点
   @Get('dept/tree')
   async getDeptTree() {
     const data = await this.organizationService.getDeptTree();
@@ -16,6 +17,23 @@ export class OrganizationController {
     };
   }
 
+  @Get('departments')
+  async getDepartments(@Query('tree') tree: string) {
+    if (tree === 'true') {
+      const data = await this.organizationService.getDeptTree();
+      return {
+        success: true,
+        data,
+      };
+    }
+    const data = await this.organizationService.getDeptTree();
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  // 员工相关端点
   @Get('employee/list')
   async getEmployeeList(
     @Query('pageNum') pageNum: number,
@@ -35,6 +53,7 @@ export class OrganizationController {
     };
   }
 
+  // 岗位相关端点
   @Get('position/list')
   async getPositionList(
     @Query('pageNum') pageNum: number,
@@ -47,6 +66,17 @@ export class OrganizationController {
       pageSize: Number(pageSize) || 10,
       postName,
       status,
+    });
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  @Get('positions')
+  async getPositions() {
+    const data = await this.organizationService.getPositionList({
+      pageSize: 1000,
     });
     return {
       success: true,
