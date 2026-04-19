@@ -80,7 +80,7 @@ export class OrganizationController {
     });
     return {
       success: true,
-      data,
+      data: data.list,
     };
   }
 }

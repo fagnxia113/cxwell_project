@@ -8,10 +8,7 @@ export class KnowledgeController {
   async getKnowledge(@Query('type') type: string, @Query('all') all: string) {
     return {
       success: true,
-      data: {
-        list: [],
-        total: 0
-      }
+      data: []
     };
   }
 }

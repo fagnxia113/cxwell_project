@@ -10,25 +10,19 @@ export class PersonnelController {
   @Get('employees')
   async getEmployees(@Query('pageSize') pageSize: string = '1000') {
     const size = Number(pageSize) || 1000;
-    const [total, list] = await Promise.all([
-      this.prisma.sysEmployee.count(),
-      this.prisma.sysEmployee.findMany({
-        take: size,
-        orderBy: { createTime: 'desc' }
-      })
-    ]);
+    const list = await this.prisma.sysEmployee.findMany({
+      take: size,
+      orderBy: { createTime: 'desc' }
+    });
 
     return {
       success: true,
-      data: {
-        total,
-        list: list.map(item => ({
-          ...item,
-          employeeId: item.employeeId.toString(),
-          deptId: item.deptId?.toString(),
-          userId: item.userId?.toString()
-        }))
-      }
+      data: list.map(item => ({
+        ...item,
+        employeeId: item.employeeId.toString(),
+        deptId: item.deptId?.toString(),
+        userId: item.userId?.toString()
+      }))
     };
   }
 }
