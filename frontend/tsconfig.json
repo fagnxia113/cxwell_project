@@ -11,8 +11,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "downlevelIteration": true,
-    "baseUrl": "./src",
+    "ignoreDeprecations": "6.0",
     "paths": {
       "@/*": ["./*"]
     },
