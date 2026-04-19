@@ -40,7 +40,7 @@ export function isTokenExpired(token: string): boolean {
 export const API_PATHS = {
   DATA: '/api/data',
   METADATA: '/api/metadata',
-  HEALTH: '/health',
+  HEALTH: '/api/health',
   WORKFLOW: '/api/workflow',
   PROJECTS: '/api/projects',
   WORK_TIME: '/api/work-time',
