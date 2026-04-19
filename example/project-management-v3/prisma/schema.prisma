@@ -1,0 +1,2863 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model approval_orders {
+  id           String                     @id @db.VarChar(36)
+  order_type   approval_orders_order_type
+  title        String                     @db.VarChar(200)
+  applicant_id String                     @db.VarChar(36)
+  target_id    String?                    @db.VarChar(36)
+  from_id      String?                    @db.VarChar(36)
+  to_id        String?                    @db.VarChar(36)
+  form_data    Json?
+  status       approval_orders_status?    @default(pending)
+  wecom_sp_no  String?                    @db.VarChar(100)
+  created_at   DateTime?                  @default(now()) @db.Timestamp(0)
+  updated_at   DateTime?                  @default(now()) @db.Timestamp(0)
+}
+
+model attendance_records {
+  id                      String                               @id @db.VarChar(36)
+  employee_id             String                               @db.VarChar(36)
+  project_id              String?                              @db.VarChar(36)
+  date                    DateTime                             @db.Date
+  check_in_time           DateTime?                            @db.DateTime(0)
+  check_in_location_name  String?                              @db.VarChar(255)
+  check_in_latitude       Decimal?                             @db.Decimal(10, 8)
+  check_in_longitude      Decimal?                             @db.Decimal(11, 8)
+  check_in_photo          String?                              @db.Text
+  check_in_status         attendance_records_check_in_status?  @default(normal)
+  check_out_time          DateTime?                            @db.DateTime(0)
+  check_out_location_name String?                              @db.VarChar(255)
+  check_out_latitude      Decimal?                             @db.Decimal(10, 8)
+  check_out_longitude     Decimal?                             @db.Decimal(11, 8)
+  check_out_photo         String?                              @db.Text
+  check_out_status        attendance_records_check_out_status? @default(normal)
+  work_status             attendance_records_work_status?      @default(off)
+  is_verified             Boolean?                             @default(false)
+  verified_by             String?                              @db.VarChar(36)
+  verified_at             DateTime?                            @db.DateTime(0)
+  notes                   String?                              @db.Text
+  created_at              DateTime?                            @default(now()) @db.Timestamp(0)
+  updated_at              DateTime?                            @default(now()) @db.Timestamp(0)
+
+  @@unique([employee_id, date], map: "uk_emp_date")
+  @@index([date], map: "idx_date")
+  @@index([project_id], map: "idx_project")
+  @@index([work_status], map: "idx_status")
+}
+
+model attendance_weekly_approvals {
+  id              String                              @id @db.VarChar(36)
+  project_id      String                              @db.VarChar(36)
+  week_start_date DateTime                            @db.Date
+  week_end_date   DateTime                            @db.Date
+  approver_id     String                              @db.VarChar(36)
+  status          attendance_weekly_approvals_status? @default(pending)
+  summary_json    Json?
+  created_at      DateTime?                           @default(now()) @db.Timestamp(0)
+  updated_at      DateTime?                           @default(now()) @db.Timestamp(0)
+
+  @@unique([project_id, week_start_date], map: "uk_proj_week")
+}
+
+model customers {
+  id                      String                    @id @db.VarChar(36)
+  customer_no             String                    @unique(map: "customer_no") @db.VarChar(50)
+  name                    String                    @db.VarChar(200)
+  contact                 String                    @db.VarChar(100)
+  phone                   String                    @db.VarChar(20)
+  address                 String?                   @db.Text
+  notes                   String?                   @db.Text
+  type                    customers_type?           @default(enterprise)
+  created_at              DateTime?                 @default(now()) @db.Timestamp(0)
+  updated_at              DateTime?                 @default(now()) @db.Timestamp(0)
+  project_proposal_orders project_proposal_orders[]
+}
+
+model daily_reports {
+  id              String                @id @db.VarChar(36)
+  employee_id     String                @db.VarChar(36)
+  report_date     DateTime              @db.Date
+  summary         String                @db.Text
+  plan            String?               @db.Text
+  problems        String?               @db.Text
+  status          daily_reports_status? @default(pending)
+  reviewer_id     String?               @db.VarChar(36)
+  reviewed_at     DateTime?             @db.Timestamp(0)
+  created_at      DateTime?             @default(now()) @db.Timestamp(0)
+  checkload_items Json?
+  attendance_id   String?               @db.VarChar(36)
+
+  @@index([report_date], map: "idx_daily_reports_report_date")
+  @@index([status], map: "idx_daily_reports_status")
+  @@index([employee_id], map: "idx_employee")
+}
+
+model project_reports {
+  id            String    @id @db.VarChar(36)
+  project_id    String    @db.VarChar(36)
+  milestone_id  String?   @db.VarChar(36)
+  name          String    @db.VarChar(255)
+  copies        Int       @default(1)
+  status        String?   @db.VarChar(50)
+  remarks       String?   @db.Text
+  submit_copies Int       @default(0)
+  submit_date   DateTime? @db.Timestamp(0)
+  file_url      String?   @db.VarChar(500)
+  file_name     String?   @db.VarChar(255)
+  created_at    DateTime? @default(now()) @db.Timestamp(0)
+  updated_at    DateTime? @db.Timestamp(0)
+
+  @@index([project_id], map: "idx_project_reports_project_id")
+}
+
+model project_report_attachments {
+  id         String    @id @db.VarChar(36)
+  report_id  String    @db.VarChar(36)
+  file_url   String    @db.VarChar(500)
+  file_name  String    @db.VarChar(255)
+  file_size  Int?
+  mime_type  String?   @db.VarChar(100)
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+
+  @@index([report_id], map: "idx_project_report_attachments_report_id")
+}
+
+model departments {
+  id                 String              @id @db.VarChar(36)
+  code               String              @unique(map: "code") @db.VarChar(50)
+  name               String              @db.VarChar(100)
+  parent_id          String?             @db.VarChar(36)
+  manager_id         String?             @db.VarChar(36)
+  manager_name       String?             @db.VarChar(100)
+  level              Int?                @default(1)
+  path               String?             @db.VarChar(500)
+  sort_order         Int?                @default(0)
+  status             departments_status? @default(active)
+  description        String?             @db.Text
+  third_party_id     String?             @db.VarChar(100)
+  third_party_source String?             @db.VarChar(50)
+  created_at         DateTime?           @default(now()) @db.Timestamp(0)
+  updated_at         DateTime?           @default(now()) @db.Timestamp(0)
+  employees          employees?          @relation(fields: [manager_id], references: [id], onUpdate: NoAction, map: "fk_dept_manager")
+  departments        departments?        @relation("departmentsTodepartments", fields: [parent_id], references: [id], onUpdate: NoAction, map: "fk_dept_parent")
+  other_departments  departments[]       @relation("departmentsTodepartments")
+  positions          positions[]
+
+  @@index([parent_id], map: "idx_departments_parent_id")
+  @@index([status], map: "idx_departments_status")
+  @@index([level], map: "idx_level")
+  @@index([manager_id], map: "idx_manager")
+  @@index([third_party_id, third_party_source], map: "idx_third_party")
+}
+
+model domain_events {
+  id             String    @id @db.VarChar(36)
+  event_type     String    @db.VarChar(100)
+  aggregate_id   String    @db.VarChar(36)
+  aggregate_type String    @db.VarChar(50)
+  payload        Json
+  metadata       Json?
+  status         String    @default("pending") @db.VarChar(20)
+  error          String?   @db.Text
+  retries        Int       @default(0)
+  created_at     DateTime  @default(now()) @db.Timestamp(0)
+  processed_at   DateTime? @db.Timestamp(0)
+
+  @@index([aggregate_id], map: "idx_aggregate")
+  @@index([status], map: "idx_status")
+}
+
+model employee_offboard_orders {
+  id                                                         String                                 @id @db.VarChar(36)
+  order_no                                                   String                                 @unique(map: "order_no") @db.VarChar(50)
+  applicant_id                                               String                                 @db.VarChar(36)
+  applicant                                                  String                                 @db.VarChar(100)
+  apply_date                                                 DateTime                               @db.Date
+  employee_id                                                String                                 @db.VarChar(36)
+  employee_name                                              String?                                @db.VarChar(100)
+  department                                                 String?                                @db.VarChar(100)
+  position                                                   String?                                @db.VarChar(100)
+  hire_date                                                  DateTime?                              @db.Date
+  offboard_type                                              employee_offboard_orders_offboard_type
+  offboard_reason                                            String                                 @db.Text
+  expected_offboard_date                                     DateTime                               @db.Date
+  handover_person_id                                         String?                                @db.VarChar(36)
+  handover_person                                            String?                                @db.VarChar(100)
+  actual_offboard_date                                       DateTime?                              @db.Date
+  status                                                     employee_offboard_orders_status?       @default(draft)
+  approval_id                                                String?                                @db.VarChar(36)
+  approved_at                                                DateTime?                              @db.Timestamp(0)
+  approved_by                                                String?                                @db.VarChar(36)
+  created_at                                                 DateTime?                              @default(now()) @db.Timestamp(0)
+  updated_at                                                 DateTime?                              @default(now()) @db.Timestamp(0)
+  employees_employee_offboard_orders_applicant_idToemployees employees                              @relation("employee_offboard_orders_applicant_idToemployees", fields: [applicant_id], references: [id], onUpdate: NoAction, map: "fk_offboard_applicant")
+  employees_employee_offboard_orders_employee_idToemployees  employees                              @relation("employee_offboard_orders_employee_idToemployees", fields: [employee_id], references: [id], onUpdate: NoAction, map: "fk_offboard_employee")
+
+  @@index([applicant_id], map: "idx_applicant")
+  @@index([employee_id], map: "idx_employee")
+  @@index([status], map: "idx_status")
+}
+
+model employee_onboard_orders {
+  id                  String                                @id @db.VarChar(36)
+  order_no            String                                @unique(map: "order_no") @db.VarChar(50)
+  applicant_id        String                                @db.VarChar(36)
+  applicant           String                                @db.VarChar(100)
+  apply_date          DateTime                              @db.Date
+  name                String                                @db.VarChar(100)
+  gender              employee_onboard_orders_gender?
+  phone               String                                @db.VarChar(20)
+  email               String?                               @db.VarChar(100)
+  id_card             String                                @db.VarChar(18)
+  department          String                                @db.VarChar(100)
+  position            String                                @db.VarChar(100)
+  hire_date           DateTime                              @db.Date
+  employee_type       employee_onboard_orders_employee_type
+  employee_no         String?                               @db.VarChar(50)
+  created_employee_id String?                               @db.VarChar(36)
+  status              employee_onboard_orders_status?       @default(draft)
+  approval_id         String?                               @db.VarChar(36)
+  approved_at         DateTime?                             @db.Timestamp(0)
+  approved_by         String?                               @db.VarChar(36)
+  created_at          DateTime?                             @default(now()) @db.Timestamp(0)
+  updated_at          DateTime?                             @default(now()) @db.Timestamp(0)
+  employees           employees                             @relation(fields: [applicant_id], references: [id], onUpdate: NoAction, map: "fk_onboard_applicant")
+
+  @@index([applicant_id], map: "idx_applicant")
+  @@index([department], map: "idx_department")
+  @@index([order_no], map: "idx_employee_onboard_orders_order_no")
+  @@index([status], map: "idx_employee_onboard_orders_status")
+}
+
+model employee_transfer_orders {
+  id                                                         String                                 @id @db.VarChar(36)
+  order_no                                                   String                                 @unique(map: "order_no") @db.VarChar(50)
+  applicant_id                                               String                                 @db.VarChar(36)
+  applicant                                                  String                                 @db.VarChar(100)
+  apply_date                                                 DateTime                               @db.Date
+  employee_id                                                String                                 @db.VarChar(36)
+  employee_name                                              String?                                @db.VarChar(100)
+  from_department                                            String?                                @db.VarChar(100)
+  from_position                                              String?                                @db.VarChar(100)
+  transfer_type                                              employee_transfer_orders_transfer_type
+  to_department                                              String                                 @db.VarChar(100)
+  to_position                                                String                                 @db.VarChar(100)
+  transfer_reason                                            String                                 @db.Text
+  effective_date                                             DateTime                               @db.Date
+  status                                                     employee_transfer_orders_status?       @default(draft)
+  approval_id                                                String?                                @db.VarChar(36)
+  approved_at                                                DateTime?                              @db.Timestamp(0)
+  approved_by                                                String?                                @db.VarChar(36)
+  created_at                                                 DateTime?                              @default(now()) @db.Timestamp(0)
+  updated_at                                                 DateTime?                              @default(now()) @db.Timestamp(0)
+  employees_employee_transfer_orders_applicant_idToemployees employees                              @relation("employee_transfer_orders_applicant_idToemployees", fields: [applicant_id], references: [id], onUpdate: NoAction, map: "fk_transfer_order_applicant")
+  employees_employee_transfer_orders_employee_idToemployees  employees                              @relation("employee_transfer_orders_employee_idToemployees", fields: [employee_id], references: [id], onUpdate: NoAction, map: "fk_transfer_order_employee")
+
+  @@index([applicant_id], map: "idx_applicant")
+  @@index([employee_id], map: "idx_employee")
+  @@index([order_no], map: "idx_employee_transfer_orders_order_no")
+  @@index([status], map: "idx_employee_transfer_orders_status")
+}
+
+model employees {
+  id                                                                                          String                              @id @db.VarChar(36)
+  employee_no                                                                                 String?                             @unique(map: "employee_no") @db.VarChar(50)
+  name                                                                                        String                              @db.VarChar(100)
+  gender                                                                                      employees_gender?
+  phone                                                                                       String                              @db.VarChar(20)
+  email                                                                                       String?                             @db.VarChar(100)
+  department_id                                                                               String?                             @db.VarChar(36)
+  position                                                                                    String                              @db.VarChar(100)
+  user_id                                                                                     String?                             @db.VarChar(36)
+  status                                                                                      employees_status?                   @default(active)
+  current_status                                                                              employees_current_status?           @default(on_duty)
+  hire_date                                                                                   DateTime                            @db.Date
+  leave_date                                                                                  DateTime?                           @db.Date
+  role                                                                                        employees_role?                     @default(user)
+  daily_cost                                                                                  Decimal?                            @db.Decimal(10, 2)
+  skills                                                                                      Json?
+  avatar_color                                                                                String?                             @db.VarChar(20)
+  data_permission                                                                             employees_data_permission?          @default(self)
+  employee_type                                                                               employees_employee_type?            @default(full_time)
+  created_at                                                                                  DateTime?                           @default(now()) @db.Timestamp(0)
+  updated_at                                                                                  DateTime?                           @default(now()) @db.Timestamp(0)
+  deleted_at                                                                                  DateTime?                           @db.Timestamp(0)
+  departments                                                                                 departments[]
+  employee_offboard_orders_employee_offboard_orders_applicant_idToemployees                   employee_offboard_orders[]          @relation("employee_offboard_orders_applicant_idToemployees")
+  employee_offboard_orders_employee_offboard_orders_employee_idToemployees                    employee_offboard_orders[]          @relation("employee_offboard_orders_employee_idToemployees")
+  employee_onboard_orders                                                                     employee_onboard_orders[]
+  employee_transfer_orders_employee_transfer_orders_applicant_idToemployees                   employee_transfer_orders[]          @relation("employee_transfer_orders_applicant_idToemployees")
+  employee_transfer_orders_employee_transfer_orders_employee_idToemployees                    employee_transfer_orders[]          @relation("employee_transfer_orders_employee_idToemployees")
+  equipment_accessory_instances                                                               equipment_accessory_instances[]
+  leave_requests                                                                              leave_requests[]
+  personnel_rotation_plans                                                                    personnel_rotation_plans[]
+  project_completion_orders                                                                   project_completion_orders[]
+  project_personnel_transfer_orders_project_personnel_transfer_orders_applicant_idToemployees project_personnel_transfer_orders[] @relation("project_personnel_transfer_orders_applicant_idToemployees")
+  project_personnel_transfer_orders_project_personnel_transfer_orders_employee_idToemployees  project_personnel_transfer_orders[] @relation("project_personnel_transfer_orders_employee_idToemployees")
+  project_proposal_orders_project_proposal_orders_applicant_idToemployees                     project_proposal_orders[]           @relation("project_proposal_orders_applicant_idToemployees")
+  project_proposal_orders_project_proposal_orders_manager_idToemployees                       project_proposal_orders[]           @relation("project_proposal_orders_manager_idToemployees")
+  task_completion_orders                                                                      task_completion_orders[]
+
+  @@index([department_id], map: "idx_dept")
+  @@index([department_id, status], map: "idx_employees_department_status")
+  @@index([user_id], map: "idx_employees_user_id")
+  @@index([status], map: "idx_status")
+}
+
+model personnel_rotation_plans {
+  id            String    @id @db.VarChar(36)
+  employee_id   String    @db.VarChar(36)
+  year_month    String    @db.VarChar(7)
+  schedule_data Json
+  status        String?   @default("submitted") @db.VarChar(20)
+  submitted_at  DateTime? @default(now()) @db.Timestamp(0)
+  updated_at    DateTime? @default(now()) @db.Timestamp(0)
+  employees     employees @relation(fields: [employee_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_rotation_employee")
+
+  @@unique([employee_id, year_month], map: "uk_emp_month")
+}
+
+model equipment_accessories {
+  id                 String                                    @id @db.VarChar(36)
+  quantity           Int?                                      @default(1)
+  created_at         DateTime?                                 @default(now()) @db.Timestamp(0)
+  updated_at         DateTime?                                 @default(now()) @db.Timestamp(0)
+  accessory_category equipment_accessories_accessory_category?
+  accessory_id       String                                    @db.VarChar(36)
+  accessory_model    String?                                   @db.VarChar(100)
+  accessory_name     String?                                   @db.VarChar(200)
+  host_equipment_id  String                                    @db.VarChar(36)
+  is_required        Boolean?                                  @default(false)
+  notes              String?                                   @db.Text
+
+  @@unique([host_equipment_id, accessory_id], map: "uk_host_accessory")
+  @@index([accessory_id], map: "idx_accessory")
+  @@index([host_equipment_id], map: "idx_host_equipment")
+}
+
+model equipment_accessory_instances {
+  id                  String                                         @id @db.VarChar(36)
+  accessory_name      String                                         @db.VarChar(200)
+  model_no            String?                                        @db.VarChar(100)
+  brand               String?                                        @db.VarChar(100)
+  category            equipment_accessory_instances_category
+  unit                String?                                        @default("个") @db.VarChar(20)
+  quantity            Int?                                           @default(1)
+  serial_number       String?                                        @db.VarChar(100)
+  manage_code         String?                                        @unique(map: "manage_code") @db.VarChar(50)
+  health_status       equipment_accessory_instances_health_status?   @default(normal)
+  usage_status        equipment_accessory_instances_usage_status?    @default(idle)
+  location_status     equipment_accessory_instances_location_status? @default(warehouse)
+  location_id         String?                                        @db.VarChar(36)
+  host_equipment_id   String?                                        @db.VarChar(36)
+  keeper_id           String?                                        @db.VarChar(36)
+  purchase_date       DateTime?                                      @db.Date
+  purchase_price      Decimal?                                       @db.Decimal(12, 2)
+  supplier            String?                                        @db.VarChar(200)
+  notes               String?                                        @db.Text
+  created_at          DateTime?                                      @default(now()) @db.Timestamp(0)
+  updated_at          DateTime?                                      @default(now()) @db.Timestamp(0)
+  tracking_type       equipment_accessory_instances_tracking_type    @default(SERIALIZED)
+  attachments         Json?
+  version             Int                                            @default(1)
+  source_type         equipment_accessory_instances_source_type?     @default(inbound_separate)
+  status              equipment_accessory_instances_status?          @default(normal)
+  bound_at            DateTime?                                      @db.DateTime(0)
+  deleted_at          DateTime?                                      @db.Timestamp(0)
+  equipment_instances equipment_instances?                           @relation(fields: [host_equipment_id], references: [id])
+  employees           employees?                                     @relation(fields: [keeper_id], references: [id])
+
+  @@index([keeper_id], map: "equipment_accessory_instances_keeper_id_fkey")
+  @@index([location_id], map: "equipment_accessory_instances_location_id_fkey")
+  @@index([accessory_name, model_no], map: "idx_accessory_name")
+  @@index([tracking_type], map: "idx_accessory_tracking_type")
+  @@index([host_equipment_id], map: "idx_host_equipment")
+  @@index([location_status, location_id], map: "idx_location")
+}
+
+model equipment_accessory_lost_records {
+  id                String                                   @id @db.VarChar(36)
+  accessory_id      String                                   @db.VarChar(36)
+  equipment_id      String?                                  @db.VarChar(36)
+  transfer_order_id String?                                  @db.VarChar(36)
+  lost_at           DateTime                                 @db.DateTime(0)
+  lost_by           String                                   @db.VarChar(36)
+  lost_by_name      String?                                  @db.VarChar(100)
+  lost_reason       String?                                  @db.Text
+  found_at          DateTime?                                @db.DateTime(0)
+  found_by          String?                                  @db.VarChar(36)
+  found_by_name     String?                                  @db.VarChar(100)
+  status            equipment_accessory_lost_records_status? @default(lost)
+  notes             String?                                  @db.Text
+  created_at        DateTime?                                @default(now()) @db.Timestamp(0)
+  updated_at        DateTime?                                @default(now()) @db.Timestamp(0)
+
+  @@index([accessory_id], map: "idx_accessory")
+  @@index([equipment_id], map: "idx_equipment")
+  @@index([lost_at], map: "idx_lost_at")
+  @@index([status], map: "idx_status")
+  @@index([transfer_order_id], map: "idx_transfer_order")
+}
+
+model equipment_images {
+  id             String                          @id @db.VarChar(36)
+  equipment_id   String?                         @db.VarChar(36)
+  equipment_name String?                         @db.VarChar(200)
+  model_no       String?                         @db.VarChar(100)
+  category       equipment_images_category?
+  image_type     equipment_images_image_type
+  image_url      String                          @db.VarChar(500)
+  image_name     String?                         @db.VarChar(200)
+  image_size     Int?
+  image_format   String?                         @db.VarChar(20)
+  business_type  equipment_images_business_type?
+  business_id    String?                         @db.VarChar(36)
+  uploader_id    String?                         @db.VarChar(36)
+  uploader_name  String?                         @db.VarChar(100)
+  notes          String?                         @db.Text
+  created_at     DateTime?                       @default(now()) @db.Timestamp(0)
+  updated_at     DateTime?                       @default(now()) @db.Timestamp(0)
+
+  @@index([business_type, business_id], map: "idx_business")
+  @@index([equipment_id], map: "idx_equipment_id")
+  @@index([image_type], map: "idx_image_type")
+  @@index([uploader_id], map: "idx_uploader")
+}
+
+model equipment_inbound_items {
+  id                       String                          @id @db.VarChar(36)
+  order_id                 String                          @db.VarChar(36)
+  equipment_name           String?                         @db.VarChar(200)
+  manufacturer             String?                         @db.VarChar(200)
+  serial_number            String?                         @db.VarChar(100)
+  quantity                 Int?
+  category                 String?                         @db.VarChar(50)
+  technical_params         String?                         @db.Text
+  created_at               DateTime?                       @default(now()) @db.Timestamp(0)
+  accessory_desc           String?                         @db.Text
+  attachment               String?                         @db.VarChar(500)
+  brand                    String?                         @db.VarChar(100)
+  certificate_expiry_date  DateTime?                       @db.Date
+  certificate_issuer       String?                         @db.VarChar(200)
+  certificate_no           String?                         @db.VarChar(100)
+  item_notes               String?                         @db.Text
+  model_name               String?                         @db.VarChar(100)
+  model_no                 String?                         @db.VarChar(100)
+  purchase_price           Decimal?                        @db.Decimal(10, 2)
+  serial_numbers           String?                         @db.Text
+  status                   equipment_inbound_items_status? @default(pending)
+  supplier                 String?                         @db.VarChar(200)
+  technical_doc            String?                         @db.Text
+  unit                     String?                         @db.VarChar(20)
+  updated_at               DateTime?                       @default(now()) @db.Timestamp(0)
+  equipment_inbound_orders equipment_inbound_orders        @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "equipment_inbound_items_ibfk_1")
+
+  @@index([order_id], map: "idx_order_id")
+  @@index([status], map: "idx_status")
+}
+
+model equipment_inbound_orders {
+  id                              String                                           @id @db.VarChar(36)
+  order_no                        String                                           @unique(map: "order_no") @db.VarChar(50)
+  warehouse_id                    String                                           @db.VarChar(36)
+  warehouse_name                  String?                                          @db.VarChar(200)
+  status                          equipment_inbound_orders_status?                 @default(draft)
+  created_at                      DateTime?                                        @default(now()) @db.Timestamp(0)
+  updated_at                      DateTime?                                        @default(now()) @db.Timestamp(0)
+  applicant                       String                                           @db.VarChar(100)
+  applicant_id                    String                                           @db.VarChar(36)
+  apply_date                      DateTime                                         @db.Date
+  approval_id                     String?                                          @db.VarChar(36)
+  approved_at                     DateTime?                                        @db.Timestamp(0)
+  approved_by                     String?                                          @db.VarChar(36)
+  equipment_code                  String?                                          @db.VarChar(50)
+  equipment_id                    String?                                          @db.VarChar(36)
+  equipment_name                  String?                                          @db.VarChar(200)
+  inbound_reason                  String                                           @db.Text
+  inbound_type                    equipment_inbound_orders_inbound_type?           @default(purchase)
+  new_equipment_calibration_cycle Int?
+  new_equipment_category          equipment_inbound_orders_new_equipment_category?
+  new_equipment_manufacturer      String?                                          @db.VarChar(200)
+  new_equipment_model             String?                                          @db.VarChar(100)
+  new_equipment_name              String?                                          @db.VarChar(200)
+  new_equipment_price             Decimal?                                         @db.Decimal(12, 2)
+  new_equipment_purchase_date     DateTime?                                        @db.Date
+  new_equipment_serial            String?                                          @db.VarChar(100)
+  notes                           String?                                          @db.Text
+  equipment_inbound_items         equipment_inbound_items[]
+
+  @@index([applicant_id], map: "idx_applicant")
+  @@index([equipment_id], map: "idx_equipment")
+  @@index([order_no], map: "idx_order_no")
+  @@index([status], map: "idx_status")
+  @@index([warehouse_id], map: "idx_warehouse")
+}
+
+model equipment_instances {
+  id                            String                               @id @db.VarChar(36)
+  manage_code                   String?                              @unique(map: "manage_code") @db.VarChar(50)
+  equipment_name                String                               @db.VarChar(200)
+  model_no                      String                               @db.VarChar(100)
+  category                      equipment_instances_category
+  manufacturer                  String?                              @db.VarChar(200)
+  brand                         String?                              @db.VarChar(100)
+  serial_number                 String?                              @db.VarChar(100)
+  factory_serial_no             String?                              @db.VarChar(100)
+  tracking_type                 equipment_instances_tracking_type    @default(SERIALIZED)
+  quantity                      Int?                                 @default(1)
+  unit                          String?                              @default("台") @db.VarChar(20)
+  location_id                   String?                              @db.VarChar(36)
+  location_status               equipment_instances_location_status? @default(warehouse)
+  health_status                 equipment_instances_health_status?   @default(normal)
+  usage_status                  equipment_instances_usage_status?    @default(idle)
+  keeper_id                     String?                              @db.VarChar(36)
+  purchase_date                 DateTime?                            @db.Date
+  purchase_price                Decimal?                             @db.Decimal(12, 2)
+  calibration_expiry            DateTime?                            @db.Date
+  certificate_no                String?                              @db.VarChar(100)
+  certificate_issuer            String?                              @db.VarChar(200)
+  supplier                      String?                              @db.VarChar(200)
+  technical_params              String?                              @db.Text
+  technical_doc                 String?                              @db.Text
+  attachment                    String?                              @db.VarChar(500)
+  attachments                   Json?
+  notes                         String?                              @db.Text
+  has_accessories               Boolean?                             @default(false)
+  accessory_count               Int?                                 @default(0)
+  version                       Int                                  @default(1)
+  deleted_at                    DateTime?                            @db.Timestamp(0)
+  created_at                    DateTime?                            @default(now()) @db.Timestamp(0)
+  updated_at                    DateTime?                            @default(now()) @db.Timestamp(0)
+  equipment_accessory_instances equipment_accessory_instances[]
+
+  @@index([equipment_name, model_no], map: "idx_equipment")
+  @@index([tracking_type], map: "idx_equipment_tracking_type")
+}
+
+model equipment_outbound_orders {
+  id                  String                                  @id @db.VarChar(36)
+  order_no            String                                  @unique(map: "order_no") @db.VarChar(50)
+  outbound_type       equipment_outbound_orders_outbound_type
+  applicant_id        String                                  @db.VarChar(36)
+  applicant           String                                  @db.VarChar(100)
+  apply_date          DateTime                                @db.Date
+  warehouse_id        String                                  @db.VarChar(36)
+  warehouse_name      String?                                 @db.VarChar(200)
+  equipment_id        String                                  @db.VarChar(36)
+  equipment_code      String?                                 @db.VarChar(50)
+  equipment_name      String?                                 @db.VarChar(200)
+  equipment_category  String?                                 @db.VarChar(50)
+  target_project_id   String?                                 @db.VarChar(36)
+  target_project_name String?                                 @db.VarChar(200)
+  repair_unit         String?                                 @db.VarChar(200)
+  outbound_reason     String                                  @db.Text
+  notes               String?                                 @db.Text
+  status              equipment_outbound_orders_status?       @default(draft)
+  approval_id         String?                                 @db.VarChar(36)
+  approved_at         DateTime?                               @db.Timestamp(0)
+  approved_by         String?                                 @db.VarChar(36)
+  created_at          DateTime?                               @default(now()) @db.Timestamp(0)
+  updated_at          DateTime?                               @default(now()) @db.Timestamp(0)
+
+  @@index([applicant_id], map: "idx_applicant")
+  @@index([equipment_id], map: "idx_equipment")
+  @@index([target_project_id], map: "idx_project")
+  @@index([status], map: "idx_status")
+  @@index([warehouse_id], map: "idx_warehouse")
+}
+
+model equipment_repair_orders {
+  id                     String                                 @id @db.VarChar(36)
+  order_no               String                                 @unique(map: "order_no") @db.VarChar(50)
+  equipment_id           String                                 @db.VarChar(36)
+  equipment_name         String?                                @db.VarChar(200)
+  fault_description      String                                 @db.Text
+  repair_type            equipment_repair_orders_repair_type?
+  estimated_cost         Decimal?                               @default(0.00) @db.Decimal(12, 2)
+  actual_cost            Decimal?                               @default(0.00) @db.Decimal(12, 2)
+  status                 equipment_repair_orders_status?        @default(draft)
+  created_at             DateTime?                              @default(now()) @db.Timestamp(0)
+  updated_at             DateTime?                              @default(now()) @db.Timestamp(0)
+  applicant              String                                 @db.VarChar(100)
+  applicant_id           String                                 @db.VarChar(36)
+  apply_date             DateTime                               @db.Date
+  approval_id            String?                                @db.VarChar(36)
+  approved_at            DateTime?                              @db.Timestamp(0)
+  approved_by            String?                                @db.VarChar(36)
+  current_host_status    String?                                @db.VarChar(50)
+  equipment_category     String?                                @db.VarChar(50)
+  equipment_code         String?                                @db.VarChar(50)
+  fault_cause            String?                                @db.Text
+  from_manager           String?                                @db.VarChar(100)
+  from_manager_id        String?                                @db.VarChar(36)
+  original_location_id   String?                                @db.VarChar(36)
+  original_location_type String?                                @db.VarChar(50)
+  repair_completed_at    DateTime?                              @db.Timestamp(0)
+  repair_description     String?                                @db.Text
+  repair_quantity        Int?                                   @default(1)
+  repair_result          equipment_repair_orders_repair_result?
+  repair_unit            String?                                @db.VarChar(200)
+  ship_quantity          Int?                                   @default(1)
+  shipped_at             DateTime?                              @db.Timestamp(0)
+  shipped_by             String?                                @db.VarChar(36)
+  shipping_images        Json?
+  shipping_no            String?                                @db.VarChar(100)
+  shipping_remark        String?                                @db.Text
+
+  @@index([applicant_id], map: "idx_applicant")
+  @@index([equipment_id], map: "idx_equipment")
+  @@index([order_no], map: "idx_equipment_repair_orders_order_no")
+  @@index([status], map: "idx_equipment_repair_orders_status")
+}
+
+model equipment_scrap_orders {
+  id                 String                                  @id @db.VarChar(36)
+  order_no           String                                  @unique(map: "order_no") @db.VarChar(50)
+  applicant_id       String                                  @db.VarChar(36)
+  applicant          String                                  @db.VarChar(100)
+  apply_date         DateTime                                @db.Date
+  equipment_id       String                                  @db.VarChar(36)
+  equipment_code     String?                                 @db.VarChar(50)
+  equipment_name     String?                                 @db.VarChar(200)
+  equipment_category String?                                 @db.VarChar(50)
+  purchase_date      DateTime?                               @db.Date
+  purchase_price     Decimal?                                @db.Decimal(12, 2)
+  used_years         Decimal?                                @db.Decimal(3, 1)
+  scrap_reason       String                                  @db.Text
+  residual_value     Decimal?                                @default(0.00) @db.Decimal(12, 2)
+  disposal_method    equipment_scrap_orders_disposal_method?
+  disposed_at        DateTime?                               @db.Timestamp(0)
+  disposal_notes     String?                                 @db.Text
+  status             equipment_scrap_orders_status?          @default(draft)
+  approval_id        String?                                 @db.VarChar(36)
+  approved_at        DateTime?                               @db.Timestamp(0)
+  approved_by        String?                                 @db.VarChar(36)
+  created_at         DateTime?                               @default(now()) @db.Timestamp(0)
+  updated_at         DateTime?                               @default(now()) @db.Timestamp(0)
+
+  @@index([applicant_id], map: "idx_applicant")
+  @@index([equipment_id], map: "idx_equipment")
+  @@index([equipment_id], map: "idx_equipment_scrap_orders_equipment")
+  @@index([order_no], map: "idx_equipment_scrap_orders_order_no")
+  @@index([status], map: "idx_equipment_scrap_orders_status")
+  @@index([status], map: "idx_status")
+}
+
+model equipment_scrap_sales {
+  id                     String                                       @id @db.VarChar(36)
+  order_no               String                                       @unique(map: "order_no") @db.VarChar(50)
+  equipment_id           String                                       @db.VarChar(36)
+  equipment_name         String                                       @db.VarChar(200)
+  sale_price             Decimal?                                     @db.Decimal(10, 2)
+  buyer                  String?                                      @db.VarChar(200)
+  status                 equipment_scrap_sales_status?                @default(draft)
+  created_at             DateTime?                                    @default(now()) @db.DateTime(0)
+  updated_at             DateTime?                                    @default(now()) @db.DateTime(0)
+  applicant              String                                       @db.VarChar(100)
+  applicant_id           String                                       @db.VarChar(36)
+  apply_date             DateTime                                     @db.DateTime(0)
+  approval_comment       String?                                      @db.Text
+  approval_id            String?                                      @db.VarChar(36)
+  approved_at            DateTime?                                    @db.DateTime(0)
+  approved_by            String?                                      @db.VarChar(36)
+  equipment_category     equipment_scrap_sales_equipment_category
+  from_manager           String?                                      @db.VarChar(100)
+  from_manager_id        String?                                      @db.VarChar(36)
+  items                  Json?
+  original_location_id   String                                       @db.VarChar(36)
+  original_location_type equipment_scrap_sales_original_location_type
+  processed_at           DateTime?                                    @db.DateTime(0)
+  processed_by           String?                                      @db.VarChar(36)
+  reason                 String                                       @db.Text
+  scrap_sale_quantity    Int?                                         @default(1)
+  type                   equipment_scrap_sales_type
+
+  @@index([applicant_id], map: "idx_applicant_id")
+  @@index([apply_date], map: "idx_apply_date")
+  @@index([equipment_id], map: "idx_equipment_id")
+  @@index([order_no], map: "idx_order_no")
+  @@index([status], map: "idx_status")
+  @@index([type], map: "idx_type")
+}
+
+model equipment_transfer_order_items {
+  id                String                                  @id @db.VarChar(36)
+  order_id          String                                  @db.VarChar(36)
+  equipment_id      String?                                 @db.VarChar(36)
+  equipment_name    String                                  @db.VarChar(200)
+  model_no          String?                                 @db.VarChar(100)
+  brand             String?                                 @db.VarChar(100)
+  category          equipment_transfer_order_items_category
+  unit              String?                                 @default("台") @db.VarChar(20)
+  manage_code       String?                                 @db.VarChar(50)
+  serial_number     String?                                 @db.VarChar(100)
+  quantity          Int                                     @default(1)
+  received_quantity Int?                                    @default(0)
+  status            equipment_transfer_order_items_status?  @default(pending)
+  notes             String?                                 @db.Text
+  shipping_images   Json?
+  receiving_images  Json?
+  created_at        DateTime?                               @default(now()) @db.Timestamp(0)
+  updated_at        DateTime?                               @default(now()) @db.Timestamp(0)
+  accessory_info    Json?
+  accessory_desc    String?                                 @db.Text
+  is_accessory      Boolean?                                @default(false)
+
+  @@index([equipment_id], map: "idx_equipment_id")
+  @@index([order_id], map: "idx_order_id")
+  @@index([status], map: "idx_status")
+}
+
+model equipment_transfer_orders {
+  id                       String                                       @id @db.VarChar(36)
+  order_no                 String                                       @unique(map: "order_no") @db.VarChar(50)
+  from_warehouse_id        String?                                      @db.VarChar(36)
+  from_warehouse_name      String?                                      @db.VarChar(200)
+  to_warehouse_id          String?                                      @db.VarChar(36)
+  to_warehouse_name        String?                                      @db.VarChar(200)
+  status                   equipment_transfer_orders_status?            @default(pending_from)
+  created_at               DateTime?                                    @default(now()) @db.Timestamp(0)
+  updated_at               DateTime?                                    @default(now()) @db.Timestamp(0)
+  applicant                String                                       @db.VarChar(100)
+  applicant_id             String                                       @db.VarChar(36)
+  apply_date               DateTime                                     @db.Date
+  approval_id              String?                                      @db.VarChar(36)
+  equipment_category       String?                                      @db.VarChar(50)
+  equipment_code           String?                                      @db.VarChar(50)
+  equipment_id             String?                                      @db.VarChar(36)
+  equipment_name           String?                                      @db.VarChar(200)
+  estimated_arrival        DateTime?                                    @db.Date
+  estimated_arrival_date   DateTime?                                    @db.Date
+  estimated_ship_date      DateTime?                                    @db.Date
+  from_approval_comment    String?                                      @db.Text
+  from_approved_at         DateTime?                                    @db.Timestamp(0)
+  from_approved_by         String?                                      @db.VarChar(36)
+  from_location_type       equipment_transfer_orders_from_location_type
+  from_manager             String?                                      @db.VarChar(100)
+  from_manager_id          String?                                      @db.VarChar(36)
+  from_project_id          String?                                      @db.VarChar(36)
+  from_project_name        String?                                      @db.VarChar(200)
+  notes                    String?                                      @db.Text
+  receive_comment          String?                                      @db.Text
+  receive_status           equipment_transfer_orders_receive_status?
+  received_at              DateTime?                                    @db.Timestamp(0)
+  received_by              String?                                      @db.VarChar(36)
+  receiving_package_images Json?
+  return_comment           String?                                      @db.Text
+  returned_at              DateTime?                                    @db.DateTime(0)
+  returned_by              String?                                      @db.VarChar(36)
+  shipped_at               DateTime?                                    @db.Timestamp(0)
+  shipped_by               String?                                      @db.VarChar(36)
+  shipping_attachment      String?                                      @db.VarChar(500)
+  shipping_no              String?                                      @db.VarChar(100)
+  shipping_package_images  Json?
+  solution                 equipment_transfer_orders_solution?
+  to_approval_comment      String?                                      @db.Text
+  to_approved_at           DateTime?                                    @db.Timestamp(0)
+  to_approved_by           String?                                      @db.VarChar(36)
+  to_location_type         equipment_transfer_orders_to_location_type
+  to_manager               String?                                      @db.VarChar(100)
+  to_manager_id            String?                                      @db.VarChar(36)
+  to_project_id            String?                                      @db.VarChar(36)
+  to_project_name          String?                                      @db.VarChar(200)
+  total_approved_quantity  Int?                                         @default(0)
+  total_items              Int?                                         @default(1)
+  total_quantity           Int?                                         @default(0)
+  total_received_quantity  Int?                                         @default(0)
+  total_requested_quantity Int?                                         @default(0)
+  tracking_no              String?                                      @db.VarChar(100)
+  transfer_reason          String                                       @db.Text
+  transfer_scene           equipment_transfer_orders_transfer_scene
+  transfer_type            equipment_transfer_orders_transfer_type?     @default(single)
+  transport_method         equipment_transfer_orders_transport_method?
+
+  @@index([applicant_id], map: "idx_applicant")
+  @@index([equipment_id], map: "idx_equipment")
+  @@index([from_project_id], map: "idx_from_project")
+  @@index([from_warehouse_id], map: "idx_from_warehouse")
+  @@index([status], map: "idx_status")
+  @@index([to_project_id], map: "idx_to_project")
+  @@index([to_warehouse_id], map: "idx_to_warehouse")
+}
+
+model exception_tasks {
+  id              String                 @id @db.VarChar(36)
+  order_id        String                 @db.VarChar(36)
+  item_id         String?                @db.VarChar(36)
+  type            exception_tasks_type
+  description     String                 @db.Text
+  status          exception_tasks_status @default(PENDING)
+  responsible_id  String?                @db.VarChar(36)
+  created_at      DateTime?              @default(now()) @db.Timestamp(0)
+  updated_at      DateTime?              @default(now()) @db.Timestamp(0)
+  workflow_orders workflow_orders        @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "exception_tasks_ibfk_1")
+
+  @@index([status], map: "idx_exception_task_status")
+  @@index([order_id], map: "order_id")
+}
+
+model form_drafts {
+  id           String             @id @db.VarChar(255)
+  user_id      String             @db.VarChar(255)
+  form_data    Json
+  created_at   DateTime           @db.DateTime(0)
+  updated_at   DateTime           @db.DateTime(0)
+  metadata     Json?
+  status       form_drafts_status @default(draft)
+  template_id  String             @db.VarChar(255)
+  template_key String             @db.VarChar(255)
+
+  @@index([status], map: "idx_form_drafts_status")
+  @@index([updated_at(sort: Desc)], map: "idx_form_drafts_updated_at")
+  @@index([user_id, template_id], map: "idx_form_drafts_user_template")
+  @@index([status], map: "idx_status")
+  @@index([template_id], map: "idx_template_id")
+  @@index([template_key], map: "idx_template_key")
+  @@index([updated_at], map: "idx_updated_at")
+  @@index([user_id], map: "idx_user_id")
+  @@index([user_id, template_id], map: "idx_user_template")
+}
+
+model form_template_versions {
+  id           String                        @id @db.VarChar(255)
+  template_id  String                        @db.VarChar(255)
+  version      Int
+  created_by   String                        @db.VarChar(255)
+  created_at   DateTime                      @db.DateTime(0)
+  activated_at DateTime?                     @db.DateTime(0)
+  archived_at  DateTime?                     @db.DateTime(0)
+  change_log   String?                       @db.Text
+  fields       Json
+  notes        String?                       @db.Text
+  status       form_template_versions_status @default(draft)
+
+  @@unique([template_id, version], map: "uk_template_version")
+  @@index([created_at], map: "idx_created_at")
+  @@index([created_by], map: "idx_created_by")
+  @@index([created_by], map: "idx_form_template_versions_created_by")
+  @@index([status], map: "idx_form_template_versions_status")
+  @@index([template_id, version(sort: Desc)], map: "idx_form_template_versions_template_version")
+  @@index([status], map: "idx_status")
+  @@index([template_id], map: "idx_template_id")
+  @@index([template_id, version], map: "idx_version")
+}
+
+model form_templates {
+  id         String   @id @db.VarChar(36)
+  name       String   @db.VarChar(255)
+  category   String?  @db.VarChar(50)
+  key        String   @db.VarChar(100)
+  fields     Json
+  layout     Json
+  sections   Json?
+  style      Json?
+  version    Int      @default(1)
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @db.DateTime(0)
+
+  @@index([name], map: "idx_name")
+  @@index([version], map: "idx_version")
+}
+
+model leave_requests {
+  id           String                    @id @db.VarChar(36)
+  order_no     String                    @unique(map: "order_no") @db.VarChar(50)
+  applicant_id String                    @db.VarChar(36)
+  applicant    String                    @db.VarChar(100)
+  apply_date   DateTime                  @db.Date
+  project_id   String?                   @db.VarChar(36)
+  project_name String?                   @db.VarChar(200)
+  leave_type   leave_requests_leave_type
+  start_date   DateTime                  @db.Date
+  end_date     DateTime                  @db.Date
+  leave_days   Int
+  leave_reason String                    @db.Text
+  status       leave_requests_status?    @default(draft)
+  approval_id  String?                   @db.VarChar(36)
+  approved_at  DateTime?                 @db.Timestamp(0)
+  approved_by  String?                   @db.VarChar(36)
+  created_at   DateTime?                 @default(now()) @db.Timestamp(0)
+  updated_at   DateTime?                 @default(now()) @db.Timestamp(0)
+  employees    employees                 @relation(fields: [applicant_id], references: [id], onUpdate: NoAction, map: "fk_leave_applicant")
+  projects     projects?                 @relation(fields: [project_id], references: [id], onUpdate: NoAction, map: "fk_leave_project")
+
+  @@index([applicant_id], map: "idx_applicant")
+  @@index([project_id], map: "idx_project")
+  @@index([status], map: "idx_status")
+}
+
+model notifications {
+  id            String                  @id @db.VarChar(36)
+  user_id       String                  @db.VarChar(36)
+  type          notifications_type?     @default(in_app)
+  title         String                  @db.VarChar(200)
+  content       String                  @db.Text
+  read_at       DateTime?               @db.Timestamp(0)
+  created_at    DateTime?               @default(now()) @db.Timestamp(0)
+  error_message String?                 @db.Text
+  is_read       Boolean?                @default(false)
+  link          String?                 @db.VarChar(255)
+  priority      notifications_priority? @default(normal)
+  sent_at       DateTime?               @db.Timestamp(0)
+  status        notifications_status?   @default(pending)
+  user_name     String?                 @db.VarChar(100)
+
+  @@index([created_at(sort: Desc)], map: "idx_notifications_created_at")
+  @@index([type], map: "idx_notifications_type")
+}
+
+model organization {
+  id          String    @id @db.VarChar(36)
+  name        String    @db.VarChar(100)
+  parent_id   String?   @db.VarChar(36)
+  level       Int
+  manager_id  String?   @db.VarChar(36)
+  description String?   @db.Text
+  created_at  DateTime? @default(now()) @db.Timestamp(0)
+  updated_at  DateTime? @default(now()) @db.Timestamp(0)
+}
+
+model permissions {
+  id               String              @id @db.VarChar(36)
+  code             String              @unique @db.VarChar(100)
+  name             String              @db.VarChar(100)
+  type             permissions_type
+  parent_id        String?             @db.VarChar(36)
+  path             String?             @db.VarChar(255)
+  method           String?             @db.VarChar(20)
+  sort_order       Int?                @default(0)
+  status           permissions_status? @default(active)
+  created_at       DateTime?           @default(now()) @db.Timestamp(0)
+  updated_at       DateTime?           @default(now()) @db.Timestamp(0)
+  action           String?             @db.VarChar(50)
+  module           String?             @db.VarChar(50)
+  resource         String?             @db.VarChar(50)
+  role_permissions role_permissions[]
+
+  @@index([parent_id])
+}
+
+model positions {
+  id                 String            @id @db.VarChar(36)
+  code               String            @unique(map: "code") @db.VarChar(50)
+  name               String            @db.VarChar(100)
+  department_id      String?           @db.VarChar(36)
+  department_name    String?           @db.VarChar(100)
+  level              Int?              @default(1)
+  category           String?           @db.VarChar(50)
+  description        String?           @db.Text
+  requirements       String?           @db.Text
+  status             positions_status? @default(active)
+  sort_order         Int?              @default(0)
+  third_party_id     String?           @db.VarChar(100)
+  third_party_source String?           @db.VarChar(50)
+  created_at         DateTime?         @default(now()) @db.Timestamp(0)
+  updated_at         DateTime?         @default(now()) @db.Timestamp(0)
+  departments        departments?      @relation(fields: [department_id], references: [id], onUpdate: NoAction, map: "fk_position_dept")
+
+  @@index([department_id], map: "idx_department")
+  @@index([level], map: "idx_level")
+  @@index([category, status], map: "idx_positions_category_status")
+  @@index([department_id, status], map: "idx_positions_department_status")
+  @@index([status], map: "idx_status")
+  @@index([third_party_id, third_party_source], map: "idx_third_party")
+}
+
+model progress_alerts {
+  id                  String                      @id @db.VarChar(36)
+  project_id          String                      @db.VarChar(36)
+  project_name        String?                     @db.VarChar(200)
+  entity_type         progress_alerts_entity_type
+  entity_id           String                      @db.VarChar(36)
+  entity_name         String                      @db.VarChar(200)
+  planned_progress    Int
+  actual_progress     Int
+  deviation           Int
+  deviation_threshold Int
+  alert_level         progress_alerts_alert_level
+  status              progress_alerts_status?     @default(active)
+  manager_id          String?                     @db.VarChar(36)
+  manager_name        String?                     @db.VarChar(100)
+  resolution_note     String?                     @db.Text
+  acknowledged_at     DateTime?                   @db.Timestamp(0)
+  acknowledged_by     String?                     @db.VarChar(36)
+  resolved_at         DateTime?                   @db.Timestamp(0)
+  created_at          DateTime?                   @default(now()) @db.Timestamp(0)
+  updated_at          DateTime?                   @default(now()) @db.Timestamp(0)
+}
+
+model project_completion_orders {
+  id                     String                                           @id @db.VarChar(36)
+  order_no               String                                           @unique(map: "order_no") @db.VarChar(50)
+  applicant_id           String                                           @db.VarChar(36)
+  applicant              String                                           @db.VarChar(100)
+  apply_date             DateTime                                         @db.Date
+  project_id             String                                           @db.VarChar(36)
+  project_name           String?                                          @db.VarChar(200)
+  status                 project_completion_orders_status?                @default(draft)
+  approval_id            String?                                          @db.VarChar(36)
+  approved_at            DateTime?                                        @db.Timestamp(0)
+  approved_by            String?                                          @db.VarChar(36)
+  created_at             DateTime?                                        @default(now()) @db.Timestamp(0)
+  updated_at             DateTime?                                        @default(now()) @db.Timestamp(0)
+  acceptance_report      Json?
+  actual_cost            Decimal                                          @db.Decimal(15, 2)
+  actual_end_date        DateTime                                         @db.Date
+  actual_start_date      DateTime?                                        @db.Date
+  cost_variance_note     String?                                          @db.Text
+  incomplete_task_note   String?                                          @db.Text
+  project_budget         Decimal?                                         @db.Decimal(15, 2)
+  project_manager_id     String?                                          @db.VarChar(36)
+  project_result         String                                           @db.Text
+  result_report          Json?
+  task_completion_status project_completion_orders_task_completion_status
+  total_duration         Int?
+  employees              employees                                        @relation(fields: [applicant_id], references: [id], onUpdate: NoAction, map: "fk_project_comp_applicant")
+  projects               projects                                         @relation(fields: [project_id], references: [id], onUpdate: NoAction, map: "fk_project_comp_project")
+
+  @@index([applicant_id], map: "idx_applicant")
+  @@index([project_id], map: "idx_project")
+  @@index([status], map: "idx_status")
+}
+
+model project_locations {
+  id         String    @id @db.VarChar(36)
+  project_id String    @unique(map: "uk_project") @db.VarChar(36)
+  address    String?   @db.VarChar(255)
+  latitude   Decimal   @db.Decimal(10, 8)
+  longitude  Decimal   @db.Decimal(11, 8)
+  radius     Int?      @default(500)
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+}
+
+model project_personnel {
+  id                String                            @id @db.VarChar(36)
+  project_id        String                            @db.VarChar(36)
+  employee_id       String                            @db.VarChar(36)
+  role_in_project   String?                           @db.VarChar(50)
+  on_duty_status    project_personnel_on_duty_status? @default(on_duty)
+  transfer_in_date  DateTime                          @db.Date
+  transfer_out_date DateTime?                         @db.Date
+  can_edit          Boolean?                          @default(false)
+  created_at        DateTime?                         @default(now()) @db.Timestamp(0)
+
+  @@unique([project_id, employee_id], map: "uk_proj_emp")
+}
+
+model project_personnel_transfer_orders {
+  id                                                                  String                                          @id @db.VarChar(36)
+  order_no                                                            String                                          @unique(map: "order_no") @db.VarChar(50)
+  transfer_type                                                       project_personnel_transfer_orders_transfer_type
+  applicant_id                                                        String                                          @db.VarChar(36)
+  applicant                                                           String                                          @db.VarChar(100)
+  apply_date                                                          DateTime                                        @db.Date
+  employee_id                                                         String                                          @db.VarChar(36)
+  employee_name                                                       String?                                         @db.VarChar(100)
+  department                                                          String?                                         @db.VarChar(100)
+  position                                                            String?                                         @db.VarChar(100)
+  project_id                                                          String                                          @db.VarChar(36)
+  project_name                                                        String?                                         @db.VarChar(200)
+  project_manager_id                                                  String?                                         @db.VarChar(36)
+  transfer_reason                                                     String                                          @db.Text
+  effective_date                                                      DateTime                                        @db.Date
+  notes                                                               String?                                         @db.Text
+  project_personnel_id                                                String?                                         @db.VarChar(36)
+  status                                                              project_personnel_transfer_orders_status?       @default(draft)
+  approval_id                                                         String?                                         @db.VarChar(36)
+  approved_at                                                         DateTime?                                       @db.Timestamp(0)
+  approved_by                                                         String?                                         @db.VarChar(36)
+  created_at                                                          DateTime?                                       @default(now()) @db.Timestamp(0)
+  updated_at                                                          DateTime?                                       @default(now()) @db.Timestamp(0)
+  employees_project_personnel_transfer_orders_applicant_idToemployees employees                                       @relation("project_personnel_transfer_orders_applicant_idToemployees", fields: [applicant_id], references: [id], onUpdate: NoAction, map: "fk_pp_transfer_applicant")
+  employees_project_personnel_transfer_orders_employee_idToemployees  employees                                       @relation("project_personnel_transfer_orders_employee_idToemployees", fields: [employee_id], references: [id], onUpdate: NoAction, map: "fk_pp_transfer_employee")
+  projects                                                            projects                                        @relation(fields: [project_id], references: [id], onUpdate: NoAction, map: "fk_pp_transfer_project")
+
+  @@index([applicant_id], map: "idx_applicant")
+  @@index([employee_id], map: "idx_employee")
+  @@index([project_id], map: "idx_project")
+  @@index([status], map: "idx_status")
+}
+
+model project_phase_update_orders {
+  id                String                                  @id @db.VarChar(36)
+  order_no          String                                  @unique(map: "order_no") @db.VarChar(50)
+  applicant_id      String                                  @db.VarChar(36)
+  applicant         String                                  @db.VarChar(100)
+  apply_date        DateTime                                @db.Date
+  phase_id          String                                  @db.VarChar(36)
+  project_id        String?                                 @db.VarChar(36)
+  project_name      String?                                 @db.VarChar(200)
+  phase_name        String?                                 @db.VarChar(100)
+  current_status    String?                                 @db.VarChar(50)
+  update_type       project_phase_update_orders_update_type
+  new_status        project_phase_update_orders_new_status
+  actual_start_date DateTime?                               @db.Date
+  actual_end_date   DateTime?                               @db.Date
+  progress          Int?
+  update_reason     String                                  @db.Text
+  status            project_phase_update_orders_status?     @default(draft)
+  approval_id       String?                                 @db.VarChar(36)
+  approved_at       DateTime?                               @db.Timestamp(0)
+  approved_by       String?                                 @db.VarChar(36)
+  created_at        DateTime?                               @default(now()) @db.Timestamp(0)
+  updated_at        DateTime?                               @default(now()) @db.Timestamp(0)
+
+  @@index([applicant_id], map: "idx_applicant")
+  @@index([phase_id], map: "idx_phase")
+  @@index([project_id], map: "idx_project")
+  @@index([status], map: "idx_status")
+}
+
+model project_proposal_orders {
+  id                                                        String                          @id @db.VarChar(36)
+  order_no                                                  String                          @unique(map: "order_no") @db.VarChar(50)
+  applicant_id                                              String                          @db.VarChar(36)
+  applicant                                                 String                          @db.VarChar(100)
+  apply_date                                                DateTime                        @db.Date
+  project_name                                              String                          @db.VarChar(200)
+  customer_id                                               String?                         @db.VarChar(36)
+  customer_name                                             String?                         @db.VarChar(200)
+  description                                               String?                         @db.Text
+  status                                                    project_proposal_orders_status? @default(draft)
+  approval_id                                               String?                         @db.VarChar(36)
+  approved_at                                               DateTime?                       @db.Timestamp(0)
+  approved_by                                               String?                         @db.VarChar(36)
+  created_at                                                DateTime?                       @default(now()) @db.Timestamp(0)
+  updated_at                                                DateTime?                       @default(now()) @db.Timestamp(0)
+  address                                                   String?                         @db.VarChar(300)
+  area                                                      Decimal?                        @db.Decimal(10, 2)
+  attachments                                               Json?
+  budget                                                    Decimal?                        @db.Decimal(15, 2)
+  capacity                                                  Decimal?                        @db.Decimal(10, 2)
+  country                                                   project_proposal_orders_country
+  created_project_id                                        String?                         @db.VarChar(36)
+  end_date                                                  DateTime?                       @db.Date
+  fire_arch                                                 String?                         @db.Text
+  hvac_arch                                                 String?                         @db.Text
+  manager                                                   String?                         @db.VarChar(100)
+  manager_id                                                String                          @db.VarChar(36)
+  power_arch                                                String?                         @db.Text
+  project_no                                                String?                         @db.VarChar(50)
+  rack_count                                                Int?
+  rack_power                                                Decimal?                        @db.Decimal(10, 2)
+  start_date                                                DateTime                        @db.Date
+  tech_manager                                              String?                         @db.VarChar(100)
+  tech_manager_id                                           String?                         @db.VarChar(36)
+  weak_arch                                                 String?                         @db.Text
+  employees_project_proposal_orders_applicant_idToemployees employees                       @relation("project_proposal_orders_applicant_idToemployees", fields: [applicant_id], references: [id], onUpdate: NoAction, map: "fk_proposal_applicant")
+  customers                                                 customers?                      @relation(fields: [customer_id], references: [id], onUpdate: NoAction, map: "fk_proposal_customer")
+  employees_project_proposal_orders_manager_idToemployees   employees                       @relation("project_proposal_orders_manager_idToemployees", fields: [manager_id], references: [id], onUpdate: NoAction, map: "fk_proposal_manager")
+
+  @@index([applicant_id], map: "idx_applicant")
+  @@index([customer_id], map: "idx_customer")
+  @@index([manager_id], map: "idx_manager")
+  @@index([status], map: "idx_status")
+}
+
+model projects {
+  id                                String                              @id @db.VarChar(36)
+  code                              String                              @unique(map: "code") @db.VarChar(50)
+  name                              String                              @db.VarChar(200)
+  type                              projects_type?                      @default(domestic)
+  customer_id                       String?                             @db.VarChar(36)
+  customer_name                     String?                             @db.VarChar(200)
+  manager_id                        String?                             @db.VarChar(36)
+  manager                           String?                             @db.VarChar(100)
+  technical_lead_id                 String?                             @db.VarChar(36)
+  status                            projects_status?                    @default(proposal)
+  progress                          Int?                                @default(0)
+  start_date                        DateTime                            @db.Date
+  end_date                          DateTime?                           @db.Date
+  budget                            Decimal?                            @default(0.00) @db.Decimal(15, 2)
+  country                           String?                             @default("中国") @db.VarChar(50)
+  address                           String?                             @db.Text
+  description                       String?                             @db.Text
+  attachments                       String?                             @db.Text
+  organization_id                   String?                             @db.VarChar(36)
+  approval_mode                     String?                             @default("workflow") @db.VarChar(50)
+  phase                             String?                             @db.VarChar(50)
+  phase_start_date                  DateTime?                           @db.Date
+  phase_end_date                    DateTime?                           @db.Date
+  estimated_days                    Int?                                @default(0)
+  remaining_days                    Int?                                @default(0)
+  area                              Decimal?                            @default(0.00) @db.Decimal(10, 2)
+  capacity                          Decimal?                            @default(0.00) @db.Decimal(10, 2)
+  rack_count                        Int?                                @default(0)
+  rack_power                        Decimal?                            @default(0.00) @db.Decimal(5, 2)
+  power_arch                        String?                             @db.Text
+  hvac_arch                         String?                             @db.Text
+  fire_arch                         String?                             @db.Text
+  weak_arch                         String?                             @db.Text
+  building_area                     Decimal?                            @db.Decimal(10, 2)
+  it_capacity                       Decimal?                            @db.Decimal(10, 2)
+  cabinet_count                     Int?
+  cabinet_power                     Decimal?                            @db.Decimal(10, 2)
+  power_architecture                String?                             @db.Text
+  hvac_architecture                 String?                             @db.Text
+  fire_architecture                 String?                             @db.Text
+  weak_electric_architecture        String?                             @db.Text
+  end_customer                      String?                             @db.VarChar(200)
+  deleted_at                        DateTime?                           @db.Timestamp(0)
+  created_at                        DateTime?                           @default(now()) @db.Timestamp(0)
+  updated_at                        DateTime?                           @default(now()) @db.Timestamp(0)
+  leave_requests                    leave_requests[]
+  project_completion_orders         project_completion_orders[]
+  project_expenses                  project_expenses[]
+  project_milestones                project_milestones[]
+  project_personnel_transfer_orders project_personnel_transfer_orders[]
+  project_risks                     project_risks[]
+  project_staffing_plans            project_staffing_plans[]
+  task_completion_orders            task_completion_orders[]
+
+  @@index([country], map: "idx_projects_country")
+  @@index([customer_id], map: "idx_projects_customer")
+  @@index([manager_id], map: "idx_projects_manager")
+  @@index([status, start_date], map: "idx_projects_status_start_date")
+  @@index([status], map: "idx_status")
+}
+
+model purchase_orders {
+  id                 String                             @id @db.VarChar(36)
+  order_no           String                             @unique(map: "order_no") @db.VarChar(50)
+  status             purchase_orders_status?            @default(draft)
+  created_at         DateTime?                          @default(now()) @db.Timestamp(0)
+  updated_at         DateTime?                          @default(now()) @db.Timestamp(0)
+  actual_price       Decimal?                           @db.Decimal(12, 2)
+  applicant          String                             @db.VarChar(100)
+  applicant_id       String                             @db.VarChar(36)
+  apply_date         DateTime                           @db.Date
+  approval_id        String?                            @db.VarChar(36)
+  approved_at        DateTime?                          @db.Timestamp(0)
+  approved_by        String?                            @db.VarChar(36)
+  arrival_date       DateTime?                          @db.Date
+  equipment_category purchase_orders_equipment_category
+  equipment_name     String                             @db.VarChar(200)
+  estimated_price    Decimal                            @db.Decimal(12, 2)
+  model_spec         String                             @db.VarChar(200)
+  purchase_reason    String                             @db.Text
+  purchase_status    purchase_orders_purchase_status?   @default(pending)
+  quantity           Int                                @default(1)
+  required_date      DateTime                           @db.Date
+  total_price        Decimal?                           @db.Decimal(12, 2)
+  transfer_order_id  String?                            @db.VarChar(36)
+
+  @@index([applicant_id], map: "idx_applicant")
+  @@index([status], map: "idx_status")
+  @@index([transfer_order_id], map: "idx_transfer")
+}
+
+model purchase_requests {
+  id              String                     @id @db.VarChar(36)
+  request_no      String                     @unique(map: "request_no") @db.VarChar(50)
+  requester_id    String                     @db.VarChar(36)
+  requester_name  String?                    @db.VarChar(100)
+  project_id      String?                    @db.VarChar(36)
+  project_name    String?                    @db.VarChar(200)
+  urgency         purchase_requests_urgency? @default(normal)
+  reason          String                     @db.Text
+  status          purchase_requests_status?  @default(pending)
+  created_at      DateTime?                  @default(now()) @db.Timestamp(0)
+  updated_at      DateTime?                  @default(now()) @db.Timestamp(0)
+  actual_date     DateTime?                  @db.Date
+  actual_price    Decimal?                   @db.Decimal(12, 2)
+  equipment_id    String?                    @db.VarChar(36)
+  equipment_name  String                     @db.VarChar(200)
+  equipment_spec  String?                    @db.VarChar(500)
+  estimated_price Decimal?                   @db.Decimal(12, 2)
+  expected_date   DateTime?                  @db.Date
+  notes           String?                    @db.Text
+  quantity        Int                        @default(1)
+  supplier        String?                    @db.VarChar(200)
+
+  @@index([equipment_id], map: "idx_equipment")
+  @@index([project_id], map: "idx_project")
+  @@index([requester_id], map: "idx_requester")
+  @@index([status], map: "idx_status")
+  @@index([urgency], map: "idx_urgency")
+}
+
+model role_permissions {
+  id            String      @id @db.VarChar(36)
+  role_id       String      @db.VarChar(36)
+  permission_id String      @db.VarChar(36)
+  created_at    DateTime?   @default(now()) @db.Timestamp(0)
+  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+  roles         roles       @relation(fields: [role_id], references: [id], onDelete: Cascade)
+
+  @@unique([role_id, permission_id])
+  @@index([permission_id], map: "role_permissions_permission_id_fkey")
+}
+
+model user_roles {
+  id         String    @id @db.VarChar(36)
+  user_id    String    @db.VarChar(36)
+  role_id    String    @db.VarChar(36)
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+
+  @@unique([user_id, role_id])
+  @@index([user_id])
+  @@index([role_id])
+}
+
+model data_permissions {
+  id          String    @id @db.VarChar(36)
+  role_id     String    @db.VarChar(36)
+  entity_type String    @db.VarChar(50)
+  scope       String    @db.VarChar(50)
+  created_at  DateTime? @default(now()) @db.Timestamp(0)
+
+  @@unique([role_id, entity_type])
+  @@index([role_id])
+}
+
+model roles {
+  id               String             @id @db.VarChar(36)
+  code             String             @unique @db.VarChar(50)
+  name             String             @db.VarChar(100)
+  description      String?            @db.Text
+  is_system        Boolean?           @default(false)
+  status           roles_status?      @default(active)
+  created_at       DateTime?          @default(now()) @db.Timestamp(0)
+  updated_at       DateTime?          @default(now()) @db.Timestamp(0)
+  is_system_role   Boolean?           @default(false)
+  level            Int?               @default(0)
+  role_permissions role_permissions[]
+}
+
+model knowledge_base_items {
+  id              String                      @id @db.VarChar(36)
+  title           String                      @db.VarChar(200)
+  type            String                      @db.VarChar(20)
+  author          String                      @db.VarChar(100)
+  date            DateTime                    @db.Date
+  is_mandatory    Boolean                     @default(false)
+  url             String?                     @db.VarChar(500)
+  project_id      String?                     @db.VarChar(36)
+  created_at      DateTime?                   @default(now()) @db.Timestamp(0)
+  updated_at      DateTime?                   @default(now()) @db.Timestamp(0)
+  is_folder       Boolean                     @default(false)
+  parent_id       String?                     @db.VarChar(36)
+  creator_id      String?                     @db.VarChar(36)
+  visibility_type knowledge_visibility_type    @default(everyone)
+  parent          knowledge_base_items?       @relation("FolderHierarchy", fields: [parent_id], references: [id], onDelete: Cascade)
+  children        knowledge_base_items[]      @relation("FolderHierarchy")
+  permissions     knowledge_item_permissions[]
+
+  @@index([type])
+  @@index([project_id])
+  @@index([parent_id])
+}
+
+model knowledge_item_permissions {
+  id          String               @id @db.VarChar(36)
+  item_id     String               @db.VarChar(36)
+  target_type String               @db.VarChar(20)
+  target_id   String               @db.VarChar(36)
+  item        knowledge_base_items @relation(fields: [item_id], references: [id], onDelete: Cascade)
+
+  @@index([item_id])
+  @@index([target_type, target_id])
+}
+
+model sync_logs {
+  id                  String               @id @db.VarChar(36)
+  config_id           String               @db.VarChar(36)
+  platform_type       String               @db.VarChar(50)
+  sync_type           sync_logs_sync_type
+  sync_mode           sync_logs_sync_mode? @default(manual)
+  status              sync_logs_status
+  total_count         Int?                 @default(0)
+  success_count       Int?                 @default(0)
+  failed_count        Int?                 @default(0)
+  created_count       Int?                 @default(0)
+  updated_count       Int?                 @default(0)
+  deleted_count       Int?                 @default(0)
+  start_time          DateTime?            @default(now()) @db.Timestamp(0)
+  end_time            DateTime?            @db.Timestamp(0)
+  duration            Int?
+  error_message       String?              @db.Text
+  details             Json?
+  created_at          DateTime?            @default(now()) @db.Timestamp(0)
+  third_party_configs third_party_configs  @relation(fields: [config_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_sync_config")
+
+  @@index([config_id], map: "idx_config")
+  @@index([platform_type], map: "idx_platform")
+  @@index([start_time], map: "idx_start_time")
+  @@index([status], map: "idx_status")
+}
+
+model system_configs {
+  id          String    @id @db.VarChar(36)
+  key         String    @unique(map: "key") @db.VarChar(100)
+  value       String?   @db.Text
+  description String?   @db.VarChar(500)
+  category    String?   @db.VarChar(50)
+  created_at  DateTime? @default(now()) @db.Timestamp(0)
+  updated_at  DateTime? @default(now()) @db.Timestamp(0)
+
+  @@index([category], map: "idx_category")
+  @@index([key], map: "idx_key")
+}
+
+model task_assignment_orders {
+  id                 String                                 @id @db.VarChar(36)
+  order_no           String                                 @unique(map: "order_no") @db.VarChar(50)
+  applicant_id       String                                 @db.VarChar(36)
+  applicant          String                                 @db.VarChar(100)
+  apply_date         DateTime                               @db.Date
+  project_id         String                                 @db.VarChar(36)
+  project_name       String?                                @db.VarChar(200)
+  phase_id           String?                                @db.VarChar(36)
+  phase_name         String?                                @db.VarChar(100)
+  wbs_code           String                                 @db.VarChar(50)
+  task_type          task_assignment_orders_task_type
+  task_name          String                                 @db.VarChar(300)
+  parent_task_id     String?                                @db.VarChar(36)
+  task_level         task_assignment_orders_task_level
+  task_description   String?                                @db.Text
+  assignee_id        String                                 @db.VarChar(36)
+  assignee           String                                 @db.VarChar(100)
+  planned_start_date DateTime                               @db.Date
+  planned_end_date   DateTime                               @db.Date
+  task_requirements  String                                 @db.Text
+  receive_status     task_assignment_orders_receive_status? @default(pending)
+  received_at        DateTime?                              @db.Timestamp(0)
+  reject_reason      String?                                @db.Text
+  created_task_id    String?                                @db.VarChar(36)
+  status             task_assignment_orders_status?         @default(draft)
+  approval_id        String?                                @db.VarChar(36)
+  created_at         DateTime?                              @default(now()) @db.Timestamp(0)
+  updated_at         DateTime?                              @default(now()) @db.Timestamp(0)
+
+  @@index([applicant_id], map: "idx_applicant")
+  @@index([assignee_id], map: "idx_assignee")
+  @@index([phase_id], map: "idx_phase")
+  @@index([project_id], map: "idx_project")
+  @@index([status], map: "idx_status")
+}
+
+model task_completion_orders {
+  id                 String                                 @id @db.VarChar(36)
+  order_no           String                                 @unique(map: "order_no") @db.VarChar(50)
+  applicant_id       String                                 @db.VarChar(36)
+  applicant          String                                 @db.VarChar(100)
+  apply_date         DateTime                               @db.Date
+  task_id            String                                 @db.VarChar(36)
+  task_name          String?                                @db.VarChar(300)
+  project_id         String?                                @db.VarChar(36)
+  project_name       String?                                @db.VarChar(200)
+  phase_id           String?                                @db.VarChar(36)
+  phase_name         String?                                @db.VarChar(100)
+  assignee_id        String?                                @db.VarChar(36)
+  assignee           String?                                @db.VarChar(100)
+  planned_end_date   DateTime?                              @db.Date
+  current_progress   Int?
+  actual_end_date    DateTime                               @db.Date
+  final_progress     Int                                    @default(100)
+  task_result        String                                 @db.Text
+  result_attachments Json?
+  remaining_issues   String?                                @db.Text
+  quality_score      Decimal?                               @db.Decimal(2, 1)
+  efficiency_score   Decimal?                               @db.Decimal(2, 1)
+  attitude_score     Decimal?                               @db.Decimal(2, 1)
+  overall_score      Decimal?                               @db.Decimal(3, 1)
+  overall_rating     task_completion_orders_overall_rating?
+  evaluation_comment String?                                @db.Text
+  status             task_completion_orders_status?         @default(draft)
+  approval_id        String?                                @db.VarChar(36)
+  approved_at        DateTime?                              @db.Timestamp(0)
+  approved_by        String?                                @db.VarChar(36)
+  created_at         DateTime?                              @default(now()) @db.Timestamp(0)
+  updated_at         DateTime?                              @default(now()) @db.Timestamp(0)
+  employees          employees                              @relation(fields: [applicant_id], references: [id], onUpdate: NoAction, map: "fk_task_comp_applicant")
+  projects           projects?                              @relation(fields: [project_id], references: [id], onUpdate: NoAction, map: "fk_task_comp_project")
+  tasks              tasks                                  @relation(fields: [task_id], references: [id], onUpdate: NoAction, map: "fk_task_comp_task")
+
+  @@index([applicant_id], map: "idx_applicant")
+  @@index([assignee_id], map: "idx_assignee")
+  @@index([project_id], map: "idx_project")
+  @@index([status], map: "idx_status")
+  @@index([task_id], map: "idx_task")
+  @@index([order_no], map: "idx_task_completion_orders_order_no")
+  @@index([status], map: "idx_task_completion_orders_status")
+  @@index([task_id], map: "idx_task_completion_orders_task")
+}
+
+model tasks {
+  id                     String                   @id @db.VarChar(36)
+  project_id             String                   @db.VarChar(36)
+  name                   String                   @db.VarChar(300)
+  description            String?                  @db.Text
+  assignee_id            String?                  @db.VarChar(36)
+  status                 tasks_status?            @default(unassigned)
+  priority               tasks_priority?          @default(medium)
+  progress               Int?                     @default(0)
+  parent_id              String?                  @db.VarChar(36)
+  planned_start_date     DateTime                 @db.Date
+  planned_end_date       DateTime                 @db.Date
+  actual_start_date      DateTime?                @db.Date
+  actual_end_date        DateTime?                @db.Date
+  task_type              tasks_task_type?         @default(subtask)
+  wbs_code               String                   @db.VarChar(50)
+  wbs_path               String                   @db.VarChar(255)
+  created_at             DateTime?                @default(now()) @db.Timestamp(0)
+  updated_at             DateTime?                @default(now()) @db.Timestamp(0)
+  deleted_at             DateTime?                @db.Timestamp(0)
+  task_completion_orders task_completion_orders[]
+
+  @@index([project_id], map: "idx_project")
+  @@index([wbs_path], map: "idx_wbs")
+}
+
+model third_party_configs {
+  id                String                                @id @db.VarChar(36)
+  platform_type     third_party_configs_platform_type
+  name              String                                @db.VarChar(100)
+  corp_id           String?                               @db.VarChar(100)
+  agent_id          String?                               @db.VarChar(100)
+  app_id            String?                               @db.VarChar(100)
+  app_secret        String?                               @db.VarChar(500)
+  access_token      String?                               @db.VarChar(500)
+  token_expire_time DateTime?                             @db.Timestamp(0)
+  sync_departments  Boolean?                              @default(true)
+  sync_employees    Boolean?                              @default(true)
+  sync_enabled      Boolean?                              @default(false)
+  sync_interval     Int?                                  @default(60)
+  last_sync_time    DateTime?                             @db.Timestamp(0)
+  last_sync_status  third_party_configs_last_sync_status?
+  config            Json?
+  status            third_party_configs_status?           @default(active)
+  created_at        DateTime?                             @default(now()) @db.Timestamp(0)
+  updated_at        DateTime?                             @default(now()) @db.Timestamp(0)
+  sync_logs         sync_logs[]
+
+  @@index([platform_type], map: "idx_platform")
+  @@index([status], map: "idx_status")
+}
+
+model timesheet_entries {
+  id           String    @id @db.VarChar(36)
+  report_id    String    @db.VarChar(36)
+  project_id   String    @db.VarChar(36)
+  task_id      String?   @db.VarChar(36)
+  duration     Decimal   @db.Decimal(4, 1)
+  work_content String?   @db.Text
+  created_at   DateTime? @default(now()) @db.Timestamp(0)
+}
+
+model users {
+  id         String        @id @db.VarChar(36)
+  username   String        @unique(map: "username") @db.VarChar(50)
+  password   String        @db.VarChar(255)
+  name       String        @db.VarChar(100)
+  email      String?       @db.VarChar(100)
+  role       String?       @db.VarChar(50)
+  status     users_status? @default(active)
+  created_at DateTime?     @default(now()) @db.Timestamp(0)
+  updated_at DateTime?     @default(now()) @db.Timestamp(0)
+
+  @@index([email], map: "idx_users_email")
+  @@index([role, status], map: "idx_users_role_status")
+}
+
+model warehouses {
+  id           String             @id @db.VarChar(36)
+  warehouse_no String             @unique(map: "warehouse_no") @db.VarChar(50)
+  name         String             @db.VarChar(200)
+  type         warehouses_type?   @default(main)
+  location     String             @db.VarChar(200)
+  address      String?            @db.Text
+  manager_id   String?            @db.VarChar(36)
+  status       warehouses_status? @default(active)
+  created_at   DateTime?          @default(now()) @db.Timestamp(0)
+  updated_at   DateTime?          @default(now()) @db.Timestamp(0)
+  deleted_at   DateTime?          @db.Timestamp(0)
+}
+
+model workflow_approver_rules {
+  id                   String                                @id @db.VarChar(36)
+  node_id              String?                               @db.VarChar(100)
+  priority             Int?                                  @default(0)
+  enabled              Int?                                  @default(1) @db.TinyInt
+  created_at           DateTime?                             @default(now()) @db.Timestamp(0)
+  updated_at           DateTime?                             @default(now()) @db.Timestamp(0)
+  approver_type        workflow_approver_rules_approver_type
+  approver_value       String                                @db.VarChar(500)
+  condition_expression String?                               @db.VarChar(500)
+  definition_id        String?                               @db.VarChar(36)
+  fallback_type        String?                               @db.VarChar(50)
+  fallback_value       String?                               @db.VarChar(500)
+  rule_name            String                                @db.VarChar(200)
+
+  @@index([definition_id], map: "idx_definition")
+  @@index([enabled], map: "idx_enabled")
+  @@index([node_id], map: "idx_node")
+}
+
+model workflow_definitions {
+  id               String                       @id @db.VarChar(36)
+  key              String                       @db.VarChar(100)
+  name             String                       @db.VarChar(200)
+  version          Int                          @default(1)
+  category         String?                      @db.VarChar(50)
+  entity_type      String?                      @db.VarChar(50)
+  bpmn_xml         String?                      @db.MediumText
+  node_config      Json?
+  form_schema      Json?
+  variables        Json?
+  status           workflow_definitions_status? @default(draft)
+  created_by       String?                      @db.VarChar(36)
+  created_at       DateTime?                    @default(now()) @db.Timestamp(0)
+  updated_at       DateTime?                    @default(now()) @db.Timestamp(0)
+  form_template_id String?                      @db.VarChar(36)
+
+  @@unique([key, version], map: "uk_key_version")
+  @@index([category], map: "idx_category")
+  @@index([entity_type], map: "idx_entity_type")
+  @@index([form_template_id], map: "idx_form_template_id")
+  @@index([status], map: "idx_status")
+  @@index([category, version(sort: Desc)], map: "idx_workflow_definitions_category_version")
+}
+
+model workflow_execution_logs {
+  id           String   @id @db.VarChar(36)
+  execution_id String   @db.VarChar(36)
+  action       String   @db.VarChar(50)
+  process_key  String?  @db.VarChar(100)
+  instance_id  String?  @db.VarChar(36)
+  task_id      String?  @db.VarChar(36)
+  node_id      String?  @db.VarChar(36)
+  node_type    String?  @db.VarChar(50)
+  business_key String?  @db.VarChar(200)
+  initiator    Json?
+  operator     Json?
+  result       String?  @db.VarChar(50)
+  error        String?  @db.Text
+  reason       String?  @db.Text
+  metadata     Json?
+  created_at   DateTime @default(now()) @db.DateTime(0)
+
+  @@index([action], map: "idx_action")
+  @@index([created_at], map: "idx_created_at")
+  @@index([execution_id], map: "idx_execution_id")
+  @@index([instance_id], map: "idx_instance_id")
+  @@index([process_key], map: "idx_process_key")
+  @@index([task_id], map: "idx_task_id")
+  @@index([action], map: "idx_workflow_execution_logs_action")
+  @@index([instance_id], map: "idx_workflow_execution_logs_instance_id")
+}
+
+model workflow_executions {
+  id           String                      @id @db.VarChar(36)
+  instance_id  String                      @db.VarChar(36)
+  parent_id    String?                     @db.VarChar(36)
+  node_id      String                      @db.VarChar(100)
+  node_name    String?                     @db.VarChar(200)
+  node_type    String?                     @db.VarChar(50)
+  variables    Json?
+  status       workflow_executions_status? @default(active)
+  created_at   DateTime?                   @default(now()) @db.Timestamp(0)
+  completed_at DateTime?                   @db.Timestamp(0)
+
+  @@index([instance_id], map: "idx_instance")
+  @@index([node_id], map: "idx_node")
+  @@index([parent_id], map: "idx_parent")
+  @@index([status], map: "idx_status")
+}
+
+model workflow_instance_history {
+  id            String   @id @db.VarChar(36)
+  instance_id   String   @db.VarChar(36)
+  from_status   String?  @db.VarChar(50)
+  to_status     String   @db.VarChar(50)
+  operator_id   String?  @db.VarChar(36)
+  operator_name String?  @db.VarChar(100)
+  reason        String?  @db.Text
+  metadata      Json?
+  created_at    DateTime @default(now()) @db.DateTime(0)
+
+  @@index([created_at], map: "idx_created_at")
+  @@index([instance_id], map: "idx_instance_id")
+}
+
+model workflow_instances {
+  id                 String                     @id @db.VarChar(36)
+  definition_id      String                     @db.VarChar(36)
+  definition_key     String                     @db.VarChar(100)
+  definition_version Int
+  business_key       String?                    @db.VarChar(100)
+  business_id        String?                    @db.VarChar(36)
+  title              String?                    @db.VarChar(300)
+  initiator_id       String?                    @db.VarChar(36)
+  initiator_name     String?                    @db.VarChar(100)
+  variables          Json?
+  status             workflow_instances_status? @default(running)
+  current_node_id    String?                    @db.VarChar(100)
+  current_node_name  String?                    @db.VarChar(200)
+  start_time         DateTime?                  @default(now()) @db.Timestamp(0)
+  end_time           DateTime?                  @db.Timestamp(0)
+  duration           BigInt?
+  result             workflow_instances_result?
+  created_at         DateTime?                  @default(now()) @db.Timestamp(0)
+  updated_at         DateTime?                  @default(now()) @db.Timestamp(0)
+  category           String?                    @db.VarChar(50)
+
+  @@index([business_key, business_id], map: "idx_business")
+  @@index([definition_id], map: "idx_definition")
+  @@index([definition_key], map: "idx_definition_key")
+  @@index([initiator_id], map: "idx_initiator")
+  @@index([start_time], map: "idx_start_time")
+  @@index([status], map: "idx_status")
+  @@index([business_key], map: "idx_workflow_instances_business_key")
+  @@index([category, status], map: "idx_workflow_instances_category_status")
+  @@index([created_at(sort: Desc)], map: "idx_workflow_instances_created_at")
+  @@index([definition_id, status], map: "idx_workflow_instances_definition_status")
+  @@index([initiator_id, status], map: "idx_workflow_instances_initiator_status")
+}
+
+model project_milestones {
+  id                  String                    @id @db.VarChar(36)
+  project_id          String                    @db.VarChar(36)
+  name                String                    @db.VarChar(200)
+  description         String?                   @db.Text
+  planned_start_date  DateTime                  @db.Date
+  planned_end_date    DateTime                  @db.Date
+  actual_end_date     DateTime?                 @db.Date
+  weight              Decimal                   @default(0.00) @db.Decimal(5, 2)
+  progress            Int                       @default(0)
+  status              project_milestones_status @default(pending)
+  created_at          DateTime?                 @default(now()) @db.Timestamp(0)
+  updated_at          DateTime?                 @default(now()) @db.Timestamp(0)
+  milestone_resources milestone_resources[]
+  projects            projects                  @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id], map: "idx_milestone_project")
+}
+
+model milestone_resources {
+  id                 String                     @id @db.VarChar(36)
+  milestone_id       String                     @db.VarChar(36)
+  resource_name      String                     @db.VarChar(200)
+  required_count     Int                        @default(1)
+  collected_count    Int                        @default(0)
+  notes              String?                    @db.Text
+  status             milestone_resources_status @default(incomplete)
+  created_at         DateTime?                  @default(now()) @db.Timestamp(0)
+  updated_at         DateTime?                  @default(now()) @db.Timestamp(0)
+  project_milestones project_milestones         @relation(fields: [milestone_id], references: [id], onDelete: Cascade)
+
+  @@index([milestone_id], map: "idx_resource_milestone")
+}
+
+model project_expenses {
+  id         String    @id @db.VarChar(36)
+  project_id String    @db.VarChar(36)
+  category   String    @db.VarChar(100)
+  amount     Decimal   @db.Decimal(15, 2)
+  date       DateTime  @db.Date
+  notes      String?   @db.Text
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  updated_at DateTime? @default(now()) @db.Timestamp(0)
+  projects   projects  @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id], map: "idx_expense_project")
+}
+
+model project_risks {
+  id          String              @id @db.VarChar(36)
+  project_id  String              @db.VarChar(36)
+  title       String              @db.VarChar(200)
+  description String?             @db.Text
+  level       project_risk_level  @default(medium)
+  status      project_risk_status @default(open)
+  owner_id    String?             @db.VarChar(36)
+  created_at  DateTime?           @default(now()) @db.Timestamp(0)
+  updated_at  DateTime?           @default(now()) @db.Timestamp(0)
+  projects    projects            @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id], map: "idx_risk_project")
+}
+
+model project_staffing_plans {
+  id          String    @id @db.VarChar(36)
+  project_id  String    @db.VarChar(36)
+  employee_id String    @db.VarChar(36)
+  plan_type   String    @db.VarChar(50)
+  start_date  DateTime  @db.Date
+  end_date    DateTime  @db.Date
+  notes       String?   @db.Text
+  created_at  DateTime? @default(now()) @db.Timestamp(0)
+  updated_at  DateTime? @default(now()) @db.Timestamp(0)
+  projects    projects  @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id], map: "idx_staffing_project")
+}
+
+model workflow_listeners {
+  id             String                           @id @db.VarChar(36)
+  definition_id  String?                          @db.VarChar(36)
+  node_id        String?                          @db.VarChar(100)
+  event_type     workflow_listeners_event_type
+  listener_type  workflow_listeners_listener_type
+  listener_value String                           @db.VarChar(500)
+  enabled        Int?                             @default(1) @db.TinyInt
+  created_at     DateTime?                        @default(now()) @db.Timestamp(0)
+
+  @@index([definition_id], map: "idx_definition")
+  @@index([event_type], map: "idx_event_type")
+  @@index([node_id], map: "idx_node")
+}
+
+model workflow_locks {
+  id          String    @id @db.VarChar(255)
+  lock_key    String    @db.VarChar(255)
+  owner       String    @db.VarChar(255)
+  acquired_at DateTime  @db.DateTime(0)
+  expires_at  DateTime  @db.DateTime(0)
+  created_at  DateTime? @default(now()) @db.DateTime(0)
+
+  @@index([expires_at], map: "idx_expires_at")
+  @@index([lock_key], map: "idx_lock_key")
+  @@index([owner], map: "idx_owner")
+  @@index([lock_key, expires_at], map: "idx_workflow_locks_key_expires")
+}
+
+model workflow_order_items {
+  id                  String                         @id @db.VarChar(36)
+  order_id            String                         @db.VarChar(36)
+  item_type           workflow_order_items_item_type
+  item_id             String?                        @db.VarChar(36)
+  model_id            String?                        @db.VarChar(36)
+  plan_qty            Int
+  actual_qty          Int?
+  dispatch_item_image String?                        @db.VarChar(500)
+  receive_item_image  String?                        @db.VarChar(500)
+  status              workflow_order_items_status    @default(PENDING)
+  created_at          DateTime?                      @default(now()) @db.Timestamp(0)
+  updated_at          DateTime?                      @default(now()) @db.Timestamp(0)
+  workflow_orders     workflow_orders                @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "workflow_order_items_ibfk_1")
+
+  @@index([order_id], map: "idx_workflow_order_items_order")
+}
+
+model workflow_orders {
+  id                     String                 @id @db.VarChar(36)
+  order_no               String                 @unique(map: "order_no") @db.VarChar(50)
+  type                   workflow_orders_type
+  status                 workflow_orders_status @default(CREATED)
+  from_location_id       String?                @db.VarChar(36)
+  to_location_id         String?                @db.VarChar(36)
+  dispatcher_id          String?                @db.VarChar(36)
+  receiver_id            String?                @db.VarChar(36)
+  dispatch_overall_image String?                @db.VarChar(500)
+  receive_overall_image  String?                @db.VarChar(500)
+  created_at             DateTime?              @default(now()) @db.Timestamp(0)
+  updated_at             DateTime?              @default(now()) @db.Timestamp(0)
+  exception_tasks        exception_tasks[]
+  workflow_order_items   workflow_order_items[]
+
+  @@index([status], map: "idx_workflow_order_status")
+}
+
+model workflow_performance_metrics {
+  id          String   @id @db.VarChar(36)
+  process_key String?  @db.VarChar(100)
+  instance_id String?  @db.VarChar(36)
+  operation   String   @db.VarChar(100)
+  duration_ms Int
+  success     Boolean  @default(true)
+  metadata    Json?
+  created_at  DateTime @default(now()) @db.DateTime(0)
+
+  @@index([created_at], map: "idx_created_at")
+  @@index([operation], map: "idx_operation")
+  @@index([process_key], map: "idx_process_key")
+}
+
+model workflow_task_history {
+  id            String                       @id @db.VarChar(36)
+  task_id       String                       @db.VarChar(36)
+  instance_id   String                       @db.VarChar(36)
+  node_id       String                       @db.VarChar(100)
+  action        workflow_task_history_action
+  operator_id   String?                      @db.VarChar(36)
+  operator_name String?                      @db.VarChar(100)
+  comment       String?                      @db.Text
+  created_at    DateTime?                    @default(now()) @db.Timestamp(0)
+  target_id     String?                      @db.VarChar(36)
+  target_name   String?                      @db.VarChar(100)
+  task_name     String?                      @db.VarChar(200)
+
+  @@index([action], map: "idx_action")
+  @@index([created_at], map: "idx_created_at")
+  @@index([instance_id], map: "idx_instance")
+  @@index([operator_id], map: "idx_operator")
+  @@index([task_id], map: "idx_task")
+  @@index([created_at(sort: Desc)], map: "idx_workflow_task_history_created_at")
+  @@index([instance_id, operator_id], map: "idx_workflow_task_history_instance_operator")
+}
+
+model workflow_tasks {
+  id               String                 @id @db.VarChar(36)
+  instance_id      String                 @db.VarChar(36)
+  execution_id     String?                @db.VarChar(36)
+  node_id          String                 @db.VarChar(100)
+  task_def_key     String?                @db.VarChar(100)
+  name             String                 @db.VarChar(200)
+  description      String?                @db.Text
+  assignee_id      String?                @db.VarChar(36)
+  assignee_name    String?                @db.VarChar(100)
+  candidate_users  Json?
+  candidate_groups Json?
+  priority         Int?                   @default(50)
+  due_date         DateTime?              @db.Timestamp(0)
+  claim_time       DateTime?              @db.Timestamp(0)
+  variables        Json?
+  status           workflow_tasks_status? @default(created)
+  approval_mode    String?                @default("workflow") @db.VarChar(50)
+  vote_threshold   Int?                   @default(1)
+  delegated_from   String?                @db.VarChar(36)
+  result           workflow_tasks_result?
+  comment          String?                @db.Text
+  created_at       DateTime?              @default(now()) @db.Timestamp(0)
+  started_at       DateTime?              @db.Timestamp(0)
+  completed_at     DateTime?              @db.Timestamp(0)
+  duration         BigInt?
+
+  @@index([assignee_id], map: "idx_assignee")
+  @@index([created_at], map: "idx_created_at")
+  @@index([due_date], map: "idx_due_date")
+  @@index([execution_id], map: "idx_execution")
+  @@index([instance_id], map: "idx_instance")
+  @@index([status], map: "idx_status")
+  @@index([assignee_id, status], map: "idx_workflow_tasks_assignee_status")
+  @@index([created_at(sort: Desc)], map: "idx_workflow_tasks_created_at")
+  @@index([instance_id, status], map: "idx_workflow_tasks_instance_status")
+}
+
+model workflow_variable_history {
+  id            String    @id @db.VarChar(36)
+  instance_id   String    @db.VarChar(36)
+  execution_id  String?   @db.VarChar(36)
+  task_id       String?   @db.VarChar(36)
+  variable_name String    @db.VarChar(100)
+  variable_type String?   @db.VarChar(50)
+  old_value     String?   @db.Text
+  new_value     String?   @db.Text
+  operator_id   String?   @db.VarChar(36)
+  created_at    DateTime? @default(now()) @db.Timestamp(0)
+
+  @@index([instance_id], map: "idx_instance")
+  @@index([variable_name], map: "idx_variable_name")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model field_permissions {
+  id          String    @id @db.VarChar(36)
+  role_id     String    @db.VarChar(36)
+  entity_type String    @db.VarChar(50)
+  field_name  String    @db.VarChar(50)
+  can_view    Boolean?  @default(true)
+  can_edit    Boolean?  @default(true)
+  created_at  DateTime? @default(now()) @db.Timestamp(0)
+
+  @@unique([role_id, entity_type, field_name], map: "uk_role_field")
+  @@index([role_id], map: "idx_fp_role")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model project_members {
+  id         String               @id @db.VarChar(36)
+  project_id String               @db.VarChar(36)
+  user_id    String               @db.VarChar(36)
+  role       project_members_role @default(member)
+  created_at DateTime?            @default(now()) @db.Timestamp(0)
+  updated_at DateTime?            @default(now()) @db.Timestamp(0)
+
+  @@unique([project_id, user_id], map: "uk_project_user")
+  @@index([project_id], map: "idx_pm_project")
+  @@index([user_id], map: "idx_pm_user")
+}
+
+enum approval_orders_order_type {
+  equip_transfer
+  person_transfer
+  purchase
+  leave
+}
+
+enum equipment_instances_category {
+  instrument
+  fake_load
+  cable
+  accessory
+}
+
+enum third_party_configs_platform_type {
+  wechat_work
+  dingtalk
+  feishu
+}
+
+enum equipment_outbound_orders_outbound_type {
+  project_use
+  repair
+  scrap
+}
+
+enum notifications_type {
+  email
+  sms
+  push
+  in_app
+}
+
+enum project_personnel_transfer_orders_transfer_type {
+  in
+  out
+}
+
+enum purchase_orders_status {
+  draft
+  pending
+  approved
+  rejected
+}
+
+enum workflow_order_items_item_type {
+  equipment
+  accessory
+}
+
+enum workflow_orders_type {
+  transfer
+  repair
+}
+
+enum employees_gender {
+  male
+  female
+}
+
+enum exception_tasks_type {
+  SHORTAGE
+  DAMAGE
+}
+
+enum permissions_type {
+  menu
+  button
+  api
+}
+
+enum progress_alerts_entity_type {
+  project
+  phase
+  task
+}
+
+enum sync_logs_sync_type {
+  department
+  employee
+  full
+}
+
+enum warehouses_type {
+  main
+  branch
+  project
+}
+
+enum workflow_listeners_event_type {
+  start
+  end
+  take
+  create
+  assignment
+  complete
+}
+
+enum workflow_orders_status {
+  CREATED
+  DISPATCHED
+  RECEIVED
+  COMPLETED
+  EXCEPTION_CONFIRMING
+  CLOSED
+}
+
+enum equipment_accessories_accessory_category {
+  instrument
+  fake_load
+  cable
+}
+
+enum equipment_accessory_instances_category {
+  instrument
+  fake_load
+  cable
+  accessory
+}
+
+enum equipment_images_category {
+  instrument
+  fake_load
+  cable
+  accessory
+}
+
+enum equipment_inbound_orders_status {
+  draft
+  pending
+  approved
+  rejected
+}
+
+enum project_personnel_on_duty_status {
+  on_duty
+  off_duty
+}
+
+enum roles_status {
+  active
+  inactive
+}
+
+enum sync_logs_sync_mode {
+  manual
+  auto
+}
+
+enum tasks_status {
+  unassigned
+  pending_confirm
+  accepted
+  in_progress
+  completed
+  closed
+}
+
+enum workflow_listeners_listener_type {
+  class
+  expression
+  delegate
+}
+
+enum workflow_task_history_action {
+  create
+  assign
+  claim
+  complete
+  delegate
+  transfer
+  withdraw
+  cancel
+  skip
+}
+
+enum attendance_weekly_approvals_status {
+  pending
+  approved
+  archived
+}
+
+enum equipment_images_image_type {
+  main
+  accessory
+  transfer_shipping
+  transfer_packed
+  transfer_receiving
+}
+
+enum equipment_repair_orders_repair_type {
+  internal
+  external
+}
+
+enum exception_tasks_status {
+  PENDING
+  CONFIRMED
+  RESOLVED
+}
+
+enum sync_logs_status {
+  success
+  failed
+  partial
+}
+
+enum tasks_priority {
+  high
+  medium
+  low
+}
+
+enum daily_reports_status {
+  pending
+  approved
+  rejected
+}
+
+enum employee_onboard_orders_gender {
+  male
+  female
+}
+
+enum equipment_scrap_sales_status {
+  draft
+  pending
+  approved
+  rejected
+  completed
+}
+
+enum equipment_transfer_orders_status {
+  pending_from
+  pending_to
+  shipping
+  receiving
+  partial_received
+  completed
+  rejected
+  cancelled
+  withdrawn
+}
+
+enum form_drafts_status {
+  draft
+  auto_saved
+}
+
+enum projects_status {
+  proposal
+  in_progress
+  completed
+  paused
+  delayed
+}
+
+enum purchase_requests_urgency {
+  low
+  normal
+  high
+  urgent
+}
+
+enum users_status {
+  active
+  inactive
+}
+
+enum workflow_approver_rules_approver_type {
+  fixed
+  role
+  department
+  superior
+  form_field
+  expression
+  previous_handler
+  initiator
+}
+
+enum customers_type {
+  enterprise
+  government
+  research
+  direct
+  channel
+  agent
+}
+
+enum leave_requests_leave_type {
+  annual
+  sick
+  personal
+  comp
+}
+
+enum project_completion_orders_status {
+  draft
+  pending
+  approved
+  rejected
+}
+
+enum warehouses_status {
+  active
+  inactive
+}
+
+enum workflow_executions_status {
+  active
+  completed
+  cancelled
+}
+
+enum approval_orders_status {
+  pending
+  approved
+  rejected
+  withdrawn
+}
+
+enum employees_status {
+  active
+  resigned
+  probation
+}
+
+enum equipment_repair_orders_status {
+  draft
+  pending_ship
+  repairing
+  pending_receive
+  completed
+  rejected
+}
+
+enum permissions_status {
+  active
+  inactive
+}
+
+enum purchase_requests_status {
+  pending
+  approved
+  purchasing
+  arrived
+  cancelled
+}
+
+enum attendance_records_check_in_status {
+  normal
+  late
+  outside
+}
+
+enum departments_status {
+  active
+  inactive
+}
+
+enum employee_transfer_orders_transfer_type {
+  department
+  branch
+  project
+}
+
+enum employees_current_status {
+  on_duty
+  leave
+  business_trip
+  other
+}
+
+enum equipment_accessory_instances_health_status {
+  normal
+  affected
+  broken
+}
+
+enum positions_status {
+  active
+  inactive
+}
+
+enum project_proposal_orders_status {
+  draft
+  pending
+  approved
+  rejected
+}
+
+enum workflow_order_items_status {
+  PENDING
+  DISPATCHED
+  RECEIVED
+  EXCEPTION
+}
+
+enum employee_offboard_orders_offboard_type {
+  voluntary
+  involuntary
+  contract_end
+}
+
+enum equipment_accessory_instances_usage_status {
+  idle
+  in_use
+}
+
+enum equipment_images_business_type {
+  inbound
+  transfer
+  return
+  repair
+}
+
+enum form_template_versions_status {
+  draft
+  active
+  archived
+}
+
+enum notifications_priority {
+  low
+  normal
+  high
+  urgent
+}
+
+enum progress_alerts_alert_level {
+  warning
+  severe
+}
+
+enum project_phase_update_orders_update_type {
+  start
+  complete
+  pause
+  resume
+}
+
+enum task_assignment_orders_task_type {
+  milestone
+  subtask
+  process
+}
+
+enum workflow_definitions_status {
+  draft
+  active
+  suspended
+  archived
+}
+
+enum workflow_instances_status {
+  running
+  suspended
+  completed
+  terminated
+  rejected
+}
+
+enum equipment_accessory_instances_location_status {
+  warehouse
+  in_project
+  repairing
+  transferring
+}
+
+enum equipment_accessory_lost_records_status {
+  lost
+  found
+}
+
+enum progress_alerts_status {
+  active
+  acknowledged
+  resolved
+}
+
+enum project_phase_update_orders_new_status {
+  not_started
+  in_progress
+  completed
+  paused
+}
+
+enum employees_role {
+  admin
+  project_manager
+  hr_manager
+  equipment_manager
+  implementer
+  user
+}
+
+enum project_risk_level {
+  low
+  medium
+  high
+}
+
+enum project_risk_status {
+  open
+  mitigated
+  closed
+}
+
+enum equipment_transfer_order_items_status {
+  pending
+  transferred
+  returned
+}
+
+enum leave_requests_status {
+  draft
+  pending
+  approved
+  rejected
+}
+
+enum notifications_status {
+  pending
+  sent
+  failed
+}
+
+enum employee_onboard_orders_employee_type {
+  full_time
+  intern
+  outsource
+}
+
+enum purchase_orders_equipment_category {
+  instrument
+  fake_load
+}
+
+enum task_assignment_orders_task_level {
+  milestone
+  subtask
+  process
+}
+
+enum employee_transfer_orders_status {
+  draft
+  pending
+  approved
+  rejected
+}
+
+enum equipment_scrap_orders_disposal_method {
+  destroy
+  sell
+  donate
+}
+
+enum third_party_configs_last_sync_status {
+  success
+  failed
+  partial
+}
+
+enum attendance_records_check_out_status {
+  normal
+  early_leave
+  outside
+}
+
+enum workflow_tasks_status {
+  created
+  assigned
+  in_progress
+  completed
+  cancelled
+}
+
+enum attendance_records_work_status {
+  on_duty
+  off
+  leave
+  business_trip
+  overtime
+}
+
+enum employee_offboard_orders_status {
+  draft
+  pending
+  approved
+  rejected
+}
+
+enum employee_onboard_orders_status {
+  draft
+  pending
+  approved
+  rejected
+}
+
+enum equipment_scrap_sales_equipment_category {
+  instrument
+  fake_load
+  cable
+}
+
+enum project_phase_update_orders_status {
+  draft
+  pending
+  approved
+  rejected
+}
+
+enum tasks_task_type {
+  milestone
+  subtask
+  process
+}
+
+enum third_party_configs_status {
+  active
+  inactive
+}
+
+enum workflow_instances_result {
+  approved
+  rejected
+  withdrawn
+  terminated
+  skipped
+}
+
+enum equipment_inbound_orders_inbound_type {
+  purchase
+  other
+}
+
+enum equipment_outbound_orders_status {
+  draft
+  pending
+  approved
+  rejected
+}
+
+enum equipment_scrap_orders_status {
+  draft
+  pending
+  approved
+  rejected
+  disposed
+}
+
+enum project_personnel_transfer_orders_status {
+  draft
+  pending
+  approved
+  rejected
+}
+
+enum equipment_scrap_sales_original_location_type {
+  warehouse
+  project
+}
+
+enum purchase_orders_purchase_status {
+  pending
+  ordering
+  arrived
+}
+
+enum employees_data_permission {
+  all
+  department
+  self
+}
+
+enum equipment_instances_health_status {
+  normal
+  affected
+  broken
+}
+
+enum workflow_tasks_result {
+  approved
+  rejected
+  withdrawn
+  delegated
+  transferred
+  skipped
+}
+
+enum employees_employee_type {
+  full_time
+  part_time
+  contract
+  intern
+}
+
+enum equipment_inbound_items_status {
+  pending
+  inbound
+  rejected
+}
+
+enum project_proposal_orders_country {
+  China
+  USA
+  Singapore
+  Malaysia
+  Indonesia
+  Other
+}
+
+enum task_assignment_orders_receive_status {
+  pending
+  accepted
+  rejected
+}
+
+enum equipment_accessory_instances_tracking_type {
+  SERIALIZED
+  BATCH
+}
+
+enum equipment_instances_location_status {
+  warehouse
+  in_project
+  repairing
+  transferring
+}
+
+enum equipment_scrap_sales_type {
+  scrap
+  sale
+}
+
+enum equipment_transfer_orders_from_location_type {
+  warehouse
+  project
+}
+
+enum project_completion_orders_task_completion_status {
+  all
+  partial
+}
+
+enum equipment_accessory_instances_source_type {
+  inbound_bundle
+  inbound_separate
+}
+
+enum task_assignment_orders_status {
+  draft
+  pending
+  accepted
+  rejected
+  completed
+}
+
+enum task_completion_orders_overall_rating {
+  excellent
+  good
+  qualified
+  unqualified
+}
+
+enum equipment_accessory_instances_status {
+  normal
+  lost
+  damaged
+}
+
+enum task_completion_orders_status {
+  draft
+  pending
+  approved
+  rejected
+}
+
+enum equipment_repair_orders_repair_result {
+  fixed
+  unfixable
+  scrapped
+}
+
+enum equipment_instances_tracking_type {
+  SERIALIZED
+  BATCH
+}
+
+enum equipment_transfer_orders_receive_status {
+  normal
+  damaged
+  missing
+  partial
+}
+
+enum equipment_transfer_orders_solution {
+  borrow
+  purchase
+}
+
+enum projects_type {
+  domestic
+  foreign
+  rd
+  service
+}
+
+enum equipment_transfer_orders_to_location_type {
+  warehouse
+  project
+}
+
+enum equipment_transfer_orders_transfer_scene {
+  A
+  B
+  C
+}
+
+enum equipment_transfer_orders_transfer_type {
+  single
+  batch
+}
+
+enum equipment_transfer_orders_transport_method {
+  land
+  air
+  express
+  self
+}
+
+enum equipment_transfer_order_items_category {
+  instrument
+  fake_load
+  cable
+  accessory
+}
+
+enum equipment_inbound_orders_new_equipment_category {
+  instrument
+  fake_load
+  cable
+  accessory
+}
+
+enum equipment_instances_usage_status {
+  idle
+  in_use
+  scrapped
+  sold
+}
+
+enum project_milestones_status {
+  pending
+  in_progress
+  completed
+}
+
+enum milestone_resources_status {
+  incomplete
+  complete
+}
+
+enum project_members_role {
+  owner
+  manager
+  member
+  viewer
+}
+enum knowledge_visibility_type {
+  everyone
+  private
+  specified
+}
