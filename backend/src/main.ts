@@ -1,0 +1,24 @@
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+
+// 解决 BigInt 无法被 JSON.stringify 的问题
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString();
+};
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.setGlobalPrefix('api');
+  app.enableCors({
+    origin: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : '*',
+    credentials: true,
+  });
+  
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+  
+  const appName = process.env.APP_NAME || 'CxWell Backend';
+  console.log(`${appName} is running on port: ${port}`);
+  console.log(`API documented at: http://localhost:${port}/api`);
+}
+bootstrap();

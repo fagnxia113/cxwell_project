@@ -1,0 +1,212 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #313a72;
+  --primary-hover: #262d5e;
+  --primary-soft: rgba(49, 58, 114, 0.1);
+  --accent: #00cc79;
+  --accent-hover: #00b86e;
+  --accent-soft: rgba(0, 204, 121, 0.1);
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --bg-soft: #f0fdf4;
+  --text-main: #1e293b;
+  --text-heading: #313a72;
+  --text-secondary: #475569;
+  --glass: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --sidebar-dark: #064e3b;
+}
+
+body {
+  margin: 0;
+  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #ffffff;
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-heading);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+@layer components {
+  /* ===== 页面标题规范 ===== */
+  .page-title {
+    @apply text-xl font-bold text-slate-800 flex items-center gap-2;
+  }
+  .page-title-icon {
+    @apply p-1.5 bg-primary rounded-lg text-white shadow-brand scale-90;
+  }
+  .page-subtitle {
+    @apply text-slate-400 text-[11px] mt-0.5 font-medium;
+  }
+
+  /* ===== 卡片组件 ===== */
+  .premium-card {
+    @apply bg-white border border-slate-100/80 shadow-sm rounded-lg transition-all duration-300;
+  }
+  .premium-card:hover {
+    @apply shadow-md border-slate-200/50;
+  }
+  .glass-card {
+    @apply backdrop-blur-md bg-white/90 border border-white shadow-lg rounded-xl;
+  }
+
+  /* ===== 按钮组件 ===== */
+  .btn-primary {
+    @apply px-4 py-1.5 bg-primary text-white rounded-lg shadow-sm transition-all text-[12px] font-semibold flex items-center justify-center gap-1.5 hover:brightness-110 active:scale-[0.98];
+  }
+  .btn-secondary {
+    @apply px-4 py-1.5 bg-slate-700 text-white rounded-lg shadow-sm transition-all text-[12px] font-semibold flex items-center justify-center gap-1.5 hover:brightness-110 active:scale-[0.98];
+  }
+  .btn-ghost {
+    @apply px-4 py-1.5 bg-white text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-all text-[12px] font-medium flex items-center justify-center gap-1.5;
+  }
+  .btn-accent {
+    @apply px-4 py-1.5 bg-accent text-white rounded-lg shadow-sm transition-all text-[12px] font-semibold flex items-center justify-center gap-1.5 hover:brightness-110 active:scale-[0.98];
+  }
+
+  /* ===== 表单组件 ===== */
+  .input-standard {
+    @apply w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/5 focus:border-primary outline-none transition-all text-[13px] font-medium placeholder:text-slate-400;
+  }
+  .input-search {
+    @apply w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-lg focus:ring-2 focus:ring-primary/5 focus:border-primary focus:bg-white outline-none transition-all text-[13px] font-medium placeholder:text-slate-400;
+  }
+  .status-badge {
+    @apply px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider;
+  }
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent font-bold;
+  }
+  .form-group {
+    @apply space-y-1;
+  }
+  .form-label {
+    @apply block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1 mb-1;
+  }
+  .form-control {
+    @apply w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/5 focus:border-primary outline-none transition-all text-[13px] font-medium placeholder:text-slate-400 placeholder:font-normal;
+  }
+  .form-control-error {
+    @apply border-danger focus:ring-danger/5 focus:border-danger;
+  }
+  .stat-card {
+    @apply premium-card p-3 flex items-center gap-3;
+  }
+  .modal-overlay {
+    @apply fixed inset-0 bg-slate-900/30 backdrop-blur-md flex items-center justify-center z-50 p-4;
+  }
+  .modal-content {
+    @apply bg-white rounded-lg shadow-xl w-full relative overflow-hidden;
+  }
+
+  /* ===== 统计栏 ===== */
+  .stats-bar {
+    @apply bg-white/40 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-100 shadow-sm;
+  }
+  .stats-item {
+    @apply flex items-center gap-1.5;
+  }
+  .stats-dot {
+    @apply w-2 h-2 rounded-full;
+  }
+  .stats-label {
+    @apply text-xs font-medium text-slate-500;
+  }
+  .stats-value {
+    @apply font-bold text-slate-700;
+  }
+}
+
+.bg-mesh {
+  background-color: #f8fafc;
+  background-image:
+    radial-gradient(at 0% 0%, hsla(160, 84%, 90%, 0.4) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(140, 30%, 85%, 0.3) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(150, 40%, 88%, 0.2) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(120, 20%, 90%, 0.2) 0px, transparent 50%);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(0.995); }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+::selection {
+  background: rgba(49, 58, 114, 0.15);
+  color: #313a72;
+}
+
+.shadow-premium {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* ===== Mobile Responsive Utilities ===== */
+
+@media (max-width: 768px) {
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .min-w-\[800px\] {
+    min-width: 600px;
+  }
+}
+
+@media (hover: none) {
+  .premium-card:hover {
+    transform: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+}
