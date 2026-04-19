@@ -539,16 +539,59 @@ model FlowUser {
 }
 
 model FlowForm {
-  id          BigInt    @id @map("id")
-  formName    String    @map("form_name")
-  formCode    String    @unique @map("form_code")
-  formContent String    @map("form_content")
-  createBy    String?   @default("") @map("create_by")
+  id          BigInt   @id @map("id")
+  formName    String   @map("form_name")
+  formCode    String   @unique @map("form_code")
+  formContent String   @map("form_content")
+  createBy    String?  @default("") @map("create_by")
   createTime  DateTime? @map("create_time")
-  updateBy    String?   @default("") @map("update_by")
+  updateBy    String?  @default("") @map("update_by")
   updateTime  DateTime? @map("update_time")
-  delFlag     String?   @default("0") @map("del_flag")
-  tenantId    String?   @map("tenant_id")
+  delFlag     String?  @default("0") @map("del_flag")
+  tenantId    String?  @map("tenant_id")
 
   @@map("flow_form")
+}
+
+// ==============================
+// 知识库模块
+// ==============================
+
+model BizKnowledge {
+  id             BigInt               @id @default(autoincrement())
+  title          String
+  type           String               @default("Document") // SOP, Video, Document, Folder
+  content        String?
+  fileUrl        String?              @map("file_url")
+  isFolder       Boolean              @default(false) @map("is_folder")
+  parentId       BigInt?              @map("parent_id")
+  visibilityType String               @default("everyone") @map("visibility_type") // everyone, private, specified
+  createdBy      BigInt?              @map("created_by")
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+  delFlag        String               @default("0") @map("del_flag")
+
+  // 关系
+  parent         BizKnowledge?        @relation("KnowledgeParent", fields: [parentId], references: [id], onDelete: Cascade)
+  children       BizKnowledge[]       @relation("KnowledgeParent")
+  permissions    BizKnowledgePermission[]
+
+  @@map("biz_knowledge")
+  @@index([parentId])
+  @@index([createdBy])
+}
+
+model BizKnowledgePermission {
+  id          BigInt    @id @default(autoincrement())
+  knowledgeId BigInt    @map("knowledge_id")
+  targetType  String    @map("target_type") // user, dept, role, post
+  targetId    BigInt    @map("target_id")
+  permission  String    @default("view") // view, edit, delete, admin
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  knowledge   BizKnowledge @relation(fields: [knowledgeId], references: [id], onDelete: Cascade)
+
+  @@map("biz_knowledge_permission")
+  @@index([knowledgeId])
+  @@index([targetType, targetId])
 }
