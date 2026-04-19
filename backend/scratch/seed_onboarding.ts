@@ -93,8 +93,7 @@ async function seedOnboarding() {
         id: skip.id,
         definitionId: defId,
         nowNodeCode: skip.now,
-        nextNodeCode: skip.next,
-        version: '1.0'
+        nextNodeCode: skip.next
       }
     });
   }

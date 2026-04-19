@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Req, Get } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Req, Get, Param } from '@nestjs/common';
 import { WorkflowEngineService } from './engine/workflow-engine.service';
 import { AuthGuard } from '@nestjs/passport';
 import { TaskQueryService } from './task/task-query.service';
@@ -80,6 +80,40 @@ export class WorkflowController {
   async cancelInstance(@Body() body: { instanceId: string }, @Req() req) {
     const operator = req.user.loginName;
     const result = await this.engineService.cancelInstance(BigInt(body.instanceId), operator);
+    return { success: true, data: result };
+  }
+
+  @Post('active')
+  async activeInstance(@Body() body: { instanceId: string }, @Req() req) {
+    const operator = req.user.loginName;
+    const result = await this.engineService.activeInstance(BigInt(body.instanceId), operator);
+    return { success: true, data: result };
+  }
+
+  @Post('suspend')
+  async suspendInstance(@Body() body: { instanceId: string }, @Req() req) {
+    const operator = req.user.loginName;
+    const result = await this.engineService.suspendInstance(BigInt(body.instanceId), operator);
+    return { success: true, data: result };
+  }
+
+  @Get('variables/:instanceId')
+  async getVariables(@Param('instanceId') instanceId: string) {
+    const variables = await this.engineService.getVariables(BigInt(instanceId));
+    return { success: true, data: variables };
+  }
+
+  @Post('variables/set')
+  async setVariables(@Body() body: { instanceId: string; variables: any }, @Req() req) {
+    const operator = req.user.loginName;
+    const result = await this.engineService.setVariables(BigInt(body.instanceId), body.variables, operator);
+    return { success: true, data: result };
+  }
+
+  @Post('variables/remove')
+  async removeVariables(@Body() body: { instanceId: string; keys: string[] }, @Req() req) {
+    const operator = req.user.loginName;
+    const result = await this.engineService.removeVariables(BigInt(body.instanceId), body.keys, operator);
     return { success: true, data: result };
   }
 }

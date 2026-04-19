@@ -537,3 +537,18 @@ model FlowUser {
   @@index([associated], name: "user_associated_idx")
   @@map("flow_user")
 }
+
+model FlowForm {
+  id          BigInt    @id @map("id")
+  formName    String    @map("form_name") @db.VarChar(100)
+  formCode    String    @unique @map("form_code") @db.VarChar(40)
+  formContent String    @map("form_content") @db.Text
+  createBy    String?   @default("") @map("create_by") @db.VarChar(64)
+  createTime  DateTime? @map("create_time")
+  updateBy    String?   @default("") @map("update_by") @db.VarChar(64)
+  updateTime  DateTime? @map("update_time")
+  delFlag     String?   @default("0") @map("del_flag") @db.Char(1)
+  tenantId    String?   @map("tenant_id") @db.VarChar(40)
+
+  @@map("flow_form")
+}
