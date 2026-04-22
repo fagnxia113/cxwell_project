@@ -124,21 +124,21 @@ const getSubPathName = (parentPath: string | undefined, subPath: string | undefi
       'request': t('sidebar.startApproval')
     }
   }
-  
+
   return subPathMap[parentPath]?.[subPath] || subPath || ''
 }
 
 // 菜单配置 - 按照新设计文档重构
 const getMenus = (t: any): MenuItem[] => [
   // 1. 工作台
-  { 
+  {
     key: 'dashboard',
-    label: t('sidebar.dashboard'), 
-    path: '/dashboard', 
+    label: t('sidebar.dashboard'),
+    path: '/dashboard',
     icon: 'home',
     permission: 'menu:dashboard'
   },
-  
+
   // 2. 项目管理
   {
     key: 'projects',
@@ -204,7 +204,7 @@ const getMenus = (t: any): MenuItem[] => [
       { key: 'admin-set', label: t('sidebar.settings'), path: '/settings', permission: 'menu:admin' },
     ]
   },
-  
+
   // 8. 知识库
   {
     key: 'knowledge',
@@ -222,14 +222,14 @@ export default function Layout({ children }: { children: ReactNode }) {
   const { pathname: currentPath } = useLocation()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({ 
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({
     'projects': false,
-    'workflow': true 
+    'workflow': true
   })
   const [menuConfig, setMenuConfig] = useState<MenuItem[]>([])
-  const { 
-    notifications, unreadNotifCount, pendingCount, totalUnreadCount, 
-    loading: notifLoading, fetchNotificationData, markAsRead, formatNotifTime 
+  const {
+    notifications, unreadNotifCount, pendingCount, totalUnreadCount,
+    loading: notifLoading, fetchNotificationData, markAsRead, formatNotifTime
   } = useNotificationSystem()
 
   const [showNotifDropdown, setShowNotifDropdown] = useState(false)
@@ -261,7 +261,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       .filter(item => {
         // 1. 检查管理员权限
         if (item.adminOnly && user?.role !== 'admin' && user?.role !== 'root') return false
-        
+
         // 2. 检查权限要求
         if (item.permission) {
           // 如果用户拥有通配符或该精确权限，直接通过
@@ -285,7 +285,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
           return false
         }
-        
+
         return true
       })
       .map(item => ({
@@ -324,14 +324,14 @@ export default function Layout({ children }: { children: ReactNode }) {
     <div className="flex h-screen bg-[#f8fafc] bg-mesh overflow-hidden">
       {/* Mobile Overlay */}
       {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden" 
-          onClick={() => setSidebarOpen(false)} 
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar - 手机端默认隐藏，通过 translate 控制滑出 */}
-      <aside className={`fixed md:relative w-60 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-800 flex flex-col shadow-2xl z-50 h-full transition-transform duration-300 ease-in-out
+      <aside className={`fixed md:relative w-[216px] bg-gradient-to-b from-slate-900 via-slate-900 to-slate-800 flex flex-col shadow-2xl z-50 h-full transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
         overflow-hidden group/sidebar`}>
         {/* 背景装饰 */}
@@ -357,11 +357,10 @@ export default function Layout({ children }: { children: ReactNode }) {
                   {/* 有子菜单的项 */}
                   <button
                     onClick={() => setExpanded(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all group ${
-                      expanded[item.key]
-                        ? 'text-white bg-white/10'
-                        : 'text-slate-400 hover:text-white hover:bg-white/5'
-                    }`}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all group ${expanded[item.key]
+                      ? 'text-white bg-white/10'
+                      : 'text-slate-400 hover:text-white hover:bg-white/5'
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <div className={`p-1.5 rounded-lg transition-colors ${expanded[item.key] ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-500 group-hover:text-slate-300'}`}>
@@ -388,11 +387,10 @@ export default function Layout({ children }: { children: ReactNode }) {
                         <button
                           key={child.path || child.label}
                           onClick={() => child.path && navigate(child.path)}
-                          className={`w-full text-left px-3 py-2 text-xs font-medium rounded-lg transition-all flex items-center justify-between group/sub ${
-                            child.path && isActivePath(child.path)
-                              ? 'text-emerald-400 bg-emerald-500/10'
-                              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
-                          }`}
+                          className={`w-full text-left px-3 py-2 text-xs font-medium rounded-lg transition-all flex items-center justify-between group/sub ${child.path && isActivePath(child.path)
+                            ? 'text-emerald-400 bg-emerald-500/10'
+                            : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                            }`}
                         >
                           <div className="flex items-center gap-2">
                             <span className={`w-1 h-1 rounded-full transition-all ${child.path && isActivePath(child.path) ? 'bg-emerald-400' : 'bg-slate-700 group-hover/sub:bg-slate-500'}`}></span>
@@ -413,11 +411,10 @@ export default function Layout({ children }: { children: ReactNode }) {
                 // 无子菜单的项
                 <button
                   onClick={() => item.path && navigate(item.path)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
-                    isActivePath(item.path || '')
-                      ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/20'
-                      : 'text-slate-400 hover:text-white hover:bg-white/5'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${isActivePath(item.path || '')
+                    ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/20'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
                 >
                   <div className={`p-1.5 rounded-lg transition-colors ${isActivePath(item.path || '') ? 'bg-white/20 text-white' : 'text-slate-500 group-hover:text-slate-300'}`}>
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -533,7 +530,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             </div>
           </div>
         </header>
-        
+
         {/* 页面内容 */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 animate-fade-in">
           <div className="max-w-[1600px] mx-auto">

@@ -10,9 +10,10 @@ import { MonitorModule } from './monitor/monitor.module';
 import { WorkflowFormTemplateController } from './definition/workflow-form-template.controller';
 import { FormModule } from '../modules/form/form.module';
 import { NotificationModule } from '../modules/notification/notification.module';
+import { DingtalkModule } from '../modules/dingtalk/dingtalk.module';
 
 @Module({
-  imports: [MonitorModule, FormModule, NotificationModule],
+  imports: [MonitorModule, FormModule, NotificationModule, DingtalkModule],
   controllers: [
     WorkflowController,
     DefinitionController,

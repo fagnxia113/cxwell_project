@@ -294,6 +294,7 @@ async function main() {
   const employeeFormSchema = [
     { name: 'employeeName', label: '姓名', type: 'text', required: true, placeholder: '请输入员工姓名', group: '基本信息' },
     { name: 'gender', label: '性别', type: 'select', required: true, options: [{ label: '男', value: 'male' }, { label: '女', value: 'female' }], group: '基本信息' },
+    { name: 'phoneCountryCode', label: '国家代码', type: 'select', required: true, options: [{ label: '中国 +86', value: '+86' }, { label: '美国 +1', value: '+1' }, { label: '英国 +44', value: '+44' }, { label: '日本 +81', value: '+81' }, { label: '韩国 +82', value: '+82' }, { label: '新加坡 +65', value: '+65' }, { label: '马来西亚 +60', value: '+60' }, { label: '泰国 +66', value: '+66' }, { label: '越南 +84', value: '+84' }, { label: '印度 +91', value: '+91' }, { label: '澳大利亚 +61', value: '+61' }, { label: '新西兰 +64', value: '+64' }, { label: '加拿大 +1', value: '+1' }, { label: '德国 +49', value: '+49' }, { label: '法国 +33', value: '+33' }], group: '基本信息' },
     { name: 'phone', label: '手机号', type: 'text', required: true, placeholder: '请输入手机号', group: '基本信息' },
     { name: 'email', label: '邮箱', type: 'text', required: false, placeholder: '请输入邮箱', group: '基本信息' },
     { name: 'education', label: '学历', type: 'select', required: true, options: [{ label: '初中', value: 'junior_high' }, { label: '高中', value: 'high_school' }, { label: '中专', value: 'secondary' }, { label: '大专', value: 'associate' }, { label: '本科', value: 'bachelor' }, { label: '硕士', value: 'master' }, { label: '博士', value: 'doctoral' }], group: '教育背景' },

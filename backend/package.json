@@ -29,6 +29,7 @@
     "@nestjs/serve-static": "^5.0.5",
     "@nestjs/throttler": "^6.5.0",
     "@prisma/client": "^5.22.0",
+    "axios": "^1.15.2",
     "bcrypt": "^6.0.0",
     "casbin": "^5.49.0",
     "casbin-prisma-adapter": "^1.4.0",

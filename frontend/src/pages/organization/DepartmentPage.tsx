@@ -28,6 +28,7 @@ interface Department {
   id: string
   code: string
   name: string
+  nameEn?: string
   parentId?: string
   managerId?: string
   managerName?: string
@@ -171,6 +172,7 @@ const DepartmentPage: React.FC = () => {
 
   const [formData, setFormData] = useState({
     name: '',
+    nameEn: '',
     parentId: '',
     managerId: '',
     sortOrder: 0,
@@ -186,6 +188,7 @@ const DepartmentPage: React.FC = () => {
       setEditingDept(dept)
       setFormData({
         name: dept.name,
+        nameEn: dept.nameEn || '',
         parentId: dept.parentId || '',
         managerId: dept.managerId || '',
         sortOrder: dept.sortOrder || 0,
@@ -195,6 +198,7 @@ const DepartmentPage: React.FC = () => {
       setEditingDept(null)
       setFormData({
         name: '',
+        nameEn: '',
         parentId: '',
         managerId: '',
         sortOrder: 0,
@@ -387,6 +391,17 @@ const DepartmentPage: React.FC = () => {
                     className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 transition-all placeholder:text-slate-300"
                     placeholder="例如：技术研发中心"
                     required
+                  />
+                </div>
+
+                <div className="space-y-2.5">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">部门英文名称</label>
+                  <input
+                    type="text"
+                    value={formData.nameEn}
+                    onChange={(e) => setFormData({ ...formData, nameEn: e.target.value })}
+                    className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 transition-all placeholder:text-slate-300"
+                    placeholder="例如：Technology R&D Center"
                   />
                 </div>
 

@@ -8,20 +8,22 @@ datasource db {
 }
 
 model SysDept {
-  deptId     BigInt   @id @default(autoincrement()) @map("dept_id")
-  parentId   BigInt   @default(0) @map("parent_id")
-  ancestors  String   @default("") @db.VarChar(50)
-  deptName   String   @default("") @map("dept_name") @db.VarChar(30)
-  orderNum   Int      @default(0) @map("order_num")
-  leader     String?  @db.VarChar(20)
-  phone      String?  @db.VarChar(11)
-  email      String?  @db.VarChar(50)
-  status     String   @default("0") @db.Char(1)
-  delFlag    String   @default("0") @map("del_flag") @db.Char(1)
-  createBy   String   @default("") @map("create_by") @db.VarChar(64)
-  createTime DateTime @default(now()) @map("create_time")
-  updateBy   String   @default("") @map("update_by") @db.VarChar(64)
-  updateTime DateTime @updatedAt @map("update_time")
+  deptId         BigInt   @id @default(autoincrement()) @map("dept_id")
+  parentId       BigInt   @default(0) @map("parent_id")
+  ancestors      String   @default("") @db.VarChar(50)
+  deptName       String   @default("") @map("dept_name") @db.VarChar(30)
+  deptNameEn     String?  @map("dept_name_en") @db.VarChar(100)
+  orderNum       Int      @default(0) @map("order_num")
+  leader         String?  @db.VarChar(20)
+  phone          String?  @db.VarChar(11)
+  email          String?  @db.VarChar(50)
+  status         String   @default("0") @db.Char(1)
+  delFlag        String   @default("0") @map("del_flag") @db.Char(1)
+  dingtalkDeptId String?  @map("dingtalk_dept_id") @db.VarChar(100)
+  createBy       String   @default("") @map("create_by") @db.VarChar(64)
+  createTime     DateTime @default(now()) @map("create_time")
+  updateBy       String   @default("") @map("update_by") @db.VarChar(64)
+  updateTime     DateTime @updatedAt @map("update_time")
 
   @@map("sys_dept")
 }
@@ -105,24 +107,26 @@ model SysUserRole {
 }
 
 model SysEmployee {
-  employeeId  BigInt          @id @default(autoincrement()) @map("employee_id")
-  employeeNo  String?         @unique @map("employee_no") @db.VarChar(50)
-  name        String          @db.VarChar(100)
-  gender      String?         @db.Char(1)
-  phone       String          @db.VarChar(20)
-  email       String?         @db.VarChar(100)
-  deptId      BigInt?         @map("dept_id")
-  position    String?         @db.VarChar(100)
-  userId      BigInt?         @unique @map("user_id")
-  status      String          @default("0") @db.Char(1)
-  hireDate    DateTime?       @map("hire_date")
-  leaveDate   DateTime?       @map("leave_date")
-  avatarColor String?         @map("avatar_color") @db.VarChar(20)
-  createTime  DateTime        @default(now()) @map("create_time")
-  updateTime  DateTime        @updatedAt @map("update_time")
-  education   String?         @db.VarChar(100)
-  university  String?         @db.VarChar(200)
-  projects    ProjectMember[]
+  employeeId       BigInt          @id @default(autoincrement()) @map("employee_id")
+  employeeNo       String?         @unique @map("employee_no") @db.VarChar(50)
+  name             String          @db.VarChar(100)
+  gender           String?         @db.Char(1)
+  phone            String          @db.VarChar(20)
+  phoneCountryCode String?         @map("phone_country_code") @db.VarChar(10)
+  email            String?         @db.VarChar(100)
+  deptId           BigInt?        @map("dept_id")
+  position         String?         @db.VarChar(100)
+  userId           BigInt?        @unique @map("user_id")
+  dingtalkUserId   String?        @unique @map("dingtalk_user_id") @db.VarChar(100)
+  status           String          @default("0") @db.Char(1)
+  hireDate         DateTime?       @map("hire_date")
+  leaveDate        DateTime?       @map("leave_date")
+  avatarColor      String?         @map("avatar_color") @db.VarChar(20)
+  createTime       DateTime        @default(now()) @map("create_time")
+  updateTime       DateTime        @updatedAt @map("update_time")
+  education        String?         @db.VarChar(100)
+  university       String?         @db.VarChar(200)
+  projects         ProjectMember[]
 
   @@map("sys_employee")
 }
@@ -162,9 +166,6 @@ model Project {
   projectCode              String                @unique @map("project_code") @db.VarChar(50)
   projectName              String                @map("project_name") @db.VarChar(200)
   projectType              String?               @default("domestic") @map("project_type") @db.VarChar(50)
-  country                  String?               @map("country") @db.VarChar(100)
-  address                  String?               @map("address") @db.VarChar(500)
-  attachments              String?               @map("attachments") @db.Text
   customerId               BigInt?               @map("customer_id")
   managerId                BigInt?               @map("manager_id")
   status                   String                @default("1") @db.Char(1)
@@ -185,14 +186,17 @@ model Project {
   itCapacity               Decimal?              @map("it_capacity") @db.Decimal(10, 2)
   powerArchitecture        String?               @map("power_architecture") @db.Text
   weakElectricArchitecture String?               @map("weak_electric_architecture") @db.Text
+  address                  String?               @map("address") @db.VarChar(500)
+  attachments              String?               @map("attachments") @db.Text
+  country                  String?               @map("country") @db.VarChar(100)
   customer                 Customer?             @relation(fields: [customerId], references: [id])
   expenses                 ProjectExpense[]
   members                  ProjectMember[]
   milestones               ProjectMilestone[]
   reports                  ProjectReport[]
-  tags                    ProjectTag[]
   risks                    ProjectRisk[]
   staffingPlans            ProjectStaffingPlan[]
+  tags                     ProjectTag[]
   tasks                    BizTask[]
 
   @@index([customerId], map: "biz_project_customer_id_fkey")
@@ -232,44 +236,44 @@ model BizTask {
 }
 
 model ProjectMilestone {
-  id          BigInt           @id @default(autoincrement())
-  projectId   BigInt           @map("project_id")
-  parentId    BigInt?          @map("parent_id")
-  name        String           @db.VarChar(200)
-  description String?          @db.Text
-  plannedStartDate DateTime?        @map("planned_start_date")
-  plannedEndDate   DateTime?        @map("planned_end_date")
-  plannedDate      DateTime?        @map("planned_date") // 保留旧字段以兼容
-  actualDate       DateTime?        @map("actual_date")
-  status      String           @default("0") @db.Char(1)
-  weight      Int              @default(0)
-  progress    Int              @default(0)
-  project     Project          @relation(fields: [projectId], references: [projectId])
-  parent      ProjectMilestone? @relation("MilestoneHierarchy", fields: [parentId], references: [id])
-  children    ProjectMilestone[] @relation("MilestoneHierarchy")
+  id               BigInt             @id @default(autoincrement())
+  projectId        BigInt             @map("project_id")
+  name             String             @db.VarChar(200)
+  plannedDate      DateTime?          @map("planned_date")
+  actualDate       DateTime?          @map("actual_date")
+  status           String             @default("0") @db.Char(1)
+  parentId         BigInt?            @map("parent_id")
+  description      String?            @db.Text
+  progress         Int                @default(0)
+  weight           Int                @default(0)
+  plannedEndDate   DateTime?          @map("planned_end_date")
+  plannedStartDate DateTime?          @map("planned_start_date")
+  parent           ProjectMilestone?  @relation("MilestoneHierarchy", fields: [parentId], references: [id])
+  children         ProjectMilestone[] @relation("MilestoneHierarchy")
+  project          Project            @relation(fields: [projectId], references: [projectId])
 
   @@index([projectId], map: "biz_project_milestone_project_id_fkey")
-  @@index([parentId], map: "biz_project_milestone_parent_id_idx")
+  @@index([parentId])
   @@map("biz_project_milestone")
 }
 
 model ProjectRisk {
-  id             BigInt    @id @default(autoincrement())
-  projectId      BigInt    @map("project_id")
-  riskNo         String?   @map("risk_no") @db.VarChar(50)
-  title          String    @db.VarChar(200)
-  description    String?   @db.Text
-  category       String?   @db.VarChar(50)
-  milestoneId    BigInt?   @map("milestone_id")
-  level          String    @default("medium") @db.VarChar(20)
-  status         String    @default("pending") @db.VarChar(20)
-  ownerName      String?   @map("owner_name") @db.VarChar(100)
-  progressNote   String?   @map("progress_note") @db.Text
-  deadline       DateTime? @map("deadline")
-  closedAt       DateTime? @map("closed_at")
-  createTime     DateTime  @default(now()) @map("create_time")
-  updateTime     DateTime  @updatedAt @map("update_time")
-  project        Project   @relation(fields: [projectId], references: [projectId])
+  id           BigInt    @id @default(autoincrement())
+  projectId    BigInt    @map("project_id")
+  title        String    @db.VarChar(200)
+  description  String?   @db.Text
+  level        String    @default("medium") @db.VarChar(20)
+  status       String    @default("pending") @db.VarChar(20)
+  ownerName    String?   @map("owner_name") @db.VarChar(100)
+  createTime   DateTime  @default(now()) @map("create_time")
+  updateTime   DateTime  @updatedAt @map("update_time")
+  category     String?   @db.VarChar(50)
+  closedAt     DateTime? @map("closed_at")
+  deadline     DateTime? @map("deadline")
+  milestoneId  BigInt?   @map("milestone_id")
+  progressNote String?   @map("progress_note") @db.Text
+  riskNo       String?   @map("risk_no") @db.VarChar(50)
+  project      Project   @relation(fields: [projectId], references: [projectId])
 
   @@index([projectId], map: "biz_project_risk_project_id_fkey")
   @@map("biz_project_risk")
@@ -308,21 +312,21 @@ model ProjectStaffingPlan {
 }
 
 model ProjectReport {
-  id              BigInt                    @id @default(autoincrement())
-  projectId       BigInt                    @map("project_id")
-  milestoneId     BigInt                    @map("milestone_id")
-  name            String                    @db.VarChar(200)
-  copies          Int                       @default(1)
-  submittedCount  Int                       @default(0) @map("submitted_count")
-  verifiedCount   Int                       @default(0) @map("verified_count")
-  rejectedCount   Int                       @default(0) @map("rejected_count")
-  status          String                    @default("pending") @db.VarChar(20)
-  remarks         String?                   @db.Text
-  lastUpdater     String?                   @map("last_updater") @db.VarChar(100)
-  createTime      DateTime                  @default(now()) @map("create_time")
-  updateTime      DateTime                  @updatedAt @map("update_time")
-  project         Project                   @relation(fields: [projectId], references: [projectId])
-  attachments     ProjectReportAttachment[]
+  id             BigInt                    @id @default(autoincrement())
+  projectId      BigInt                    @map("project_id")
+  milestoneId    BigInt                    @map("milestone_id")
+  name           String                    @db.VarChar(200)
+  copies         Int                       @default(1)
+  status         String                    @default("pending") @db.VarChar(20)
+  remarks        String?                   @db.Text
+  createTime     DateTime                  @default(now()) @map("create_time")
+  updateTime     DateTime                  @updatedAt @map("update_time")
+  lastUpdater    String?                   @map("last_updater") @db.VarChar(100)
+  rejectedCount  Int                       @default(0) @map("rejected_count")
+  submittedCount Int                       @default(0) @map("submitted_count")
+  verifiedCount  Int                       @default(0) @map("verified_count")
+  project        Project                   @relation(fields: [projectId], references: [projectId])
+  attachments    ProjectReportAttachment[]
 
   @@index([projectId], map: "biz_project_report_project_id_fkey")
   @@map("biz_project_report")
@@ -341,19 +345,19 @@ model ProjectReportAttachment {
 }
 
 model ProjectTag {
-  id             BigInt      @id @default(autoincrement())
-  projectId      BigInt      @map("project_id")
-  milestoneId    BigInt?     @map("milestone_id")
-  tagType        String      @map("tag_type") @db.VarChar(20)
-  systemType     String?     @map("system_type") @db.VarChar(50)
-  requiredCount  Int         @default(0) @map("required_count")
-  taggedCount    Int         @default(0) @map("tagged_count")
-  verifiedCount  Int         @default(0) @map("verified_count")
-  abnormalCount  Int         @default(0) @map("abnormal_count")
-  status         String      @default("pending") @map("status") @db.VarChar(20)
-  createTime     DateTime    @default(now()) @map("create_time")
-  updateTime     DateTime    @updatedAt @map("update_time")
-  project        Project     @relation(fields: [projectId], references: [projectId])
+  id            BigInt   @id @default(autoincrement())
+  projectId     BigInt   @map("project_id")
+  milestoneId   BigInt?  @map("milestone_id")
+  tagType       String   @map("tag_type") @db.VarChar(20)
+  systemType    String?  @map("system_type") @db.VarChar(50)
+  requiredCount Int      @default(0) @map("required_count")
+  taggedCount   Int      @default(0) @map("tagged_count")
+  verifiedCount Int      @default(0) @map("verified_count")
+  abnormalCount Int      @default(0) @map("abnormal_count")
+  status        String   @default("pending") @map("status") @db.VarChar(20)
+  createTime    DateTime @default(now()) @map("create_time")
+  updateTime    DateTime @updatedAt @map("update_time")
+  project       Project  @relation(fields: [projectId], references: [projectId])
 
   @@index([projectId], map: "biz_project_tag_project_id_fkey")
   @@map("biz_project_tag")
@@ -560,18 +564,18 @@ model FlowUser {
 }
 
 model SysNotification {
-  id          BigInt    @id @default(autoincrement())
-  userId      String    @map("user_id") @db.VarChar(64)
-  title       String    @db.VarChar(200)
-  content     String?   @db.Text
-  type        String    @default("workflow") @map("type") @db.VarChar(20)
-  priority    String    @default("normal") @map("priority") @db.VarChar(20)
-  isRead      Boolean   @default(false) @map("is_read")
-  actionUrl   String?   @map("action_url") @db.VarChar(500)
-  relatedId   String?   @map("related_id") @db.VarChar(100)
-  createTime  DateTime  @default(now()) @map("create_time")
-  updateTime  DateTime  @updatedAt @map("update_time")
-  delFlag     String    @default("0") @map("del_flag") @db.Char(1)
+  id         BigInt   @id @default(autoincrement())
+  userId     String   @map("user_id") @db.VarChar(64)
+  title      String   @db.VarChar(200)
+  content    String?  @db.Text
+  type       String   @default("workflow") @map("type") @db.VarChar(20)
+  priority   String   @default("normal") @map("priority") @db.VarChar(20)
+  isRead     Boolean  @default(false) @map("is_read")
+  actionUrl  String?  @map("action_url") @db.VarChar(500)
+  relatedId  String?  @map("related_id") @db.VarChar(100)
+  createTime DateTime @default(now()) @map("create_time")
+  updateTime DateTime @updatedAt @map("update_time")
+  delFlag    String   @default("0") @map("del_flag") @db.Char(1)
 
   @@index([userId, isRead], map: "notif_user_read_idx")
   @@index([createTime], map: "notif_create_time_idx")
@@ -612,4 +616,18 @@ model BizKnowledgePermission {
   @@index([knowledgeId])
   @@index([targetType, targetId])
   @@map("biz_knowledge_permission")
+}
+
+model PersonnelRotation {
+  id         BigInt   @id @default(autoincrement())
+  employeeId BigInt   @map("employee_id")
+  projectId  BigInt   @map("project_id")
+  startDate  DateTime @map("start_date")
+  endDate    DateTime @map("end_date")
+  type       String   @db.VarChar(20)
+  remark     String?  @db.Text
+  createTime DateTime @default(now()) @map("create_time")
+  updateTime DateTime @updatedAt @map("update_time")
+
+  @@map("biz_personnel_rotation")
 }

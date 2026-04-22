@@ -215,18 +215,22 @@
       "absent": "Absent"
     },
     "action": {
-      "apply_onboarding": "Start Onboarding",
+      "apply_onboarding": "Onboarding",
+      "sync_dingtalk": "Sync DingTalk",
+      "sync_attendance": "Sync Attendance",
+      "add_to_project": "Add Member",
       "confirm_destroy": "Confirm Removal",
       "destroy_desc": "Remove employee {{name}} from system? This cannot be undone.",
       "transfer_desc": "Update position and organization",
       "edit_employee": "Edit Profile",
       "one_click_remind": "Remind Pending",
       "remind_success": "Sent reminders to {{count}} personnel",
-      "sync_dingtalk": "Sync DingTalk",
       "syncing": "Syncing...",
       "updating": "Updating...",
       "submit_update": "Submit"
     },
+    "view_list": "Member List",
+    "view_schedule": "Schedule",
     "fields": {
       "id": "ID",
       "employee_no": "Employee ID",
@@ -357,7 +361,10 @@
       },
       "success": {
         "save": "Monthly plan submitted successfully"
-      }
+      },
+      "loading": "Loading attendance data...",
+      "no_data": "No attendance data",
+      "staff_column": "Staff"
     }
   },
   "equipment": {
@@ -1564,9 +1571,13 @@
       "status_closed": "Closed",
       "add_item": "Add Risk",
       "placeholder_title": "Enter risk description",
-      "high_priority_warning": "High Risk Alert",
-      "visa_overlap": "Alert: Visa/Leave overlap detected",
+      "high_priority_warning": "High Priority Warning",
+      "visa_overlap": "Visa/Leave Overlap Alert",
       "example": "e.g. Key equipment delivery delay"
+    },
+    "compliance": {
+      "team_health": "Team Continuity Planning",
+      "action_hint": "Ensuring field operations continuity"
     },
     "asset": {
       "name": "Asset Name",

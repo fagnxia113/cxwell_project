@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { DingtalkService } from '../dingtalk/dingtalk.service';
 
 @Injectable()
 export class OrganizationService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private dingtalkService: DingtalkService,
+  ) {}
 
   /**
    * 获取部门树
@@ -124,37 +128,98 @@ export class OrganizationService {
    * 创建部门
    */
   async createDept(data: any, creator: string) {
-    return this.prisma.sysDept.create({
+    const dept = await this.prisma.sysDept.create({
       data: {
         deptName: data.name,
+        deptNameEn: data.nameEn || null,
         parentId: data.parentId ? BigInt(data.parentId) : 0n,
         orderNum: data.sortOrder || 0,
         createBy: creator,
         createTime: new Date()
       }
     });
+
+    try {
+      const parentDeptId = data.parentId ? Number(data.parentId) : 1;
+      const dingtalkResult = await this.dingtalkService.createDepartment(data.name, parentDeptId, data.nameEn);
+      if (dingtalkResult.success && dingtalkResult.deptId) {
+        console.log(`[Organization] 部门 ${data.name} 已同步到钉钉，钉钉部门ID: ${dingtalkResult.deptId}`);
+        await this.prisma.sysDept.update({
+          where: { deptId: dept.deptId },
+          data: { dingtalkDeptId: dingtalkResult.deptId }
+        });
+        console.log(`[Organization] 部门 ${data.name} 的钉钉部门ID已保存`);
+      } else {
+        console.warn(`[Organization] 部门 ${data.name} 同步钉钉失败: ${dingtalkResult.error}`);
+      }
+    } catch (error) {
+      console.error(`[Organization] 部门 ${data.name} 同步钉钉异常:`, error.message);
+    }
+
+    return dept;
   }
 
   /**
    * 更新部门
    */
   async updateDept(id: string, data: any, updater: string) {
-    return this.prisma.sysDept.update({
+    const dept = await this.prisma.sysDept.findFirst({
+      where: { deptId: BigInt(id) }
+    });
+
+    const updatedDept = await this.prisma.sysDept.update({
       where: { deptId: BigInt(id) },
       data: {
         deptName: data.name,
+        deptNameEn: data.nameEn || null,
         parentId: data.parentId ? BigInt(data.parentId) : undefined,
         orderNum: data.sortOrder !== undefined ? data.sortOrder : undefined,
         updateBy: updater,
         updateTime: new Date()
       }
     });
+
+    if (dept?.dingtalkDeptId) {
+      try {
+        const dingtalkResult = await this.dingtalkService.updateDepartment(
+          dept.dingtalkDeptId,
+          data.name,
+          data.nameEn
+        );
+        if (dingtalkResult.success) {
+          console.log(`[Organization] 部门 ${data.name} 已同步更新到钉钉`);
+        } else {
+          console.warn(`[Organization] 部门 ${data.name} 同步更新到钉钉失败: ${dingtalkResult.error}`);
+        }
+      } catch (error) {
+        console.error(`[Organization] 部门 ${data.name} 同步更新到钉钉异常:`, error.message);
+      }
+    }
+
+    return updatedDept;
   }
 
   /**
    * 删除部门 (软删除)
    */
   async deleteDept(id: string) {
+    const dept = await this.prisma.sysDept.findFirst({
+      where: { deptId: BigInt(id) }
+    });
+
+    if (dept?.dingtalkDeptId) {
+      try {
+        const dingtalkResult = await this.dingtalkService.deleteDepartment(dept.dingtalkDeptId);
+        if (dingtalkResult.success) {
+          console.log(`[Organization] 部门 ${dept.deptName} 已从钉钉删除`);
+        } else {
+          console.warn(`[Organization] 部门 ${dept.deptName} 从钉钉删除失败: ${dingtalkResult.error}`);
+        }
+      } catch (error) {
+        console.error(`[Organization] 部门 ${dept.deptName} 从钉钉删除异常:`, error.message);
+      }
+    }
+
     return this.prisma.sysDept.update({
       where: { deptId: BigInt(id) },
       data: {
@@ -248,6 +313,49 @@ export class OrganizationService {
   async deleteEmployee(id: string) {
     return this.prisma.sysEmployee.delete({
       where: { employeeId: BigInt(id) }
+    });
+  }
+
+  /**
+   * 获取项目轮岗报表
+   */
+  async getProjectRotationReport(projectId: string, month: string) {
+    const startOfMonth = new Date(`${month}-01T00:00:00Z`);
+    const endOfMonth = new Date(startOfMonth);
+    endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+
+    // 1. 获取项目成员
+    const members = await this.prisma.projectMember.findMany({
+      where: { projectId: BigInt(projectId) },
+      include: { employee: true }
+    });
+
+    const employeeIds = members.map(m => m.employeeId);
+
+    // 2. 获取这些成员在当月的轮岗记录
+    const rotations = await this.prisma.personnelRotation.findMany({
+      where: {
+        employeeId: { in: employeeIds },
+        OR: [
+          { startDate: { gte: startOfMonth, lt: endOfMonth } },
+          { endDate: { gte: startOfMonth, lt: endOfMonth } },
+          { AND: [{ startDate: { lt: startOfMonth } }, { endDate: { gte: endOfMonth } }] }
+        ]
+      }
+    });
+
+    // 3. 组装数据
+    return members.map(m => {
+      const empRotations = rotations.filter(r => r.employeeId === m.employeeId);
+      return {
+        employeeId: m.employeeId.toString(),
+        employeeName: m.employee.name,
+        segments: empRotations.map(r => ({
+          startDate: r.startDate.toISOString().split('T')[0],
+          endDate: r.endDate.toISOString().split('T')[0],
+          type: r.type
+        }))
+      };
     });
   }
 

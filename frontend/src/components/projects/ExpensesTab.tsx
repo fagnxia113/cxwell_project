@@ -1,3 +1,5 @@
+import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { DollarSign, Plus, Trash2, PieChart, ArrowUpRight, Zap, Briefcase } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '../../utils/cn'

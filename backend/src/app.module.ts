@@ -19,6 +19,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { KnowledgeModule } from './modules/knowledge/knowledge.module';
 import { UploadModule } from './modules/upload/upload.module';
+import { DingtalkModule } from './modules/dingtalk/dingtalk.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
 
@@ -54,6 +55,7 @@ import { join } from 'path';
     NotificationModule,
     KnowledgeModule,
     UploadModule,
+    DingtalkModule,
   ],
   controllers: [AppController],
   providers: [

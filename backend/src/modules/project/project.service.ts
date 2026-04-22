@@ -170,6 +170,102 @@ export class ProjectService {
   }
 
   /**
+   * 添加项目成员
+   */
+  async addMember(projectId: bigint, data: any) {
+    return this.prisma.projectMember.create({
+      data: {
+        projectId,
+        employeeId: BigInt(data.employeeId),
+        roleName: data.roleInProject || 'Member',
+        joinDate: data.transferInDate ? new Date(data.transferInDate) : new Date(),
+        canEdit: false
+      }
+    });
+  }
+
+  /**
+   * 移除项目成员
+   */
+  async removeMember(projectId: bigint, employeeId: bigint) {
+    return this.prisma.projectMember.delete({
+      where: {
+        projectId_employeeId: {
+          projectId,
+          employeeId
+        }
+      }
+    });
+  }
+
+  /**
+   * 转移项目成员
+   */
+  async transferMember(projectId: bigint, data: any) {
+    const employeeId = BigInt(data.employeeId);
+    const targetProjectId = BigInt(data.targetProjectId);
+    const transferDate = new Date(data.transferDate);
+
+    return this.prisma.$transaction(async (tx) => {
+      // 1. 从原项目移除
+      await tx.projectMember.delete({
+        where: {
+          projectId_employeeId: {
+            projectId,
+            employeeId
+          }
+        }
+      });
+
+      // 2. 添加到新项目
+      return tx.projectMember.create({
+        data: {
+          projectId: targetProjectId,
+          employeeId,
+          roleName: 'Member',
+          joinDate: transferDate,
+          canEdit: false
+        }
+      });
+    });
+  }
+  /**
+   * 更新项目
+   */
+  async updateProject(id: bigint, data: any) {
+    const res = await this.prisma.project.update({
+      where: { projectId: id },
+      data: {
+        projectName: data.name,
+        status: data.status,
+        progress: data.progress,
+        buildingArea: data.building_area,
+        itCapacity: data.it_capacity,
+        cabinetCount: data.cabinet_count,
+        cabinetPower: data.cabinet_power,
+        startDate: data.start_date ? new Date(data.start_date) : undefined,
+        endDate: data.end_date ? new Date(data.end_date) : undefined,
+        description: data.description,
+        powerArchitecture: data.power_architecture,
+        hvacArchitecture: data.hvac_architecture,
+        fireArchitecture: data.fire_architecture,
+        weakElectricArchitecture: data.weak_electric_architecture,
+      }
+    });
+    return this.mapProject(res);
+  }
+
+  /**
+   * 删除项目
+   */
+  async deleteProject(id: bigint) {
+    return this.prisma.project.update({
+      where: { projectId: id },
+      data: { delFlag: '1' }
+    });
+  }
+
+  /**
    * 数据模型映射 (处理 BigInt 序列化问题)
    */
   private mapProject(project: any) {

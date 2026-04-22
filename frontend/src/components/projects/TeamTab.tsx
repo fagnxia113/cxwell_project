@@ -5,7 +5,12 @@
 
 import React, { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Users, Activity, ShieldCheck, Loader2, UserPlus, ArrowRightLeft, Trash2, Search, Calendar } from 'lucide-react'
+import dayjs from 'dayjs'
+import { 
+  Users, Activity, ShieldCheck, Loader2, UserPlus, 
+  ArrowRightLeft, Trash2, Search, Calendar,
+  ChevronLeft, ChevronRight, Briefcase, Plane, Home, Info 
+} from 'lucide-react'
 import { useMessage } from '../../hooks/useMessage'
 import { apiClient } from '../../utils/apiClient'
 import { cn } from '../../utils/cn'
@@ -13,6 +18,7 @@ import type { ProjectPersonnel } from '../../types/project'
 import ModalDialog from '../ModalDialog'
 
 interface TeamTabProps {
+  projectId: string
   personnel: ProjectPersonnel[]
   isAdmin?: boolean
   onUpdatePermission?: (employeeId: string, canEdit: boolean) => void
@@ -22,6 +28,7 @@ interface TeamTabProps {
 }
 
 export default function TeamTab({ 
+  projectId,
   personnel, 
   isAdmin, 
   onUpdatePermission,
@@ -32,6 +39,12 @@ export default function TeamTab({
   const { t } = useTranslation()
   const { success, error: showError } = useMessage()
   const [syncing, setSyncing] = useState(false)
+  const [activeView, setActiveView] = useState<'list' | 'schedule'>('list')
+  
+  // -- Schedule State --
+  const [currentMonth, setCurrentMonth] = useState(dayjs().format('YYYY-MM'))
+  const [scheduleData, setScheduleData] = useState<any[]>([])
+  const [loadingSchedule, setLoadingSchedule] = useState(false)
   
   // -- Add Member State --
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -84,6 +97,40 @@ export default function TeamTab({
     }
   }
 
+  useEffect(() => {
+    if (activeView === 'schedule') {
+      loadSchedule()
+    }
+  }, [activeView, currentMonth, projectId])
+
+  const loadSchedule = async () => {
+    try {
+      setLoadingSchedule(true)
+      const res = await apiClient.get<any>(`/api/personnel/rotation/project-report/${projectId}/${currentMonth}`)
+      if (res.success) {
+        setScheduleData(res.data)
+      }
+    } catch (e) {
+      showError('Failed to load schedule')
+    } finally {
+      setLoadingSchedule(false)
+    }
+  }
+
+  const getStatusForDay = (employee: any, date: dayjs.Dayjs) => {
+    const dateStr = date.format('YYYY-MM-DD')
+    const segment = employee.segments.find((s: any) => dateStr >= s.startDate && dateStr <= s.endDate)
+    if (!segment) return 'none'
+    return segment.type
+  }
+
+  const changeMonth = (delta: number) => {
+    setCurrentMonth(dayjs(currentMonth).add(delta, 'month').format('YYYY-MM'))
+  }
+
+  const daysInMonth = dayjs(currentMonth).daysInMonth()
+  const days = Array.from({ length: daysInMonth }, (_, i) => dayjs(currentMonth + '-' + (i + 1).toString().padStart(2, '0')))
+
   const filteredEmployees = employees.filter(e => 
     !personnel.some(p => p.employee_id === e.id) && 
     (e.name?.toLowerCase().includes(searchQuery.toLowerCase()) || e.employee_no?.includes(searchQuery))
@@ -102,7 +149,7 @@ export default function TeamTab({
             className="flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black border border-emerald-100 hover:bg-emerald-100 transition-all disabled:opacity-50"
           >
             {syncing ? <Loader2 size={12} className="animate-spin" /> : <Activity size={12} />} 
-            {t('personnel.action.sync_attendance') || 'Sync Attendance'}
+            {t('personnel.action.sync_attendance')}
           </button>
           
           <button 
@@ -112,96 +159,207 @@ export default function TeamTab({
             }}
             className="flex items-center gap-2 px-3 py-1 bg-emerald-500 text-white rounded-lg text-[10px] font-black hover:bg-emerald-600 transition-all shadow-sm"
           >
-            <UserPlus size={12} /> {t('personnel.action.add_to_project') || 'Add Member'}
+            <UserPlus size={12} /> {t('personnel.action.add_to_project')}
           </button>
         </div>
       </div>
 
-      {/* 风险预警卡片 (保持不变) */}
-      <div className="bg-emerald-950 p-6 rounded-2xl shadow-xl relative overflow-hidden group border border-emerald-800">
-        <div className="absolute top-0 right-0 p-6 text-emerald-500/10 opacity-50 group-hover:scale-125 transition-transform duration-700">
-          <ShieldCheck size={120} />
-        </div>
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
-              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em]">{t('project.risk.high_priority_warning')}</span>
-            </div>
-            <h4 className="text-lg font-black text-white tracking-tight leading-tight">
-              {t('project.compliance.team_health') || 'Personnel Continuity Planning'}
-            </h4>
-            <p className="text-[11px] font-bold text-emerald-300 max-w-md">
-              {t('project.risk.visa_overlap') || 'Staff movement monitoring'} • 
-              <span className="ml-1 opacity-80">{t('project.compliance.action_hint') || 'Ensuring field operations are maintained.'}</span>
-            </p>
-          </div>
-        </div>
+      {/* 视图切换 */}
+      <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-xl w-fit">
+        <button 
+          onClick={() => setActiveView('list')}
+          className={cn(
+            "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+            activeView === 'list' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
+          )}
+        >
+          {t('personnel.view_list')}
+        </button>
+        <button 
+          onClick={() => setActiveView('schedule')}
+          className={cn(
+            "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+            activeView === 'schedule' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
+          )}
+        >
+          {t('personnel.view_schedule')}
+        </button>
       </div>
 
-      {/* 人员列表网格 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {personnel.map(p => (
-          <div key={p.id} className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 -mr-12 -mt-12 rounded-full group-hover:scale-110 transition-transform opacity-50" />
-            <div className="flex items-start justify-between relative z-10 mb-6">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-slate-900 flex items-center justify-center text-emerald-400 font-black text-xl shadow-lg group-hover:bg-emerald-600 group-hover:text-white transition-all">
-                  {p.employee_name?.charAt(0) || '?'}
-                </div>
-                <div>
-                  <div className="font-black text-base text-slate-900 group-hover:text-emerald-600 transition-colors uppercase tracking-tight">{p.employee_name}</div>
-                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{p.position}</div>
-                </div>
-              </div>
-              <div className="flex flex-col items-end gap-1.5">
-                <span className={cn(
-                  "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm",
-                  p.on_duty_status === 'on_duty' ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-400"
-                )}>
-                  {p.on_duty_status === 'on_duty' ? 'On Site' : 'Off Site'}
-                </span>
-                
-                <div className="flex gap-1">
-                  <button 
-                    onClick={() => {
-                      setTargetPersonnel(p)
-                      setIsTransferModalOpen(true)
-                      loadProjects()
-                    }}
-                    title="Transfer"
-                    className="p-1.5 bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                  >
-                    <ArrowRightLeft size={14} />
-                  </button>
-                  <button 
-                    onClick={() => onRemovePersonnel?.(p.employee_id)}
-                    title="Remove"
-                    className="p-1.5 bg-slate-50 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
+      {activeView === 'list' ? (
+        <>
+          {/* 风险预警卡片 (保持不变) */}
+          <div className="bg-emerald-950 p-6 rounded-2xl shadow-xl relative overflow-hidden group border border-emerald-800">
+            <div className="absolute top-0 right-0 p-6 text-emerald-500/10 opacity-50 group-hover:scale-125 transition-transform duration-700">
+              <ShieldCheck size={120} />
             </div>
-            
-            <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-slate-50 relative z-10">
-              <div>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                  <Calendar size={10} className="text-emerald-500" /> Joined Date
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+                  <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em]">{t('project.risk.high_priority_warning')}</span>
+                </div>
+                <h4 className="text-lg font-black text-white tracking-tight leading-tight">
+                  {t('project.compliance.team_health')}
+                </h4>
+                <p className="text-[11px] font-bold text-emerald-300 max-w-md">
+                  {t('project.risk.visa_overlap')} • 
+                  <span className="ml-1 opacity-80">{t('project.compliance.action_hint')}</span>
                 </p>
-                <p className="text-xs font-black text-slate-900 tabular-nums">{p.transfer_in_date?.split('T')[0] || '--'}</p>
-              </div>
-              <div>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                  <Activity size={10} className="text-emerald-500" /> Status
-                </p>
-                <p className="text-xs font-black text-emerald-600 tabular-nums">Active</p>
               </div>
             </div>
           </div>
-        ))}
-      </div>
+
+          {/* 人员列表网格 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {personnel.map(p => (
+              <div key={p.employee_id} className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 -mr-12 -mt-12 rounded-full group-hover:scale-110 transition-transform opacity-50" />
+                <div className="flex items-start justify-between relative z-10 mb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-slate-900 flex items-center justify-center text-emerald-400 font-black text-xl shadow-lg group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                      {p.employee_name?.charAt(0) || '?'}
+                    </div>
+                    <div>
+                      <div className="font-black text-base text-slate-900 group-hover:text-emerald-600 transition-colors uppercase tracking-tight">{p.employee_name}</div>
+                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{p.position}</div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1.5">
+                    <span className={cn(
+                      "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm",
+                      p.on_duty_status === 'on_duty' ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-400"
+                    )}>
+                      {p.on_duty_status === 'on_duty' ? t('personnel.rotation.on_duty') : t('personnel.rotation.local_rest')}
+                    </span>
+                    
+                    <div className="flex gap-1">
+                      <button 
+                        onClick={() => {
+                          setTargetPersonnel(p)
+                          setIsTransferModalOpen(true)
+                          loadProjects()
+                        }}
+                        title="Transfer"
+                        className="p-1.5 bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                      >
+                        <ArrowRightLeft size={14} />
+                      </button>
+                      <button 
+                        onClick={() => onRemovePersonnel?.(p.employee_id)}
+                        title="Remove"
+                        className="p-1.5 bg-slate-50 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-slate-50 relative z-10">
+                  <div>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                      <Calendar size={10} className="text-emerald-500" /> {t('personnel.fields.hire_date')}
+                    </p>
+                    <p className="text-xs font-black text-slate-900 tabular-nums">{p.transfer_in_date?.split('T')[0] || '--'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                      <Activity size={10} className="text-emerald-500" /> {t('common.status')}
+                    </p>
+                    <p className="text-xs font-black text-emerald-600 tabular-nums">{t('personnel.status.active')}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="space-y-4 animate-in fade-in duration-500">
+          {/* Schedule Controls */}
+          <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-100">
+                <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-white rounded-md transition-colors">
+                  <ChevronLeft size={16} className="text-slate-400" />
+                </button>
+                <span className="text-[10px] font-black text-slate-600 px-2 min-w-[80px] text-center">{dayjs(currentMonth).format('YYYY-MM')}</span>
+                <button onClick={() => changeMonth(1)} className="p-1 hover:bg-white rounded-md transition-colors">
+                  <ChevronRight size={16} className="text-slate-400" />
+                </button>
+              </div>
+              
+              <div className="hidden sm:flex gap-4 border-l border-slate-200 pl-4">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded bg-blue-500"></div>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('personnel.rotation.on_duty')}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded bg-emerald-500"></div>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('personnel.rotation.home_rest')}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded bg-amber-500"></div>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('personnel.rotation.local_rest')}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Schedule Table */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+             <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/50">
+                      <th className="sticky left-0 z-10 bg-slate-50/50 px-4 py-3 text-left border-r border-slate-100">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('personnel.rotation.staff_column')}</span>
+                      </th>
+                      {days.map(day => (
+                        <th key={`th-${day.format('YYYY-MM-DD')}`} className={cn(
+                          "px-1 py-3 text-center min-w-[30px] border-r border-slate-100/50",
+                          day.day() === 0 || day.day() === 6 ? "bg-amber-50/30" : ""
+                        )}>
+                          <div className="text-[8px] font-black text-slate-300 mb-0.5">{day.format('dd')}</div>
+                          <div className={cn("text-[10px] font-black", day.isSame(dayjs(), 'day') ? "text-emerald-500" : "text-slate-600")}>{day.format('D')}</div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {loadingSchedule ? (
+                      <tr><td colSpan={daysInMonth + 1} className="py-10 text-center text-[10px] font-bold text-slate-400 italic tracking-widest uppercase">{t('personnel.rotation.loading')}</td></tr>
+                    ) : scheduleData.length === 0 ? (
+                      <tr><td colSpan={daysInMonth + 1} className="py-10 text-center text-[10px] font-bold text-slate-300 italic tracking-widest uppercase text-xs">{t('personnel.rotation.no_data')}</td></tr>
+                    ) : (
+                      scheduleData.map(person => (
+                        <tr key={person.employeeId} className="hover:bg-slate-50/50 transition-colors group">
+                          <td className="sticky left-0 z-10 bg-white group-hover:bg-slate-50 px-4 py-3 border-r border-slate-100 shadow-[5px_0_10px_-5px_rgba(0,0,0,0.05)]">
+                            <span className="text-xs font-black text-slate-700 truncate block max-w-[100px]">{person.employeeName}</span>
+                          </td>
+                          {days.map(day => {
+                            const status = getStatusForDay(person, day)
+                            return (
+                              <td key={`td-${person.employeeId}-${day.format('YYYY-MM-DD')}`} className="p-0.5 border-r border-slate-100/30">
+                                <div className={cn(
+                                  "w-full h-6 rounded-sm transition-all",
+                                  status === 'work' ? "bg-blue-500 shadow-sm" :
+                                  status === 'home_rest' ? "bg-emerald-500 shadow-sm" :
+                                  status === 'rest' ? "bg-amber-500 shadow-sm" :
+                                  "bg-slate-50"
+                                )}></div>
+                              </td>
+                            )
+                          })}
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+             </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Member Modal */}
       <ModalDialog
@@ -228,7 +386,7 @@ export default function TeamTab({
             ) : filteredEmployees.length === 0 ? (
               <div className="py-10 text-center text-slate-400 text-xs">No matching employees found</div>
             ) : filteredEmployees.map(e => (
-              <div key={e.id} className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl hover:border-emerald-300 transition-all group">
+              <div key={e.employeeId} className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl hover:border-emerald-300 transition-all group">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-900 font-black group-hover:bg-emerald-500 group-hover:text-white transition-all">
                     {e.name?.charAt(0)}
@@ -315,6 +473,13 @@ export default function TeamTab({
           </div>
         </div>
       </ModalDialog>
+      {/* Styles for scrollbar */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+      `}} />
     </div>
   )
 }

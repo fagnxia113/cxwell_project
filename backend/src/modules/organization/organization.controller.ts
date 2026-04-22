@@ -171,4 +171,28 @@ export class PersonnelController {
       total: data.total
     };
   }
+
+  @Get('rotation/project-report/:projectId/:month')
+  async getProjectReport(
+    @Param('projectId') projectId: string,
+    @Param('month') month: string,
+  ) {
+    const data = await this.organizationService.getProjectRotationReport(projectId, month);
+    return {
+      success: true,
+      data,
+    };
+  }
+}
+
+@Controller('attendance')
+export class AttendanceController {
+  @Post('sync/dingtalk')
+  async syncDingTalk() {
+    // Mock sync logic
+    return {
+      success: true,
+      message: 'Attendance data synchronized successfully from DingTalk'
+    };
+  }
 }

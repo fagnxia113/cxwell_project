@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Param, Req } from '@nestjs/common';
+import { Controller, Get, Query, Param, Req, Post, Body, Put, Delete } from '@nestjs/common';
 import { ProjectService } from './project.service';
 
 @Controller('project')
@@ -41,5 +41,45 @@ export class ProjectController {
       success: true,
       data,
     };
+  }
+
+  @Put(':id')
+  async update(@Param('id') id: string, @Body() body: any) {
+    const data = await this.projectService.updateProject(BigInt(id), body);
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string) {
+    await this.projectService.deleteProject(BigInt(id));
+    return {
+      success: true,
+    };
+  }
+}
+
+@Controller('project/personnel-mgmt')
+export class PersonnelMgmtController {
+  constructor(private readonly projectService: ProjectService) {}
+
+  @Post(':id/personnel/add')
+  async addPersonnel(@Param('id') id: string, @Body() data: any) {
+    const res = await this.projectService.addMember(BigInt(id), data);
+    return { success: true, data: res };
+  }
+
+  @Post(':id/personnel/:employeeId/remove')
+  async removePersonnel(@Param('id') id: string, @Param('employeeId') employeeId: string) {
+    await this.projectService.removeMember(BigInt(id), BigInt(employeeId));
+    return { success: true };
+  }
+
+  @Post(':id/personnel/transfer')
+  async transferPersonnel(@Param('id') id: string, @Body() data: any) {
+    const res = await this.projectService.transferMember(BigInt(id), data);
+    return { success: true, data: res };
   }
 }

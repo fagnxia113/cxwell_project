@@ -221,17 +221,21 @@
     },
     "action": {
       "apply_onboarding": "发起入职",
+      "sync_dingtalk": "同步钉钉",
+      "sync_attendance": "同步考勤",
+      "add_to_project": "添加成员",
       "confirm_destroy": "确认移除",
       "destroy_desc": "确定要将员工 {{name}} 从系统中移除吗？此操作不可撤销。",
       "transfer_desc": "更新员工的岗位及所属组织",
       "edit_employee": "编辑员工",
       "one_click_remind": "一键提醒",
       "remind_success": "已向 {{count}} 人发送提醒",
-      "sync_dingtalk": "同步钉钉",
       "syncing": "同步中...",
       "updating": "更新中...",
       "submit_update": "提交"
     },
+    "view_list": "成员列表",
+    "view_schedule": "预计出勤",
     "fields": {
       "id": "员工编号",
       "employee_no": "工号",
@@ -362,7 +366,10 @@
       },
       "success": {
         "save": "月度计划提交成功"
-      }
+      },
+      "loading": "正在加载出勤数据...",
+      "no_data": "暂无出勤数据",
+      "staff_column": "人员"
     }
   },
   "equipment": {
@@ -1612,7 +1619,13 @@
       },
       "add_item": "添加风险",
       "placeholder_title": "请输入风险描述",
-      "example": "例如：1号柴发机房漏水隐患"
+      "example": "例如：1号柴发机房漏水隐患",
+      "high_priority_warning": "高优先级预警",
+      "visa_overlap": "签证/假期重叠预警"
+    },
+    "compliance": {
+      "team_health": "团队连续性规划",
+      "action_hint": "确保现场作业持续性"
     },
     "asset": {
       "name": "名称",

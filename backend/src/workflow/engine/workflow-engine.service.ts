@@ -3,11 +3,13 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { pinyin } from 'pinyin-pro';
 import * as bcrypt from 'bcrypt';
 import { NotificationService } from '../../modules/notification/notification.service';
+import { DingtalkService } from '../../modules/dingtalk/dingtalk.service';
 
 @Injectable()
 export class WorkflowEngineService {
   private readonly logger = new Logger(WorkflowEngineService.name);
   private notificationService: NotificationService | null = null;
+  private dingtalkService: DingtalkService | null = null;
   private readonly NOTIFY = {
     TASK_ASSIGN: 'task_assign',
     TASK_APPROVED: 'task_approved',
@@ -19,8 +21,10 @@ export class WorkflowEngineService {
   constructor(
     private prisma: PrismaService,
     @Optional() notificationService?: NotificationService,
+    @Optional() dingtalkService?: DingtalkService,
   ) {
     this.notificationService = notificationService || null;
+    this.dingtalkService = dingtalkService || null;
   }
 
   private async notify(opts: {
@@ -170,7 +174,9 @@ export class WorkflowEngineService {
       if (variables && Object.keys(variables).length > 0) {
         let currentExt: any = {};
         try {
-          currentExt = typeof instance.ext === 'string' ? JSON.parse(instance.ext) : (instance.ext || {});
+          if (instance) {
+            currentExt = typeof instance.ext === 'string' ? JSON.parse(instance.ext) : (instance.ext || {});
+          }
         } catch (e) { currentExt = {}; }
         
         const newExt = { ...currentExt, ...variables };
@@ -391,6 +397,8 @@ export class WorkflowEngineService {
       }
     });
 
+    const phoneCountryCode = formData.phoneCountryCode || formData.countryCode || '+86';
+
     await tx.SysEmployee.create({
       data: {
         name,
@@ -398,6 +406,7 @@ export class WorkflowEngineService {
         userId,
         status: '0',
         phone: phone || 'N/A',
+        phoneCountryCode,
         deptId: deptId ? BigInt(deptId) : null,
         position: positionId || null,
         gender,
@@ -414,6 +423,48 @@ export class WorkflowEngineService {
     }
 
     this.logger.log(`服务节点执行完成：为 ${name} 创建了账号 ${username} 和工号 ${employeeNo}`);
+
+    // 同步到钉钉
+    if (this.dingtalkService && phone) {
+      try {
+        let dingtalkDeptId: number | undefined;
+        if (deptId) {
+          const dept = await tx.sysDept.findFirst({ where: { deptId: BigInt(deptId) } });
+          if (dept?.dingtalkDeptId) {
+            dingtalkDeptId = parseInt(dept.dingtalkDeptId);
+          }
+        }
+        let jobTitleName = positionId;
+        if (positionId) {
+          const post = await tx.sysPost.findFirst({ where: { postId: BigInt(positionId) } });
+          if (post) {
+            jobTitleName = post.postName;
+          }
+        }
+        const dingtalkResult = await this.dingtalkService.createUser({
+          name,
+          mobile: phone,
+          countryCode: phoneCountryCode,
+          deptIds: dingtalkDeptId ? [dingtalkDeptId] : undefined,
+          jobTitle: jobTitleName,
+          email: formData.email,
+          jobNumber: employeeNo,
+          hiredDate: formData.start_date || formData.startDate,
+        });
+        if (dingtalkResult.success && dingtalkResult.userId) {
+          this.logger.log(`入职流程：员工 ${name} 已同步到钉钉，userId: ${dingtalkResult.userId}`);
+          await tx.SysEmployee.update({
+            where: { name, phone: phone || undefined },
+            data: { dingtalkUserId: dingtalkResult.userId }
+          });
+          this.logger.log(`入职流程：员工 ${name} 的 dingtalkUserId 已保存到数据库`);
+        } else {
+          this.logger.warn(`入职流程：员工 ${name} 同步钉钉失败: ${dingtalkResult.error}`);
+        }
+      } catch (error) {
+        this.logger.error(`入职流程：员工 ${name} 同步钉钉异常: ${error.message}`);
+      }
+    }
   }
 
   /**
@@ -1035,6 +1086,8 @@ export class WorkflowEngineService {
       }
     });
 
+    const phoneCountryCode = formData.phoneCountryCode || vars.phoneCountryCode || formData.countryCode || vars.countryCode || '+86';
+
     await tx.SysEmployee.create({
       data: {
         name,
@@ -1042,6 +1095,7 @@ export class WorkflowEngineService {
         userId,
         status: '0',
         phone: phone || 'N/A',
+        phoneCountryCode,
         deptId: deptId ? BigInt(deptId) : null,
         position: position || null,
         gender: formData.gender || vars.gender || null,
@@ -1068,6 +1122,39 @@ export class WorkflowEngineService {
     });
 
     this.logger.log(`入职流程完成：为 ${name} 创建了账号 ${username} 和工号 ${employeeNo}，已分配员工角色`);
+
+    // 同步到钉钉
+    if (this.dingtalkService && phone) {
+      try {
+        let dingtalkDeptId: number | undefined;
+        if (deptId) {
+          const dept = await tx.sysDept.findFirst({ where: { deptId: BigInt(deptId) } });
+          if (dept?.dingtalkDeptId) {
+            dingtalkDeptId = parseInt(dept.dingtalkDeptId);
+          }
+        }
+        const dingtalkResult = await this.dingtalkService.createUser({
+          name,
+          mobile: phone,
+          countryCode: phoneCountryCode,
+          deptIds: dingtalkDeptId ? [dingtalkDeptId] : undefined,
+          jobTitle: position,
+          email: formData.email || vars.email,
+        });
+        if (dingtalkResult.success && dingtalkResult.userId) {
+          this.logger.log(`入职流程：员工 ${name} 已同步到钉钉，userId: ${dingtalkResult.userId}`);
+          await tx.SysEmployee.update({
+            where: { name, phone: phone || undefined },
+            data: { dingtalkUserId: dingtalkResult.userId }
+          });
+          this.logger.log(`入职流程：员工 ${name} 的 dingtalkUserId 已保存到数据库`);
+        } else {
+          this.logger.warn(`入职流程：员工 ${name} 同步钉钉失败: ${dingtalkResult.error}`);
+        }
+      } catch (error) {
+        this.logger.error(`入职流程：员工 ${name} 同步钉钉异常: ${error.message}`);
+      }
+    }
   }
 
   private async archiveTask(tx: any, task: any, targetNode: any, approver: string, skipType: string, comment: string, variables?: any, cooperateType: number = 1) {

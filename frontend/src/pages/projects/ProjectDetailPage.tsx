@@ -31,7 +31,6 @@ import TagsTab from '../../components/projects/TagsTab'
 import TeamTab from '../../components/projects/TeamTab'
 import RisksTab from '../../components/projects/RisksTab'
 import ExpensesTab from '../../components/projects/ExpensesTab'
-import StaffingTab from '../../components/projects/StaffingTab'
 import ProjectReportView from '../../components/projects/ProjectReportView'
 
 export default function ProjectDetailPage() {
@@ -192,7 +191,6 @@ export default function ProjectDetailPage() {
               { id: 'risks', label: t('project.tabs.risks'), icon: AlertCircle },
               { id: 'team', label: t('project.tabs.team'), icon: Users },
               { id: 'expenses', label: t('project.tabs.expenses') || 'Budget', icon: DollarSign },
-              { id: 'staffing', label: t('project.tabs.staffing') || 'Staffing', icon: Calendar },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -231,6 +229,7 @@ export default function ProjectDetailPage() {
                 )}
                 {activeTab === 'team' && (
                   <TeamTab 
+                    projectId={id!}
                     personnel={personnel} 
                     isAdmin={isAdmin} 
                     onUpdatePermission={updatePersonnelPermission} 
@@ -256,15 +255,6 @@ export default function ProjectDetailPage() {
                     isAdmin={isAdmin} 
                     onAddExpense={addExpense} 
                     onDeleteExpense={deleteExpense} 
-                  />
-                )}
-                {activeTab === 'staffing' && (
-                  <StaffingTab 
-                    personnel={personnel} 
-                    staffingPlans={staffingPlans} 
-                    isAdmin={isAdmin} 
-                    onAddPlan={addStaffingPlan} 
-                    onDeletePlan={deleteStaffingPlan} 
                   />
                 )}
                 {/* 占位符 */}

@@ -174,7 +174,7 @@ export function useProjectDetail(id: string | undefined) {
 
   const handleSave = async () => {
     try {
-      const result = await apiClient.put<any>(`/api/projects/${id}`, editForm)
+      const result = await apiClient.put<any>(`/api/project/${id}`, editForm)
       if (result?.success || result?.id) {
         setProject(result.data || result)
         setIsEditing(false)
@@ -196,7 +196,7 @@ export function useProjectDetail(id: string | undefined) {
     }))) return
 
     try {
-      const result = await apiClient.delete<any>(`/api/projects/${id}`)
+      const result = await apiClient.delete<any>(`/api/project/${id}`)
       if (result?.success || result?.id) {
         success(t('common.delete') + ' ' + t('common.success'))
         navigate('/projects')
@@ -308,7 +308,7 @@ export function useProjectDetail(id: string | undefined) {
   const addPersonnel = async (data: { employeeId: string, roleInProject?: string, transferInDate?: string }) => {
     try {
       if (!id) return
-      const res = await apiClient.post<any>(`/api/projects/personnel-mgmt/${id}/personnel/add`, data)
+      const res = await apiClient.post<any>(`/api/project/personnel-mgmt/${id}/personnel/add`, data)
       if (res?.success) {
         success(t('common.success'))
         loadProjectData()
@@ -321,7 +321,7 @@ export function useProjectDetail(id: string | undefined) {
   const transferPersonnel = async (data: { employeeId: string, targetProjectId: string, transferDate: string, remark?: string }) => {
     try {
       if (!id) return
-      const res = await apiClient.post<any>(`/api/projects/personnel-mgmt/${id}/personnel/transfer`, data)
+      const res = await apiClient.post<any>(`/api/project/personnel-mgmt/${id}/personnel/transfer`, data)
       if (res?.success) {
         success(t('common.success'))
         loadProjectData()
@@ -340,7 +340,7 @@ export function useProjectDetail(id: string | undefined) {
         type: 'danger',
       }))) return
 
-      const res = await apiClient.post<any>(`/api/projects/personnel-mgmt/${id}/personnel/${employeeId}/remove`, data || {})
+      const res = await apiClient.post<any>(`/api/project/personnel-mgmt/${id}/personnel/${employeeId}/remove`, data || {})
       if (res?.success) {
         success(t('common.success'))
         loadProjectData()
