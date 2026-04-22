@@ -12,7 +12,8 @@ import {
   Save,
   Search,
   Users,
-  Settings
+  Settings,
+  MousePointer2
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Tree } from 'antd'
@@ -30,6 +31,40 @@ interface Role {
   status: string
   remark?: string
   isSystem?: boolean
+}
+
+function buildAntTree(nodes: any[]): any[] {
+  return nodes.map(node => {
+    const isButton = node.menuType === 'F'
+    const title = isButton ? (
+      <span className="flex items-center gap-2">
+        <MousePointer2 size={12} className="text-amber-500" />
+        <span className="text-slate-700">{node.menuName || node.title}</span>
+        {node.perms && (
+          <code className="text-[10px] px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded font-mono border border-amber-100">
+            {node.perms}
+          </code>
+        )}
+      </span>
+    ) : (
+      <span className="flex items-center gap-2">
+        <span className="font-medium text-slate-900">{node.menuName || node.title}</span>
+        {node.perms && (
+          <code className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded font-mono border border-blue-100">
+            {node.perms}
+          </code>
+        )}
+      </span>
+    )
+
+    return {
+      ...node,
+      title,
+      key: node.menuId || node.key,
+      children: node.children?.length ? buildAntTree(node.children) : [],
+      isLeaf: isButton,
+    }
+  })
 }
 
 export default function RoleManagementPage() {
@@ -117,7 +152,7 @@ export default function RoleManagementPage() {
         systemApi.getMenuTree(),
         systemApi.getRoleMenuIds(role.roleId)
       ])
-      setMenuTree(menuRes?.data || [])
+      setMenuTree(buildAntTree(menuRes?.data || []))
       setSelectedMenuIds(currentPermsRes?.menuIds || [])
       setShowPermModal(true)
     } catch (error) {
@@ -353,6 +388,10 @@ export default function RoleManagementPage() {
                    </h4>
                    <p className="text-xs text-indigo-600 font-medium">
                       请从下方菜单树中勾选该角色有权访问的功能模块、界面及操作按钮。
+                      <span className="flex items-center gap-1 mt-1">
+                        <MousePointer2 size={10} className="text-amber-500" />
+                        <span>琥珀色标记为按钮级权限，控制具体操作可见性</span>
+                      </span>
                    </p>
                 </div>
                 

@@ -7,27 +7,27 @@ import { useConfirm } from '../../hooks/useConfirm'
 import { useTranslation } from 'react-i18next'
 
 interface Employee {
-  id: string
-  employee_no: string
+  employeeId: string
+  employeeNo: string
   name: string
   gender: 'male' | 'female'
   phone: string
   email: string
-  user_id: string | null
-  department_id: string | null
+  userId: string | null
+  deptId: string | null
   position: string
-  position_name?: string
-  department_name?: string
+  positionName?: string
+  departmentName?: string
   status: 'active' | 'resigned' | 'probation'
-  current_status: 'on_duty' | 'leave' | 'business_trip' | 'other'
-  hire_date: string
-  leave_date: string | null
-  role: 'admin' | 'project_manager' | 'hr_manager' | 'equipment_manager' | 'implementer' | 'user'
-  daily_cost: number
+  currentStatus: 'onDuty' | 'leave' | 'businessTrip' | 'other'
+  hireDate: string
+  leaveDate: string | null
+  role: 'admin' | 'projectManager' | 'hrManager' | 'equipmentManager' | 'implementer' | 'user'
+  dailyCost: number
   skills: any
-  avatar_color: string
-  created_at: string
-  updated_at: string
+  avatarColor: string
+  createTime: string
+  updateTime: string
 }
 
 interface Department {
@@ -78,9 +78,9 @@ export default function EmployeeDetailPage() {
   const loadEmployeeData = async () => {
     try {
       setLoading(true)
-      const result = await apiClient.get<any>(`${API_URL.DATA('Employee')}/${id}`)
+      const result = await apiClient.get<any>(API_URL.ORGANIZATION.EMPLOYEE_DETAIL(id!))
 
-      if (result && (result.success || result.id)) {
+      if (result && (result.success || result.employeeId)) {
         const data = result.data || result
         setEmployee(data)
         setEditForm(data)
@@ -127,9 +127,9 @@ export default function EmployeeDetailPage() {
 
   const handleSave = async () => {
     try {
-      const result = await apiClient.put<any>(`${API_URL.DATA('Employee')}/${id}`, editForm)
+      const result = await apiClient.put<any>(API_URL.ORGANIZATION.EMPLOYEE_UPDATE(id!), editForm)
 
-      if (result && (result.success || result.id)) {
+      if (result && (result.success || result.employeeId)) {
         setEmployee(result.data || result)
         setIsEditing(false)
         success(t('common.success'))
@@ -152,7 +152,7 @@ export default function EmployeeDetailPage() {
     }
 
     try {
-      const result = await apiClient.delete<any>(`${API_URL.DATA('Employee')}/${id}`)
+      const result = await apiClient.delete<any>(API_URL.ORGANIZATION.EMPLOYEE_DELETE(id!))
       if (result && (result.success || result.id)) {
         success(t('common.success'))
         navigate('/personnel')
@@ -436,13 +436,13 @@ export default function EmployeeDetailPage() {
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">¥</span>
                         <input
                           type="number"
-                          value={editForm.daily_cost || 0}
-                          onChange={(e) => setEditForm({ ...editForm, daily_cost: parseFloat(e.target.value) || 0 })}
+                          value={editForm.dailyCost || 0}
+                          onChange={(e) => setEditForm({ ...editForm, dailyCost: parseFloat(e.target.value) || 0 })}
                           className="w-full bg-slate-50 border border-slate-100 rounded-md pl-7 pr-3 py-1.5 text-xs font-bold focus:ring-4 focus:ring-blue-600/5 transition-all outline-none focus:border-blue-500"
                         />
                       </div>
                     ) : (
-                      <div className="text-xs font-bold text-blue-600 tabular-nums">{formatCurrency(employee.daily_cost)}</div>
+                      <div className="text-xs font-bold text-blue-600 tabular-nums">{formatCurrency(employee.dailyCost)}</div>
                     )}
                   </div>
                   <div>
@@ -450,12 +450,12 @@ export default function EmployeeDetailPage() {
                     {isEditing ? (
                       <input
                         type="date"
-                        value={editForm.hire_date?.split('T')[0] || ''}
-                        onChange={(e) => setEditForm({ ...editForm, hire_date: e.target.value })}
+                        value={editForm.hireDate?.split('T')[0] || ''}
+                        onChange={(e) => setEditForm({ ...editForm, hireDate: e.target.value })}
                         className="w-full rounded-md border-gray-200 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 p-2 outline-none border transition-all bg-white"
                       />
                     ) : (
-                      <div className="text-sm font-bold text-gray-900">{formatDate(employee.hire_date)}</div>
+                      <div className="text-sm font-bold text-gray-900">{formatDate(employee.hireDate)}</div>
                     )}
                   </div>
                   <div>

@@ -44,7 +44,7 @@ export const IfRole: React.FC<IfRoleProps> = ({
 }
 
 interface CanProps {
-  action: 'create' | 'read' | 'update' | 'delete' | 'export' | 'approve'
+  action: 'create' | 'read' | 'update' | 'delete' | 'export' | 'approve' | 'reject' | 'withdraw' | 'return' | 'transfer' | 'cc' | 'resetPwd' | 'manage'
   resource: string
   fallback?: ReactNode
   children: ReactNode
@@ -69,7 +69,7 @@ export const Can: React.FC<CanProps> = ({
 interface PermissionButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   permission?: string
   resource?: string
-  action?: 'create' | 'read' | 'update' | 'delete' | 'export' | 'approve'
+  action?: 'create' | 'read' | 'update' | 'delete' | 'export' | 'approve' | 'reject' | 'withdraw' | 'return' | 'transfer' | 'cc' | 'resetPwd' | 'manage'
 }
 
 export const PermissionButton: React.FC<PermissionButtonProps> = ({

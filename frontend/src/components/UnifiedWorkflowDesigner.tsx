@@ -11,7 +11,8 @@ import ReactFlow, {
   useEdgesState,
   MarkerType,
   NodeTypes,
-  Panel
+  Panel,
+  useReactFlow
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import {
@@ -36,7 +37,7 @@ import {
   Search,
   User
 } from 'lucide-react'
-import { API_URL } from '../config/api'
+import { API_URL, API_BASE_URL } from '../config/api'
 
 import { 
   UnifiedWorkflowDesignerProps, 
@@ -53,7 +54,6 @@ import {
 import { StartEventNode, EndEventNode } from './workflow/nodes/StartEndNodes'
 import { UserTaskNode, ServiceTaskNode } from './workflow/nodes/TaskNodes'
 import { ExclusiveGatewayNode, ParallelGatewayNode } from './workflow/nodes/GatewayNodes'
-import FormDesignTab from './workflow/FormDesignTab'
 
 const defaultNodeTypes: NodeTypes = {
   startEvent: StartEventNode,
@@ -64,6 +64,8 @@ const defaultNodeTypes: NodeTypes = {
   parallelGateway: ParallelGatewayNode
 }
 
+const defaultEdgeTypes = {}
+
 export const UnifiedWorkflowDesigner: React.FC<UnifiedWorkflowDesignerProps> = ({
   initialNodes = [],
   initialEdges = [],
@@ -73,18 +75,13 @@ export const UnifiedWorkflowDesigner: React.FC<UnifiedWorkflowDesignerProps> = (
   onExport,
   readOnly = false
 }) => {
-  const nodeTypes = useMemo(() => defaultNodeTypes, [])
-  const edgeTypes = useMemo(() => ({}), [])
-
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
   const [variables, setVariables] = useState<WorkflowVariable[]>(initialVariables)
-  const [formSchema, setFormSchema] = useState<FormField[]>(initialFormSchema || [])
   const [selectedNode, setSelectedNode] = useState<Node | null>(null)
-  const [activeTab, setActiveTab] = useState<'workflow' | 'form'>('workflow')
   const [activePanel, setActivePanel] = useState<'nodes' | 'variables'>('nodes')
-  const [selectedFieldIndex, setSelectedFieldIndex] = useState<number | null>(null)
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
+  const { screenToFlowPosition, setViewport } = useReactFlow()
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -109,11 +106,6 @@ export const UnifiedWorkflowDesigner: React.FC<UnifiedWorkflowDesignerProps> = (
   const onPaneClick = useCallback(() => {
     setSelectedNode(null)
   }, [])
-
-  const onDragStart = (event: React.DragEvent, nodeType: string) => {
-    event.dataTransfer.setData('application/reactflow', nodeType)
-    event.dataTransfer.effectAllowed = 'move'
-  }
 
   const getDefaultNodeData = (type: string): WorkflowNodeData => {
     switch (type) {
@@ -144,6 +136,33 @@ export const UnifiedWorkflowDesigner: React.FC<UnifiedWorkflowDesignerProps> = (
     setNodes((nds) => [...nds, newNode])
   }, [setNodes])
 
+  const onDragStart = (event: React.DragEvent, nodeType: string) => {
+    event.dataTransfer.setData('application/reactflow', nodeType)
+    event.dataTransfer.effectAllowed = 'move'
+  }
+
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'move'
+  }, [])
+
+  const onDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault()
+
+      const type = event.dataTransfer.getData('application/reactflow')
+      if (typeof type === 'undefined' || !type) return
+
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      })
+      
+      addNode(type, position)
+    },
+    [screenToFlowPosition, addNode]
+  )
+
   const deleteSelectedNode = useCallback(() => {
     if (selectedNode) {
       setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id))
@@ -153,83 +172,91 @@ export const UnifiedWorkflowDesigner: React.FC<UnifiedWorkflowDesignerProps> = (
   }, [selectedNode, setNodes, setEdges])
 
   const onAutoLayout = useCallback(() => {
-    const nodeWidth = 200
-    const nodeHeight = 80
-    const horizontalSpacing = 100
-    const verticalSpacing = 100
+    const nodeWidth = 200;
+    const nodeHeight = 80;
+    const horizontalSpacing = 150;
+    const verticalSpacing = 120;
 
-    const adjacencyList = new Map<string, string[]>()
-    
-    nodes.forEach(node => {
-      adjacencyList.set(node.id, [])
-    })
-    
-    edges.forEach(edge => {
-      const targets = adjacencyList.get(edge.source) || []
-      targets.push(edge.target)
-      adjacencyList.set(edge.source, targets)
-    })
+    // 1. 构建邻接表和入度表
+    const adj = new Map<string, string[]>();
+    const inDegree = new Map<string, number>();
+    nodes.forEach(n => {
+      adj.set(n.id, []);
+      inDegree.set(n.id, 0);
+    });
+    edges.forEach(e => {
+      adj.get(e.source)?.push(e.target);
+      inDegree.set(e.target, (inDegree.get(e.target) || 0) + 1);
+    });
 
-    const inDegree = new Map<string, number>()
-    nodes.forEach(node => inDegree.set(node.id, 0))
-    edges.forEach(edge => {
-      inDegree.set(edge.target, (inDegree.get(edge.target) || 0) + 1)
-    })
-
-    const levels: string[][] = []
-    let currentLevel = nodes.filter(n => (inDegree.get(n.id) || 0) === 0).map(n => n.id)
+    // 2. 拓扑排序计算层级 (处理非 DAG 场景：使用简单 BFS 层级限制)
+    const levels: Map<string, number> = new Map();
+    const queue: [string, number][] = [];
     
-    while (currentLevel.length > 0) {
-      levels.push(currentLevel)
-      const nextLevel: string[] = []
-      
-      currentLevel.forEach(nodeId => {
-        const targets = adjacencyList.get(nodeId) || []
-        targets.forEach(targetId => {
-          const newInDegree = (inDegree.get(targetId) || 0) - 1
-          inDegree.set(targetId, newInDegree)
-          if (newInDegree === 0) {
-            nextLevel.push(targetId)
-          }
-        })
-      })
-      
-      currentLevel = nextLevel
+    // 找出所有入度为 0 的节点作为起点
+    nodes.filter(n => (inDegree.get(n.id) || 0) === 0).forEach(n => {
+      queue.push([n.id, 0]);
+      levels.set(n.id, 0);
+    });
+
+    // 如果没有入度为 0 的节点（纯环路），强制将第一个节点作为起点
+    if (queue.length === 0 && nodes.length > 0) {
+      queue.push([nodes[0].id, 0]);
+      levels.set(nodes[0].id, 0);
     }
 
-    const positionedNodes = nodes.map(node => {
-      let levelIndex = -1
-      let indexInLevel = -1
-      
-      for (let i = 0; i < levels.length; i++) {
-        const idx = levels[i].indexOf(node.id)
-        if (idx !== -1) {
-          levelIndex = i
-          indexInLevel = idx
-          break
-        }
-      }
-      
-      if (levelIndex === -1) {
-        levelIndex = levels.length
-        indexInLevel = 0
-      }
+    const processed = new Set<string>();
+    while (queue.length > 0) {
+      const [u, d] = queue.shift()!;
+      if (processed.has(u)) continue;
+      processed.add(u);
 
-      const levelWidth = levels[levelIndex]?.length || 1
-      const totalWidth = levelWidth * nodeWidth + (levelWidth - 1) * horizontalSpacing
-      const startX = (800 - totalWidth) / 2
+      (adj.get(u) || []).forEach(v => {
+        const nextDist = Math.max(levels.get(v) || 0, d + 1);
+        levels.set(v, nextDist);
+        queue.push([v, nextDist]);
+      });
+    }
+
+    // 处理未访问到的孤立节点
+    nodes.forEach(n => {
+      if (!levels.has(n.id)) levels.set(n.id, 0);
+    });
+
+    // 3. 将层级汇总为数组
+    const levelMap: Record<number, string[]> = {};
+    levels.forEach((lvl, id) => {
+      if (!levelMap[lvl]) levelMap[lvl] = [];
+      levelMap[lvl].push(id);
+    });
+
+    const maxLevel = Math.max(...Object.keys(levelMap).map(Number));
+
+    // 4. 计算坐标
+    const positionedNodes = nodes.map(node => {
+      const lvl = levels.get(node.id) || 0;
+      const nodesInThisLevel = levelMap[lvl];
+      const indexInLevel = nodesInThisLevel.indexOf(node.id);
+      
+      // 水平居中计算
+      const levelTotalWidth = nodesInThisLevel.length * nodeWidth + (nodesInThisLevel.length - 1) * horizontalSpacing;
+      const startX = (1000 - levelTotalWidth) / 2; // 假设容器宽 1000
 
       return {
         ...node,
         position: {
           x: startX + indexInLevel * (nodeWidth + horizontalSpacing),
-          y: 100 + levelIndex * (nodeHeight + verticalSpacing)
+          y: 50 + lvl * (nodeHeight + verticalSpacing)
         }
-      }
-    })
+      };
+    });
 
-    setNodes(positionedNodes)
-  }, [nodes, edges, setNodes])
+    setNodes(positionedNodes);
+    // 自动重置视角
+    setTimeout(() => {
+         setViewport({ x: 0, y: 0, zoom: 0.8 }, { duration: 800 });
+    }, 100);
+  }, [nodes, edges, setNodes, setViewport])
 
   const updateNodeData = useCallback((key: string, value: any) => {
     if (selectedNode) {
@@ -272,33 +299,11 @@ export const UnifiedWorkflowDesigner: React.FC<UnifiedWorkflowDesignerProps> = (
         condition: edge.data?.condition
       })),
       variables,
-      formSchema
+      formSchema: []
     }
     onSave?.(workflowData)
     onExport?.(workflowData)
-  }, [nodes, edges, variables, formSchema, onSave, onExport])
-
-  const addFormField = useCallback((type: string = 'text', label?: string) => {
-    const newField: FormField = {
-      name: `field_${formSchema.length + 1}`,
-      label: label || `字段 ${formSchema.length + 1}`,
-      type: type as any,
-      required: false
-    }
-    const newIndex = formSchema.length
-    setFormSchema([...formSchema, newField])
-    setSelectedFieldIndex(newIndex)
-  }, [formSchema])
-
-  const updateFormField = useCallback((index: number, field: keyof FormField, value: any) => {
-    const newFields = [...formSchema]
-    newFields[index] = { ...newFields[index], [field]: value }
-    setFormSchema(newFields)
-  }, [formSchema])
-
-  const removeFormField = useCallback((index: number) => {
-    setFormSchema(formSchema.filter((_, i) => i !== index))
-  }, [formSchema])
+  }, [nodes, edges, variables, onSave, onExport])
 
   const addVariable = useCallback(() => {
     const newVar: WorkflowVariable = {
@@ -335,29 +340,18 @@ export const UnifiedWorkflowDesigner: React.FC<UnifiedWorkflowDesignerProps> = (
     <div className="w-full h-full flex flex-col bg-gray-50 overflow-hidden font-sans">
       <div className="flex-shrink-0 bg-white border-b border-gray-200 px-6 pt-2">
         <div className="flex items-center gap-8">
-          <button
-            onClick={() => setActiveTab('workflow')}
-            className={`pb-3 text-sm font-semibold tracking-wide transition-all border-b-2 ${activeTab === 'workflow' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
-          >
-            工作流
-          </button>
-          <button
-            onClick={() => setActiveTab('form')}
-            className={`pb-3 text-sm font-semibold tracking-wide transition-all border-b-2 ${activeTab === 'form' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
-          >
-            表单
-          </button>
+          <div className="pb-3 text-sm font-semibold tracking-wide transition-all border-b-2 border-blue-600 text-blue-600">
+            工作流设计
+          </div>
 
           <div className="ml-auto flex items-center gap-3 pb-3">
-            {activeTab === 'workflow' && (
-              <button
-                onClick={onAutoLayout}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-200 transition-all"
-              >
-                <LayoutGrid className="w-4 h-4" />
-                一键排版
-              </button>
-            )}
+            <button
+              onClick={onAutoLayout}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-200 transition-all"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              一键排版
+            </button>
             <button
               onClick={handleSave}
               disabled={readOnly}
@@ -371,8 +365,7 @@ export const UnifiedWorkflowDesigner: React.FC<UnifiedWorkflowDesignerProps> = (
       </div>
 
       <div className="flex-1 overflow-hidden">
-        {activeTab === 'workflow' ? (
-          <div className="w-full h-full flex min-h-0">
+        <div className="w-full h-full flex min-h-0">
             <div className="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 shadow-sm z-10">
               <div className="flex border-b border-gray-200">
                 <button
@@ -431,6 +424,7 @@ export const UnifiedWorkflowDesigner: React.FC<UnifiedWorkflowDesignerProps> = (
                             key={node.type}
                             className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl cursor-grab active:cursor-grabbing hover:border-blue-200 hover:shadow-md transition-all group"
                             onDragStart={(e) => onDragStart(e, node.type)}
+                            onClick={() => addNode(node.type, { x: 250, y: 150 })}
                             draggable
                           >
                             <div className={`w-8 h-8 rounded-lg ${node.bg} ${node.color} flex items-center justify-center transition-transform group-hover:scale-110`}>
@@ -456,6 +450,7 @@ export const UnifiedWorkflowDesigner: React.FC<UnifiedWorkflowDesignerProps> = (
                             key={node.type}
                             className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl cursor-grab active:cursor-grabbing hover:border-blue-200 hover:shadow-md transition-all group"
                             onDragStart={(e) => onDragStart(e, node.type)}
+                            onClick={() => addNode(node.type, { x: 250, y: 150 })}
                             draggable
                           >
                             <div className={`w-8 h-8 rounded-lg ${node.bg} ${node.color} flex items-center justify-center transition-transform group-hover:scale-110`}>
@@ -558,7 +553,10 @@ export const UnifiedWorkflowDesigner: React.FC<UnifiedWorkflowDesignerProps> = (
                 onConnect={onConnect}
                 onNodeClick={onNodeClick}
                 onPaneClick={onPaneClick}
+                onDragOver={onDragOver}
+                onDrop={onDrop}
                 nodeTypes={defaultNodeTypes}
+                edgeTypes={defaultEdgeTypes}
                 fitView
                 attributionPosition="bottom-left"
               >
@@ -568,304 +566,24 @@ export const UnifiedWorkflowDesigner: React.FC<UnifiedWorkflowDesignerProps> = (
               </ReactFlow>
             </div>
 
-            <div className="w-80 bg-white border-l border-gray-200 flex flex-col flex-shrink-0">
-              {selectedNode ? (
+            {selectedNode ? (
+              <div className="w-80 bg-white border-l border-gray-200 flex flex-col flex-shrink-0 shadow-xl z-20">
                 <NodeConfigPanel
                   node={selectedNode}
                   onUpdate={updateNodeData}
                   onDelete={deleteSelectedNode}
                   readOnly={readOnly}
                 />
-              ) : (
-                <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
-                  从左侧选择一个节点进行配置
+              </div>
+            ) : (
+              <div className="w-80 bg-white border-l border-gray-200 flex flex-col flex-shrink-0 p-8 items-center justify-center text-center">
+                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                  <Settings2 className="w-8 h-8 text-gray-300" />
                 </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="w-full h-full flex min-h-0">
-            <div className="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
-              <div className="p-3 border-b border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-700">字段类型</h3>
+                <p className="text-gray-400 text-sm font-medium">请选择一个节点进行配置</p>
               </div>
-
-              <div className="flex-1 overflow-y-auto p-3">
-                <div className="space-y-2">
-                  <button
-                    onClick={() => addFormField('text', '文本输入')}
-                    disabled={readOnly}
-                    className="flex items-center gap-3 w-full px-3 py-2 text-sm text-left bg-gray-50 hover:bg-gray-100 rounded-lg disabled:opacity-50"
-                  >
-                    <div className="w-8 h-8 rounded bg-blue-100 flex items-center justify-center">
-                      <span className="text-blue-600 text-xs font-bold">T</span>
-                    </div>
-                    <span>文本输入</span>
-                  </button>
-
-                  <button
-                    onClick={() => addFormField('number', '数字输入')}
-                    disabled={readOnly}
-                    className="flex items-center gap-3 w-full px-3 py-2 text-sm text-left bg-gray-50 hover:bg-gray-100 rounded-lg disabled:opacity-50"
-                  >
-                    <div className="w-8 h-8 rounded bg-green-100 flex items-center justify-center">
-                      <span className="text-green-600 text-xs font-bold">#</span>
-                    </div>
-                    <span>数字输入</span>
-                  </button>
-
-                  <button
-                    onClick={() => addFormField('date', '日期选择')}
-                    disabled={readOnly}
-                    className="flex items-center gap-3 w-full px-3 py-2 text-sm text-left bg-gray-50 hover:bg-gray-100 rounded-lg disabled:opacity-50"
-                  >
-                    <div className="w-8 h-8 rounded bg-purple-100 flex items-center justify-center">
-                      <span className="text-purple-600 text-xs font-bold">D</span>
-                    </div>
-                    <span>日期选择</span>
-                  </button>
-
-                  <button
-                    onClick={() => addFormField('select', '下拉选择')}
-                    disabled={readOnly}
-                    className="flex items-center gap-3 w-full px-3 py-2 text-sm text-left bg-gray-50 hover:bg-gray-100 rounded-lg disabled:opacity-50"
-                  >
-                    <div className="w-8 h-8 rounded bg-orange-100 flex items-center justify-center">
-                      <span className="text-orange-600 text-xs font-bold">S</span>
-                    </div>
-                    <span>下拉选择</span>
-                  </button>
-
-                  <button
-                    onClick={() => addFormField('textarea', '多行文本')}
-                    disabled={readOnly}
-                    className="flex items-center gap-3 w-full px-3 py-2 text-sm text-left bg-gray-50 hover:bg-gray-100 rounded-lg disabled:opacity-50"
-                  >
-                    <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center">
-                      <span className="text-gray-600 text-xs font-bold">¶</span>
-                    </div>
-                    <span>多行文本</span>
-                  </button>
-
-                  <button
-                    onClick={() => addFormField('user', '用户选择')}
-                    disabled={readOnly}
-                    className="flex items-center gap-3 w-full px-3 py-2 text-sm text-left bg-gray-50 hover:bg-gray-100 rounded-lg disabled:opacity-50"
-                  >
-                    <div className="w-8 h-8 rounded bg-indigo-100 flex items-center justify-center">
-                      <User className="w-4 h-4 text-indigo-600" />
-                    </div>
-                    <span>用户选择</span>
-                  </button>
-
-                  <button
-                    onClick={() => addFormField('boolean', '开关')}
-                    disabled={readOnly}
-                    className="flex items-center gap-3 w-full px-3 py-2 text-sm text-left bg-gray-50 hover:bg-gray-100 rounded-lg disabled:opacity-50"
-                  >
-                    <div className="w-8 h-8 rounded bg-teal-100 flex items-center justify-center">
-                      <span className="text-teal-600 text-xs font-bold">✓</span>
-                    </div>
-                    <span>开关</span>
-                  </button>
-
-                  <button
-                    onClick={() => addFormField('reference', '关联字段')}
-                    disabled={readOnly}
-                    className="flex items-center gap-3 w-full px-3 py-2 text-sm text-left bg-gray-50 hover:bg-gray-100 rounded-lg disabled:opacity-50"
-                  >
-                    <div className="w-8 h-8 rounded bg-pink-100 flex items-center justify-center">
-                      <span className="text-pink-600 text-xs font-bold">@</span>
-                    </div>
-                    <span>关联字段</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex-1 bg-gray-100 p-6 overflow-y-auto min-w-0">
-              <div className="max-w-2xl mx-auto bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">表单预览</h3>
-                
-                {formSchema.length === 0 ? (
-                  <div className="text-center py-12 text-gray-400">
-                    <CheckSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>暂无字段</p>
-                    <p className="text-sm mt-2">从左侧选择一个字段进行配置</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {formSchema.map((field, index) => (
-                      <div 
-                        key={index} 
-                        onClick={() => setSelectedFieldIndex(index)}
-                        className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                          selectedFieldIndex === index 
-                            ? 'border-blue-500 bg-blue-50' 
-                            : 'border-gray-200 hover:border-blue-300'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <label className="text-sm font-medium text-gray-700">
-                            {field.label}
-                            {field.required && <span className="text-red-500 ml-1">*</span>}
-                          </label>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              removeFormField(index)
-                              if (selectedFieldIndex === index) {
-                                setSelectedFieldIndex(null)
-                              }
-                            }}
-                            disabled={readOnly}
-                            className="text-red-500 hover:text-red-700 text-xs"
-                          >
-                            删除
-                          </button>
-                        </div>
-                        <div className="text-xs text-gray-400 mb-2">
-                          字段名: {field.name} | 类型: {fieldTypeLabels[field.type] || field.type}
-                        </div>
-                        {field.type === 'text' && (
-                          <input type="text" disabled className="w-full px-3 py-2 border border-gray-300 rounded bg-gray-50" placeholder={field.placeholder} />
-                        )}
-                        {field.type === 'number' && (
-                          <input type="number" disabled className="w-full px-3 py-2 border border-gray-300 rounded bg-gray-50" placeholder={field.placeholder} />
-                        )}
-                        {field.type === 'date' && (
-                          <input type="date" disabled className="w-full px-3 py-2 border border-gray-300 rounded bg-gray-50" />
-                        )}
-                        {field.type === 'select' && (
-                          <select disabled className="w-full px-3 py-2 border border-gray-300 rounded bg-gray-50">
-                            <option>请选择</option>
-                          </select>
-                        )}
-                        {field.type === 'textarea' && (
-                          <textarea disabled className="w-full px-3 py-2 border border-gray-300 rounded bg-gray-50" rows={3} placeholder={field.placeholder} />
-                        )}
-                        {field.type === 'boolean' && (
-                          <label className="flex items-center gap-2">
-                            <input type="checkbox" disabled className="rounded" />
-                            <span className="text-sm text-gray-600">是/否</span>
-                          </label>
-                        )}
-                        {field.type === 'user' && (
-                          <input type="text" disabled className="w-full px-3 py-2 border border-gray-300 rounded bg-gray-50" placeholder="选择用户" />
-                        )}
-                        {field.type === 'reference' && (
-                          <input type="text" disabled className="w-full px-3 py-2 border border-gray-300 rounded bg-gray-50" placeholder="选择关联字段" />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="w-80 bg-white border-l border-gray-200 flex flex-col flex-shrink-0">
-              <div className="px-4 py-3 border-b border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-700">字段属性</h3>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-4">
-                {formSchema.length === 0 ? (
-                  <div className="text-center py-8 text-gray-400 text-sm">
-                    请先添加一个字段
-                  </div>
-                ) : selectedFieldIndex === null ? (
-                  <div className="text-center py-8 text-gray-400 text-sm">
-                    从左侧选择一个字段进行配置
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="bg-gray-50 rounded-lg p-4 space-y-4">
-                      <div className="text-xs font-medium text-gray-500 uppercase flex items-center justify-between">
-                        {formSchema[selectedFieldIndex].label}
-                        <span className="text-blue-500">字段 {selectedFieldIndex + 1} / {formSchema.length}</span>
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-600 mb-1">字段标识</label>
-                        <input
-                          type="text"
-                          value={formSchema[selectedFieldIndex].name}
-                          onChange={(e) => updateFormField(selectedFieldIndex, 'name', e.target.value)}
-                          disabled={readOnly}
-                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-600 mb-1">字段标签</label>
-                        <input
-                          type="text"
-                          value={formSchema[selectedFieldIndex].label}
-                          onChange={(e) => updateFormField(selectedFieldIndex, 'label', e.target.value)}
-                          disabled={readOnly}
-                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-600 mb-1">字段类型</label>
-                        <select
-                          value={formSchema[selectedFieldIndex].type}
-                          onChange={(e) => updateFormField(selectedFieldIndex, 'type', e.target.value)}
-                          disabled={readOnly}
-                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="text">文本输入</option>
-                          <option value="number">数字输入</option>
-                          <option value="date">日期选择</option>
-                          <option value="select">下拉选择</option>
-                          <option value="textarea">多行文本</option>
-                          <option value="user">用户选择</option>
-                          <option value="boolean">开关</option>
-                          <option value="lookup">查找引用</option>
-                          <option value="reference">关联字段</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-600 mb-1">占位文字</label>
-                        <input
-                          type="text"
-                          value={formSchema[selectedFieldIndex].placeholder || ''}
-                          onChange={(e) => updateFormField(selectedFieldIndex, 'placeholder', e.target.value)}
-                          disabled={readOnly}
-                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-                      <label className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={formSchema[selectedFieldIndex].required || false}
-                          onChange={(e) => updateFormField(selectedFieldIndex, 'required', e.target.checked)}
-                          disabled={readOnly}
-                          className="rounded"
-                        />
-                        必填
-                      </label>
-                      <div className="flex gap-2 pt-2 border-t border-gray-200">
-                        <button
-                          onClick={() => setSelectedFieldIndex(Math.max(0, selectedFieldIndex - 1))}
-                          disabled={selectedFieldIndex === 0}
-                          className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          上一步
-                        </button>
-                        <button
-                          onClick={() => setSelectedFieldIndex(Math.min(formSchema.length - 1, selectedFieldIndex + 1))}
-                          disabled={selectedFieldIndex === formSchema.length - 1}
-                          className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          下一步
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+            )}
+        </div>
       </div>
     </div>
   )
@@ -922,14 +640,25 @@ const EmployeeSelectorModal: React.FC<EmployeeSelectorModalProps> = ({
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`${API_URL.DATA('Employee')}?page=1&pageSize=1000`, {
+      const response = await fetch(`${API_BASE_URL}/api/organization/employee/list?page=1&pageSize=1000`, {
         headers: {
           'Content-Type': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` })
         }
       })
       const result = await response.json()
-      setEmployees(result.data || [])
+      const rawList = result.data?.list || result.data || []
+      const mapped = (Array.isArray(rawList) ? rawList : []).map((emp: any) => ({
+        id: emp.employeeId?.toString() || emp.id?.toString() || '',
+        name: emp.name || emp.employeeName || emp.userName || '',
+        employeeNo: emp.employeeNo || emp.empNo || '',
+        position: emp.position || emp.postName || '',
+        department: emp.department || emp.deptName || '',
+        department_name: emp.department_name || emp.deptName || '',
+        email: emp.email || '',
+        phone: emp.phone || emp.mobile || '',
+      }))
+      setEmployees(mapped)
     } catch (error) {
       console.error('Failed to load employee list:', error)
     } finally {
@@ -1099,14 +828,25 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onUpdate, onDel
   const loadEmployees = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`${API_URL.DATA('Employee')}?page=1&pageSize=1000`, {
+      const response = await fetch(`${API_BASE_URL}/api/organization/employee/list?page=1&pageSize=1000`, {
         headers: {
           'Content-Type': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` })
         }
       })
       const result = await response.json()
-      setEmployees(result.data || [])
+      const rawList = result.data?.list || result.data || []
+      const mapped = (Array.isArray(rawList) ? rawList : []).map((emp: any) => ({
+        id: emp.employeeId?.toString() || emp.id?.toString() || '',
+        name: emp.name || emp.employeeName || emp.userName || '',
+        employeeNo: emp.employeeNo || emp.empNo || '',
+        position: emp.position || emp.postName || '',
+        department: emp.department || emp.deptName || '',
+        department_name: emp.department_name || emp.deptName || '',
+        email: emp.email || '',
+        phone: emp.phone || emp.mobile || '',
+      }))
+      setEmployees(mapped)
     } catch (error) {
       console.error('Failed to load employee list:', error)
     }

@@ -86,7 +86,7 @@ export default function ApprovalPendingPage() {
   const loadTasks = async () => {
     setLoading(true)
     try {
-      const res = await workflowApi.getTodoTasks()
+      const res = await workflowApi.getHubTodo()
       setTasks(res?.data || [])
     } catch (e: any) {
       message.error(`任务库同步失败: ${e.message}`)
@@ -117,9 +117,9 @@ export default function ApprovalPendingPage() {
             <div className="p-2 bg-slate-900 text-white rounded-2xl shadow-xl shadow-slate-900/20">
               <Zap size={24} />
             </div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">待办审批中心</h1>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">待办审批</h1>
           </div>
-          <p className="text-slate-500 font-medium">高效处理业务流转，把控每一项核心决策的生命周期</p>
+          <p className="text-slate-500 font-medium">处理业务申请，把控核心决策</p>
         </div>
 
         <div className="flex gap-2">
@@ -136,10 +136,10 @@ export default function ApprovalPendingPage() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="待处理任务" value={tasks.length} icon={Layers} color="blue" delay={0.1} />
-        <StatCard title="高优加急" value={tasks.filter(t => t.priority === 'high').length} icon={AlertCircle} color="amber" delay={0.2} />
-        <StatCard title="平均处理时效" value="1.5h" icon={Timer} color="emerald" delay={0.3} />
-        <StatCard title="月度结案率" value="98%" icon={TrendingUp} color="blue" delay={0.4} />
+        <StatCard title="待处理" value={tasks.length} icon={Layers} color="blue" delay={0.1} />
+        <StatCard title="加急" value={tasks.filter(t => t.priority === 'high').length} icon={AlertCircle} color="amber" delay={0.2} />
+        <StatCard title="平均时效" value="1.5h" icon={Timer} color="emerald" delay={0.3} />
+        <StatCard title="结案率" value="98%" icon={TrendingUp} color="blue" delay={0.4} />
       </div>
 
       <div className="bg-white/70 backdrop-blur-md p-4 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 flex flex-wrap items-center gap-4">

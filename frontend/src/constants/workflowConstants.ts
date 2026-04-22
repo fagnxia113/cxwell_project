@@ -25,7 +25,8 @@ export const getOrderTypeConfigs = (t: any): Record<string, { label: string; col
   'equipment_repair': { label: t('workflow.categories.equipment'), color: 'pink', icon: Activity },
   'equipment_scrap': { label: t('workflow.categories.equipment'), color: 'slate', icon: Database },
   'project_completion': { label: t('workflow.categories.project'), color: 'violet', icon: CheckCircle2 },
-  'purchase_request': { label: t('workflow.categories.purchase'), color: 'cyan', icon: FileText }
+  'purchase_request': { label: t('workflow.categories.purchase'), color: 'cyan', icon: FileText },
+  'project_approval': { label: t('workflow.categories.project'), color: 'violet', icon: CheckCircle2 }
 });
 
 /**
@@ -89,7 +90,7 @@ export const getFormFieldLabels = (t: any): Record<string, string> => ({
  * 枚举值翻译映射
  */
 export const getEnumLabels = (t: any) => ({
-  gender: { 'male': t('personnel.gender.male'), 'female': t('personnel.gender.female'), 'other': t('personnel.gender.other') },
+  gender: { 'male': t('personnel.gender.male'), 'female': t('personnel.gender.female') },
   employeeType: {
     'regular': t('personnel.employee_type_labels.regular'),
     'probation': t('personnel.employee_type_labels.probation'),

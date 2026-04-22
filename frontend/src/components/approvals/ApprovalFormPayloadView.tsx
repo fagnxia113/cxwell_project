@@ -25,22 +25,25 @@ export default function ApprovalFormPayloadView({
   // Helper to get nested value or key conversion
   const getDisplayValue = (key: string, value: any) => {
     if (value === null || value === undefined || value === '') return '--';
-    
+
     let display = String(value);
-    
-    if (key === 'gender') display = (enumLabels.gender as any)[String(value)] || display;
+
+    if (key === 'gender') {
+      if (value === 'unknown') return '--';
+      display = (enumLabels.gender as any)[String(value)] || display;
+    }
     else if (key === 'employee_type') display = (enumLabels.employeeType as any)[String(value)] || display;
     else if (key === 'inbound_type') display = (enumLabels.inboundType as any)[String(value)] || display;
     else if (key === 'receiveStatus') display = (enumLabels.receiveStatus as any)[String(value)] || display;
     else if (key === 'category') display = (enumLabels.category as any)[String(value)] || display;
     else if (key === 'locationType') display = (enumLabels.locationType as any)[String(value)] || display;
-    
+
     // Check for internal mappings like _deptMap or _posMap
     const deptMap = formData._deptMap || {};
     const posMap = formData._posMap || {};
     if (key === 'department_id') display = deptMap[String(value)] || display;
     else if (key === 'position_id') display = posMap[String(value)] || display;
-    
+
     return display;
   };
 

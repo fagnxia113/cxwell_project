@@ -1,9 +1,7 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Request, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Request, Delete } from '@nestjs/common';
 import { FormService } from './form.service';
-import { AuthGuard } from '@nestjs/passport';
 
 @Controller('form')
-@UseGuards(AuthGuard('jwt'))
 export class FormController {
   constructor(private readonly formService: FormService) {}
 

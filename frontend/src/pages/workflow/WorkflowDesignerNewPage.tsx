@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import UnifiedWorkflowDesigner from '../../components/UnifiedWorkflowDesigner'
+import { ReactFlowProvider } from 'reactflow'
 import { UnifiedWorkflowData, WorkflowVariable } from '../../types/workflow-designer'
 import { API_URL } from '../../config/api'
 import { apiClient } from '../../utils/apiClient'
@@ -273,14 +274,16 @@ export default function WorkflowDesignerNewPage() {
       </div>
 
       <div className="flex-1 overflow-hidden min-h-0">
-        <UnifiedWorkflowDesigner
-          initialNodes={initialNodes}
-          initialEdges={initialEdges}
-          initialVariables={initialVariables}
-          initialFormSchema={initialFormSchema}
-          onSave={handleSave}
-          onExport={handleExport}
-        />
+        <ReactFlowProvider>
+          <UnifiedWorkflowDesigner
+            initialNodes={workflowData?.nodes?.length ? workflowData.nodes : initialNodes}
+            initialEdges={workflowData?.edges?.length ? workflowData.edges : initialEdges}
+            initialVariables={workflowData?.variables || initialVariables}
+            initialFormSchema={workflowData?.formSchema || initialFormSchema}
+            onSave={handleSave}
+            onExport={handleExport}
+          />
+        </ReactFlowProvider>
       </div>
 
       {showSaveDialog && (

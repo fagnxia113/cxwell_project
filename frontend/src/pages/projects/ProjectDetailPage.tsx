@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   TrendingUp, DollarSign, FileText, Calendar,
-  Activity, AlertCircle, Users, CheckCircle
+  Activity, AlertCircle, Users, CheckCircle, Tag
 } from 'lucide-react'
 
 // 类型与状态映射
@@ -27,6 +27,7 @@ import ProjectSidebar from '../../components/projects/ProjectSidebar'
 import OverviewTab from '../../components/projects/OverviewTab'
 import MilestoneManager from '../../components/projects/MilestoneManager'
 import ReportsTab from '../../components/projects/ReportsTab'
+import TagsTab from '../../components/projects/TagsTab'
 import TeamTab from '../../components/projects/TeamTab'
 import RisksTab from '../../components/projects/RisksTab'
 import ExpensesTab from '../../components/projects/ExpensesTab'
@@ -62,7 +63,7 @@ export default function ProjectDetailPage() {
   // 初始化 Tab
   useEffect(() => {
     const hash = window.location.hash.replace('#', '')
-    if (hash && ['overview', 'milestones', 'tasks', 'reports', 'risks', 'team', 'expenses', 'staffing'].includes(hash)) {
+    if (hash && ['overview', 'milestones', 'tasks', 'reports', 'tags', 'risks', 'team', 'expenses', 'staffing'].includes(hash)) {
       setActiveTab(hash)
     }
   }, [])
@@ -187,6 +188,7 @@ export default function ProjectDetailPage() {
               { id: 'overview', label: t('project.tabs.overview'), icon: FileText },
               { id: 'milestones', label: t('project.tabs.milestones'), icon: Calendar },
               { id: 'reports', label: t('project.tabs.reports'), icon: Activity },
+              { id: 'tags', label: t('project.tabs.tags'), icon: Tag },
               { id: 'risks', label: t('project.tabs.risks'), icon: AlertCircle },
               { id: 'team', label: t('project.tabs.team'), icon: Users },
               { id: 'expenses', label: t('project.tabs.expenses') || 'Budget', icon: DollarSign },
@@ -240,6 +242,7 @@ export default function ProjectDetailPage() {
                 {activeTab === 'risks' && (
                   <RisksTab 
                     risks={risks} 
+                    milestones={milestones}
                     isAdmin={isAdmin} 
                     onAddRisk={addRisk} 
                     onUpdateRisk={updateRisk} 
@@ -267,6 +270,9 @@ export default function ProjectDetailPage() {
                 {/* 占位符 */}
                 {activeTab === 'reports' && (
                   <ReportsTab projectId={id!} milestones={milestones} />
+                )}
+                {activeTab === 'tags' && (
+                  <TagsTab projectId={id!} milestones={milestones} />
                 )}
               </motion.div>
             </AnimatePresence>

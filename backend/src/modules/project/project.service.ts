@@ -17,8 +17,9 @@ export class ProjectService {
     const { pageNum = 1, pageSize = 10, projectName, status } = query;
     const skip = (pageNum - 1) * pageSize;
 
-    // 1. 获取数据权限过滤条件
+    console.log('getProjectList called, user:', JSON.stringify(user));
     const dataScopeWhere = await this.applyDataScope(user);
+    console.log('dataScopeWhere:', JSON.stringify(dataScopeWhere));
 
     const where: any = {
       ...dataScopeWhere,
@@ -71,11 +72,28 @@ export class ProjectService {
           orderBy: { startDate: 'asc' }
         },
         milestones: {
-          orderBy: { plannedDate: 'asc' }
+          orderBy: { plannedDate: 'asc' },
+          include: {
+            children: {
+              orderBy: { plannedDate: 'asc' }
+            }
+          }
         }
       }
     });
-    return project ? this.mapProject(project) : null;
+
+    if (!project) return null;
+
+    // 获取项目经理信息
+    let managerName: string | null = null;
+    if (project.managerId) {
+      const manager = await this.prisma.sysEmployee.findUnique({
+        where: { employeeId: project.managerId }
+      });
+      managerName = manager?.name ?? null;
+    }
+
+    return this.mapProject({ ...project, _managerName: managerName });
   }
 
   /**
@@ -99,15 +117,17 @@ export class ProjectService {
    * 1-全部数据 2-本部门数据 3-仅本人数据
    */
   private async applyDataScope(user: any): Promise<any> {
-    if (!user || !user.sub) return { createBy: 'none' }; // 未登录拒绝访问
-    if (user.sub === '1') return {}; // 如果是 1 (超级管理员)，拥有全部权限
+    const userId = user?.sub || user?.userId;
+    const loginName = user?.loginName;
+    if (!userId) return { createBy: 'none' }; // 未登录拒绝访问
+    if (userId === '1' || userId === 1) return {}; // 如果是 1 (超级管理员)，拥有全部权限
 
     // 获取用户最大的数据权限级别 (1 最小，3 最大? 不，根据业务通常 1是全量，2是部门，3是个人)
     const userWithRoles = await this.prisma.sysUserRole.findMany({
-      where: { userId: BigInt(user.sub) },
+      where: { userId: BigInt(userId) },
     });
 
-    if (userWithRoles.length === 0) return { createBy: user.loginName }; // 默认仅个人
+    if (userWithRoles.length === 0) return { createBy: loginName }; // 默认仅个人
 
     const roleIds = userWithRoles.map(r => r.roleId);
     const roles = await this.prisma.sysRole.findMany({
@@ -119,17 +139,17 @@ export class ProjectService {
     const maxScope = Math.min(...scopes);
 
     if (maxScope === 1) return {}; // 全部
-    
+
     if (maxScope === 2) {
       // 获取用户部门
       const sysUser = await this.prisma.sysUser.findUnique({
-        where: { userId: BigInt(user.sub) },
+        where: { userId: BigInt(userId) },
         select: { deptId: true }
       });
       return {
         OR: [
-          { createBy: user.loginName }, // 自己创建的
-          { managerId: BigInt(user.sub) }, // 自己管理的
+          { createBy: loginName }, // 自己创建的
+          { managerId: BigInt(userId) }, // 自己管理的
           // 这里假设项目也有 deptId 关联，或者通过成员关联
           { members: { some: { employee: { deptId: sysUser?.deptId } } } }
         ]
@@ -139,14 +159,14 @@ export class ProjectService {
     if (maxScope === 3) {
       return {
         OR: [
-          { createBy: user.loginName },
-          { managerId: BigInt(user.sub) },
-          { members: { some: { employee: { userId: BigInt(user.sub) } } } }
+          { createBy: loginName },
+          { managerId: BigInt(userId) },
+          { members: { some: { employee: { userId: BigInt(userId) } } } }
         ]
       };
     }
 
-    return { createBy: user.loginName };
+    return { createBy: loginName };
   }
 
   /**
@@ -156,11 +176,26 @@ export class ProjectService {
     return {
       ...project,
       id: project.projectId.toString(),
+      code: project.projectCode,
       name: project.projectName || '未命名项目',
       projectId: project.projectId.toString(),
       customerId: project.customerId?.toString(),
       managerId: project.managerId?.toString(),
       budget: project.budget.toString(),
+      // 前端需要的下划线格式字段
+      building_area: project.buildingArea,
+      it_capacity: project.itCapacity,
+      cabinet_count: project.cabinetCount,
+      cabinet_power: project.cabinetPower,
+      start_date: project.startDate,
+      end_date: project.endDate,
+      power_architecture: project.powerArchitecture,
+      hvac_architecture: project.hvacArchitecture,
+      fire_architecture: project.fireArchitecture,
+      weak_electric_architecture: project.weakElectricArchitecture,
+      // 前端需要的 manager 和 tech_manager
+      manager: project._managerName || null,
+      tech_manager: project._managerName || null,
       members: project.members?.map((m: any) => ({
         ...m,
         id: m.id.toString(),
@@ -182,7 +217,14 @@ export class ProjectService {
       milestones: project.milestones?.map((m: any) => ({
         ...m,
         id: m.id.toString(),
-        projectId: m.projectId.toString()
+        projectId: m.projectId.toString(),
+        parentId: m.parentId?.toString(),
+        children: m.children?.map((child: any) => ({
+          ...child,
+          id: child.id.toString(),
+          projectId: child.projectId.toString(),
+          parentId: child.parentId?.toString()
+        }))
       }))
     };
   }

@@ -1,9 +1,7 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Req } from '@nestjs/common';
 import { DefinitionService } from './definition.service';
-import { AuthGuard } from '@nestjs/passport';
 
 @Controller('workflow/definition')
-@UseGuards(AuthGuard('jwt'))
 export class DefinitionController {
   constructor(private readonly defService: DefinitionService) {}
 

@@ -95,6 +95,7 @@
     "go_back": "Go Back",
     "index": "No.",
     "details": "Details",
+    "more": "More",
     "remark": "Remark",
     "toGenerate": "To Generate",
     "system": "System",
@@ -116,12 +117,26 @@
     "generated": "Generated",
     "no_remark": "No remark",
     "date": "Date",
-    "select": "Please select"
+    "select": "Please select",
+    "uploading": "Uploading...",
+    "select_file": "Select File",
+    "education_levels": {
+      "high_school": "High School or Below",
+      "associate": "Associate",
+      "bachelor": "Bachelor",
+      "master": "Master",
+      "doctor": "Doctorate",
+      "other": "Other"
+    },
+    "startTime": "Start Time",
+    "remaining": "Remaining",
+    "show_more": "Show More",
+    "detail": "Detail"
   },
   "dashboard": {
-    "welcome_back": "Welcome Back",
-    "welcome_message": "Welcome to CXWELL PM",
-    "subtitle": "Compliance, asset monitoring & efficiency platform",
+    "welcome_back": "Welcome",
+    "welcome_message": "CXWELL Project Management",
+    "subtitle": "Compliance · Asset Monitoring · Efficiency",
     "start_workflow": "Start Workflow",
     "active_projects": "Active Projects",
     "pending_tasks": "Pending Tasks",
@@ -157,13 +172,33 @@
     "last_7_days_trend": "Past 7 Days Completion Rate",
     "efficiency": "Efficiency",
     "output_value": "Output Value",
-    "active_projects_overview": "Active Projects",
+    "active_projects_overview": "Active Projects Overview",
     "view_full_list": "View Full List →",
     "expected_q3_delivery": "Expected Q3 Delivery",
     "no_active_projects": "No active projects. Please create or claim one first.",
-    "central_alert_overview": "Alert Overview",
+    "central_alert_overview": "Alerts",
     "all_nodes_status_good": "All nodes status is good",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "digital_command_center": "Dashboard",
+    "realtime_insights": "Real-time Insights",
+    "loading_indicator": "Loading...",
+    "active_projects": "Active Projects",
+    "pending_processes": "Pending",
+    "compliance_rate": "Compliance",
+    "pending_submit": "Pending",
+    "total": "Total",
+    "delivery_trend": "Delivery Trend",
+    "delivery_trend_desc": "Last 7 days efficiency",
+    "projects_overview": "Projects Overview",
+    "view_all": "View All",
+    "unnamed_project": "Unnamed Project",
+    "energy_infra": "Energy Infra",
+    "construction_progress": "Progress",
+    "risk_alert": "Risk Alert",
+    "view_all_alerts": "View All Alerts",
+    "alert_title": "Xuzhou Phase 2 Delay Risk",
+    "alert_desc": "Node [Earthwork] exceeded 48h, manual intervention required",
+    "business_distribution": "Distribution"
   },
   "personnel": {
     "list_title": "Personnel",
@@ -206,7 +241,20 @@
       "role": "Role",
       "status": "Status",
       "hire_date": "Hire Date",
-      "remark": "Remark"
+      "hireDate": "Hire Date",
+      "remark": "Remark",
+      "address": "Address",
+      "emergency_contact": "Emergency Contact",
+      "emergency_phone": "Emergency Phone",
+      "education": "Education",
+      "major": "Major",
+      "graduation_school": "University",
+      "graduation_date": "Graduation Date",
+      "bank_account": "Bank Account",
+      "bank_name": "Bank Name",
+      "employee_type": "Employee Type",
+      "id_card": "ID Number",
+      "start_date": "Start Date"
     },
     "empty": {
       "no_records": "No Personnel Records Found"
@@ -247,6 +295,17 @@
       "on_leave": "On Leave",
       "resigned": "Resigned",
       "leave": "On Leave"
+    },
+    "gender": {
+      "male": "Male",
+      "female": "Female"
+    },
+    "employee_type_labels": {
+      "regular": "Regular",
+      "probation": "Probation",
+      "intern": "Intern",
+      "contract": "Contract",
+      "part_time": "Part-time"
     },
     "error": {
       "load_failed": "Failed to load personnel",
@@ -390,6 +449,20 @@
       "repaired": "Restored",
       "partially_repaired": "Partial"
     },
+    "inbound_type_labels": {
+      "purchase": "Purchase",
+      "repair_return": "Repair Return",
+      "other": "Other"
+    },
+    "location_type_labels": {
+      "warehouse": "Warehouse",
+      "project": "Project Site"
+    },
+    "receive_status_labels": {
+      "normal": "Normal",
+      "damaged": "Damaged",
+      "missing": "Missing"
+    },
     "action": {
       "import": "Import",
       "export": "Export",
@@ -527,8 +600,15 @@
       "department": "Department",
       "position": "Position",
       "hire_date": "Hire Date",
+      "hireDate": "Hire Date",
       "id_card": "ID Card No.",
+      "idCard": "ID Card No.",
       "employee_no": "Staff ID",
+      "employeeNo": "Staff ID",
+      "education": "Education",
+      "university": "University",
+      "deptId": "Department",
+      "postId": "Position",
       "actual_start": "Actual Start Date",
       "actual_end": "Actual End Date",
       "total_cost": "Actual Cost",
@@ -537,7 +617,26 @@
       "on_time": "Completed on Time",
       "early": "Completed Early",
       "delayed": "Delayed",
-      "summary": "Project Summary"
+      "summary": "Project Summary",
+      "projectName": "Project Name",
+      "projectCode": "Project Code",
+      "country": "Country",
+      "address": "Address",
+      "managerId": "Project Manager",
+      "customerId": "Customer",
+      "startDate": "Est. Start Date",
+      "endDate": "Est. End Date",
+      "budget": "Budget (10K CNY)",
+      "description": "Description",
+      "attachments": "Attachments",
+      "buildingArea": "Building Area (m²)",
+      "itCapacity": "IT Capacity (MW)",
+      "cabinetCount": "Cabinet Count",
+      "cabinetPower": "Cabinet Power (KW)",
+      "powerArchitecture": "Power Architecture",
+      "hvacArchitecture": "HVAC Architecture",
+      "fireArchitecture": "Fire Protection",
+      "weakElectricArchitecture": "Weak Current System"
     },
     "definition_not_found": "Workflow Definition Not Found",
     "load_failed": "Failed to load workflow form, please retry",
@@ -625,6 +724,16 @@
       "current_node": "Current Node",
       "title": "Title",
       "initiator": "Initiator",
+      "node": "Node",
+      "handler": "Handler",
+      "type": "Type",
+      "time": "Time",
+      "payload": "Application",
+      "node_handler": "Node/Handler",
+      "current_user": "Current User",
+      "created_at": "Created At",
+      "completion_time": "Completed At",
+      "comment": "Comment",
       "manage_code": "Asset Code",
       "received_quantity": "Received Qty",
       "receiving_images": "Receive Photos",
@@ -666,7 +775,17 @@
     "search_workflow_placeholder": "Search workflow...",
     "no_matching_workflow": "No matching workflows",
     "definition_key_not_found": "Workflow not found",
+    "no_definition": "No workflow information",
+    "no_records": "No records yet",
+    "timeline": "Timeline",
+    "waiting": "Waiting for decision...",
     "click_to_initiate": "Click to start",
+    "prediction": {
+      "title": "Future Path Prediction",
+      "hint": "Automatically calculated based on current business data, actual path may change due to manual decisions",
+      "approvers": "Expected Approvers",
+      "no_approver_skip": "No expected approver (may auto skip)"
+    },
     "placeholder": {
       "shipping_no": "Enter tracking number (optional)",
       "shipping_note": "Enter ship note (e.g. seal no.)",
@@ -677,9 +796,11 @@
       "signer_comment": "Enter add-signer note...",
       "return_comment": "Enter return reason...",
       "search_engine": "Search engine name, code...",
-      "search_tasks": "Search task name, initiator..."
+      "search_tasks": "Search task name, initiator...",
+      "comment": "Enter approval comment..."
     },
     "stats": {
+      "total_requests": "Total Requests",
       "pending_tasks": "Pending",
       "urgent_tasks": "Urgent",
       "avg_response": "Avg Response",
@@ -691,6 +812,11 @@
       "draft_engines": "Drafts",
       "syncing": "Syncing..."
     },
+    "view_my_requests": "View my requests",
+    "submit_proposal": "Submit Proposal",
+    "save_draft": "Save as Draft",
+    "submit_confirm_title": "Confirm Submission",
+    "submit_confirm_content": "Please confirm all information is correct. Once submitted, this cannot be undone.",
     "priority": {
       "high": "High",
       "normal": "Normal",
@@ -792,11 +918,41 @@
       "expression": "Expression"
     },
     "approval_mode": {
-      "or_sign": "Or Sign (Single)",
-      "and_sign": "And Sign (All)",
+      "or_sign": "Or Sign",
+      "or_sign_desc": "Single approver approval",
+      "and_sign": "And Sign",
+      "and_sign_desc": "All approvers must approve",
       "sequential": "Sequential",
-      "vote": "Vote"
+      "sequential_desc": "Approve in order",
+      "vote": "Vote",
+      "vote_desc": "Majority approval"
     },
+    "approval_method": "Approval Method",
+    "vote_threshold": "Vote Threshold",
+    "vote_threshold_hint": "Set approval ratio",
+    "approver_source": "Approver Source",
+    "approval_role": "Approver Role",
+    "skip_condition": "Skip Condition",
+    "skip_none": "None",
+    "skip_no_approvers": "No Approvers",
+    "skip_always": "Always Skip",
+    "timeout_hours": "Timeout (hours)",
+    "timeout_hint": "Set approval timeout",
+    "vote_unit": " votes",
+    "approver_source_type_user": "Designated",
+    "approver_source_type_role": "Role",
+    "approver_source_type_department_manager": "Dept Manager",
+    "approver_source_type_project_manager": "PM",
+    "approver_source_type_initiator": "Initiator",
+    "approver_source_type_form_field": "Form Field",
+    "approver_source_type_expression": "Expression",
+    "service_node": "Service",
+    "service_type": "Service Type",
+    "service_type_http": "HTTP Request",
+    "service_type_script": "Script",
+    "service_type_email": "Send Email",
+    "service_type_notification": "Send Notification",
+    "service_type_custom": "Custom",
     "status": {
       "pending": "Pending",
       "approved": "Approved",
@@ -805,6 +961,9 @@
       "completed": "Completed",
       "terminated": "Terminated",
       "skipped": "Skipped",
+      "normal": "In Progress",
+      "success": "Success",
+      "completed_short": "Done",
       "normal_receiving": "Normal",
       "exception_receiving": "Exception",
       "damaged": "Damaged",
@@ -842,8 +1001,8 @@
     "comment_signer": "Add-signer Note",
     "placeholder_return_comment": "Enter return reason...",
     "repair_order": "Repair Order",
-    "version_label": "App v2.1",
-    "footer_label": "Antigravity Workflow Engine",
+    "version_label": "v2.1",
+    "footer_label": "Workflow Engine",
     "form_groups": {
       "basic_info": "Basic Info",
       "project_info": "Project Details",
@@ -890,11 +1049,17 @@
     "action_logs": {
       "title": "Action Logs"
     },
+    "basic_info": "Basic Info",
+    "form_content": "Form Content",
     "action": {
       "reload": "Reload",
       "submit": "Submit",
       "approve": "Approve",
       "reject": "Reject",
+      "return_target": "Return Target",
+      "default_previous": "Default (Previous)",
+      "done_by": "Done",
+      "select_reject_target": "Please select reject target and confirm",
       "withdraw": "Withdraw",
       "return": "Return",
       "transfer": "Transfer",
@@ -908,10 +1073,26 @@
       "confirm_approve": "Confirm Approve",
       "confirm_reject": "Confirm Reject",
       "select_action": "Select Action",
-      "view_flow_chart": "View Flow"
+      "view_flow_chart": "View Flow",
+      "view_flow": "View Flow",
+      "confirm_withdraw": "Confirm Withdraw",
+      "confirm_withdraw_desc": "Are you sure you want to withdraw this application?",
+      "withdrawn_success": "Withdrawn successfully",
+      "cc": "CC",
+      "cc_select": "Select CC Person",
+      "more": "More"
+    },
+    "fields": {
+      "title": "Application Title",
+      "document_no": "Document No.",
+      "apply_date": "Application Date",
+      "applicant": "Applicant"
     },
     "task_list": {
       "title": "Task List"
+    },
+    "hint": {
+      "auto_generate": "Auto-generated on submit"
     }
   },
   "task": {
@@ -980,18 +1161,19 @@
     "equipment_repair": "Equipment Repair",
     "equipment_scrap": "Equipment Scrap",
     "project_completion": "Project Completion",
-    "purchase_request": "Purchase Request"
+    "purchase_request": "Purchase Request",
+    "project_approval": "Project Approval"
   },
   "login": {
     "title": "Sign In",
     "username": "Username",
     "password": "Password",
     "submit": "Login",
-    "error": "Login failed, check username and password",
-    "credentials_required": "Please enter username and password",
-    "secure_entry": "Secure Entry",
+    "error": "Login failed, check credentials",
+    "credentials_required": "Enter username and password",
+    "secure_entry": "Secure Login",
     "infrastructure": "CXWELL Infrastructure v3.0",
-    "copyright": "© 2026 cxwell Technologies. All Rights Reserved."
+    "copyright": "© 2026 CXWELL Technologies. All Rights Reserved."
   },
   "notification_center": {
     "title": "Notifications",
@@ -1045,7 +1227,8 @@
       "running": "Running",
       "completed": "Completed",
       "terminated": "Terminated",
-      "unknown": "Unknown"
+      "unknown": "Unknown",
+      "label": "Status"
     },
     "task_status": {
       "completed": "Completed",
@@ -1352,7 +1535,8 @@
       "assets": "Assets",
       "expenses": "Expenses",
       "staffing": "Staffing",
-      "knowledge": "Knowledge"
+      "knowledge": "Knowledge",
+      "tags": "Tags"
     },
     "report": {
       "title": "Project Status Report",
@@ -1463,7 +1647,11 @@
       "total_tasks": "Total Tasks",
       "wbs_code": "WBS Code",
       "permission_desc": "Authorized members can edit milestones and mark complete.",
-      "invalid_dates": "End date cannot be earlier than start date"
+      "invalid_dates": "End date cannot be earlier than start date",
+      "no_parent": "No Parent",
+      "add_child": "Add Sub-Milestone",
+      "parent": "Parent",
+      "sub_milestones": "Sub-Milestones"
     },
     "reports": {
       "title": "Milestone Reports",
@@ -1798,44 +1986,44 @@
     "urgency_urgent": "Urgent"
   },
   "user_management": {
-    "page_title": "Member & Access Control",
-    "page_subtitle": "Manage enterprise digital identity, permission allocation and system access security",
-    "sync_success": "Identity profile synced successfully",
+    "page_title": "Members",
+    "page_subtitle": "Manage user accounts and access permissions",
+    "sync_success": "Profile synced",
     "create_success": "New identity created",
-    "status_changed": "User {{name}} has been {{status}}",
+    "status_changed": "User {{name}} {{status}}",
     "status_active": "activated",
     "status_inactive": "deactivated",
-    "delete_confirm_title": "Revoke Identity Token",
-    "delete_confirm_content": "This will permanently revoke \"{{name}}\"'s system access token and associated permissions. This action cannot be reversed. Continue?",
-    "delete_success": "Identity data erased",
-    "reset_password_success": "Reset successful, new password activated",
-    "no_email": "No communication asset bound",
+    "delete_confirm_title": "Revoke Access",
+    "delete_confirm_content": "This will permanently revoke \"{{name}}\"'s system access. This action cannot be reversed. Continue?",
+    "delete_success": "User deleted",
+    "reset_password_success": "Password reset successfully",
+    "no_email": "No email bound",
     "status_active_user": "Online",
     "status_inactive_user": "Locked",
-    "sync_profile": "Sync Identity Profile",
-    "create_profile": "Create Digital Avatar",
-    "create_new_identity": "Create New Identity",
-    "search_placeholder": "Search by ID, name or identity tag...",
-    "loading": "Syncing identity directory...",
-    "no_results_title": "No matching digital identity found",
-    "no_results_message": "Try changing the search term or create a new identity index",
+    "sync_profile": "Sync Profile",
+    "create_profile": "Create Profile",
+    "create_new_identity": "Create User",
+    "search_placeholder": "Search by ID, name or identity...",
+    "loading": "Syncing directory...",
+    "no_results_title": "No matching user found",
+    "no_results_message": "Try a different search or create a new user",
     "edit_profile": "Edit Profile",
     "reset_password": "Reset Password",
     "delete_user": "Delete User",
-    "reset_password_title": "Reset Security Key",
-    "execute_reset": "Execute Reset",
-    "table_header_identity": "Core Identity",
-    "table_header_contact": "Contact Matrix",
+    "reset_password_title": "Reset Password",
+    "execute_reset": "Execute",
+    "table_header_identity": "Identity",
+    "table_header_contact": "Contact",
     "table_header_role": "Role",
     "table_header_status": "Status",
     "table_header_actions": "Actions",
     "role": {
       "admin": "Super Admin",
-      "project_manager": "Project Commander",
-      "hr_manager": "HR Dispatcher",
-      "equipment_manager": "Asset Custodian",
-      "implementer": "Field Implementer",
-      "user": "Core Business User"
+      "project_manager": "Project Manager",
+      "hr_manager": "HR Manager",
+      "equipment_manager": "Equipment Manager",
+      "implementer": "Engineer",
+      "user": "User"
     }
   },
   "role_management": {

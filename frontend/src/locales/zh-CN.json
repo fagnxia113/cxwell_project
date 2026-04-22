@@ -94,6 +94,7 @@
     "go_back": "返回上一页",
     "index": "序号",
     "details": "详情",
+    "more": "更多",
     "remark": "备注",
     "toGenerate": "待生成",
     "system": "系统",
@@ -115,15 +116,35 @@
     "generated": "生成时间",
     "no_remark": "无备注",
     "date": "日期",
-    "select": "请选择"
+    "select": "请选择",
+    "uploading": "上传中...",
+    "select_file": "选择文件",
+    "education_levels": {
+      "high_school": "高中及以下",
+      "associate": "大专",
+      "bachelor": "本科",
+      "master": "硕士",
+      "doctor": "博士",
+      "other": "其他"
+    },
+    "高中及以下": "高中及以下",
+    "大专": "大专",
+    "本科": "本科",
+    "硕士": "硕士",
+    "博士": "博士",
+    "其他": "其他",
+    "startTime": "开始时间",
+    "remaining": "剩余",
+    "show_more": "展开更多",
+    "detail": "详情"
   },
   "dashboard": {
-    "welcome_back": "欢迎回来",
-    "welcome_message": "欢迎进入 CXWELL 项目管理系统",
-    "subtitle": "全流程业务合规、资产监控与效能提升平台",
+    "welcome_back": "欢迎",
+    "welcome_message": "CXWELL 项目管理系统",
+    "subtitle": "业务合规 · 资产监控 · 效能提升",
     "start_workflow": "发起流程",
     "active_projects": "进行中项目",
-    "pending_tasks": "待处理任务",
+    "pending_tasks": "待办任务",
     "equipment_in_stock": "设备在库",
     "pending_approvals": "待审批",
     "quick_access": "快捷入口",
@@ -136,14 +157,14 @@
     "current_progress": "当前进度",
     "severe_alert": "严重预警",
     "normal_alert": "一般预警",
-    "status_abnormal_message": "状态异常，节点可能逾期，请立即核查。",
+    "status_abnormal_message": "状态异常，节点可能逾期。",
     "view_details": "查看详情",
     "quick_actions": "快捷操作",
     "project_boarding": "项目启动",
     "asset_inbound": "资产入库",
     "task_control": "任务布控",
     "business_audit": "经营审计",
-    "work_compliance_dashboard": "工作合规看板",
+    "work_compliance_dashboard": "合规看板",
     "active_projects_count": "进行中项目",
     "total_count": "总计 {{count}}",
     "pending_approvals_count": "待审批",
@@ -162,7 +183,27 @@
     "no_active_projects": "目前没有进行中的项目，请先创建或认领。",
     "central_alert_overview": "智能预警",
     "all_nodes_status_good": "所有节点状态正常",
-    "refresh": "刷新"
+    "refresh": "刷新",
+    "digital_command_center": "工作台",
+    "realtime_insights": "实时业务洞察",
+    "loading_indicator": "正在加载...",
+    "active_projects": "活跃项目",
+    "pending_processes": "待处理",
+    "compliance_rate": "合规率",
+    "pending_submit": "待补",
+    "total": "总计",
+    "delivery_trend": "交付趋势",
+    "delivery_trend_desc": "近7天流程效率监测",
+    "projects_overview": "项目总览",
+    "view_all": "查看全部",
+    "unnamed_project": "未命名项目",
+    "energy_infra": "能源基建",
+    "construction_progress": "进度",
+    "risk_alert": "风险预警",
+    "view_all_alerts": "查看全部预警",
+    "alert_title": "Xuzhou二期延期风险",
+    "alert_desc": "节点[土方回填]超标48h，需人工干预",
+    "business_distribution": "状态分布"
   },
   "personnel": {
     "list_title": "人员库",
@@ -205,7 +246,20 @@
       "role": "角色",
       "status": "状态",
       "hire_date": "入职日期",
-      "remark": "备注"
+      "hireDate": "入职日期",
+      "remark": "备注",
+      "address": "地址",
+      "emergency_contact": "紧急联系人",
+      "emergency_phone": "紧急联系电话",
+      "education": "学历",
+      "major": "专业",
+      "graduation_school": "毕业院校",
+      "graduation_date": "毕业日期",
+      "bank_account": "银行账号",
+      "bank_name": "开户银行",
+      "employee_type": "员工类型",
+      "id_card": "身份证号",
+      "start_date": "入职日期"
     },
     "empty": {
       "no_records": "暂无人员"
@@ -246,6 +300,17 @@
       "on_leave": "休假",
       "resigned": "已离职",
       "leave": "休假"
+    },
+    "gender": {
+      "male": "男",
+      "female": "女"
+    },
+    "employee_type_labels": {
+      "regular": "正式员工",
+      "probation": "试用期",
+      "intern": "实习生",
+      "contract": "合同工",
+      "part_time": "兼职"
     },
     "error": {
       "load_failed": "加载失败",
@@ -388,6 +453,20 @@
       "normal": "合格",
       "repaired": "维修合格",
       "partially_repaired": "部分修复"
+    },
+    "inbound_type_labels": {
+      "purchase": "采购入库",
+      "repair_return": "维修归还",
+      "other": "其他入库"
+    },
+    "location_type_labels": {
+      "warehouse": "仓库",
+      "project": "项目现场"
+    },
+    "receive_status_labels": {
+      "normal": "正常",
+      "damaged": "损坏",
+      "missing": "缺失"
     },
     "action": {
       "import": "导入",
@@ -563,8 +642,15 @@
       "department": "部门",
       "position": "岗位",
       "hire_date": "入职日期",
+      "hireDate": "入职日期",
       "id_card": "身份证号",
+      "idCard": "身份证号",
       "employee_no": "工号",
+      "employeeNo": "工号",
+      "education": "学历",
+      "university": "毕业院校",
+      "deptId": "所属部门",
+      "postId": "入职岗位",
       "actual_start": "实际开始日期",
       "actual_end": "实际结束日期",
       "total_cost": "实际成本",
@@ -573,7 +659,26 @@
       "on_time": "按时完成",
       "early": "提前完成",
       "delayed": "延期完成",
-      "summary": "项目总结"
+      "summary": "项目总结",
+      "projectName": "项目名称",
+      "projectCode": "项目编号",
+      "country": "所属国家",
+      "address": "详细地址",
+      "managerId": "项目经理",
+      "customerId": "客户",
+      "startDate": "项目预计开始时间",
+      "endDate": "项目预计结束时间",
+      "budget": "预算金额(万元)",
+      "description": "项目描述",
+      "attachments": "附件",
+      "buildingArea": "建筑面积(m²)",
+      "itCapacity": "IT容量(MW)",
+      "cabinetCount": "机柜数量",
+      "cabinetPower": "单机柜功率(KW)",
+      "powerArchitecture": "供电架构",
+      "hvacArchitecture": "暖通架构",
+      "fireArchitecture": "消防架构",
+      "weakElectricArchitecture": "弱电架构"
     }
   },
   "process_form_launcher": {
@@ -624,6 +729,16 @@
       "current_node": "当前节点",
       "title": "流程名称",
       "initiator": "发起人",
+      "node": "节点",
+      "handler": "处理人",
+      "type": "类型",
+      "time": "时间",
+      "payload": "申请内容",
+      "node_handler": "节点/处理人",
+      "current_user": "当前用户",
+      "created_at": "创建时间",
+      "completion_time": "完成时间",
+      "comment": "意见",
       "manage_code": "编号",
       "received_quantity": "实收数量",
       "receiving_images": "收货照片",
@@ -658,14 +773,24 @@
       "general": "通用"
     },
     "engine_center": "工作流引擎",
-    "engine_desc": "可视化编排业务，驱动标准化协作",
+    "engine_desc": "可视化编排业务流程",
     "new_engine": "新建工作流",
     "initiate_workflow": "发起流程",
     "select_workflow_desc": "选择要发起的业务流程",
     "search_workflow_placeholder": "搜索流程...",
     "no_matching_workflow": "暂未找到匹配的流程",
     "definition_key_not_found": "流程不存在",
+    "no_definition": "暂无流程信息",
+    "no_records": "暂无流转记录",
+    "timeline": "流转轨迹",
+    "waiting": "等待决策中...",
     "click_to_initiate": "点击发起此流程",
+    "prediction": {
+      "title": "未来路径预测",
+      "hint": "基于当前业务数据自动演算，实际路径可能因手动决策改变",
+      "approvers": "预定审批人",
+      "no_approver_skip": "无预定审批人（届时可能自动跳过）"
+    },
     "placeholder": {
       "shipping_no": "请输入发货单号（可选）",
       "shipping_note": "请输入发货备注（如封条号）",
@@ -676,9 +801,11 @@
       "signer_comment": "请输入加签说明...",
       "return_comment": "请输入退回理由...",
       "search_engine": "搜索流程名称、代码...",
-      "search_tasks": "搜索流程名称、发起人..."
+      "search_tasks": "搜索流程名称、发起人...",
+      "comment": "请输入审批意见..."
     },
     "stats": {
+      "total_requests": "申请总数",
       "pending_tasks": "待处理",
       "urgent_tasks": "紧急",
       "avg_response": "平均响应",
@@ -690,6 +817,11 @@
       "draft_engines": "草稿",
       "syncing": "同步中..."
     },
+    "view_my_requests": "查看我发起的申请",
+    "submit_proposal": "提交申请",
+    "save_draft": "暂存为草稿",
+    "submit_confirm_title": "确认提交申请",
+    "submit_confirm_content": "请确认所有信息填写无误，提交后将无法撤回。",
     "priority": {
       "high": "高",
       "normal": "中",
@@ -791,11 +923,41 @@
       "expression": "表达式"
     },
     "approval_mode": {
-      "or_sign": "或签（一人通过）",
-      "and_sign": "会签（全部通过）",
-      "sequential": "顺序签（按序审批）",
-      "vote": "票决（按比例）"
+      "or_sign": "或签",
+      "or_sign_desc": "任一审批人通过即可",
+      "and_sign": "会签",
+      "and_sign_desc": "所有审批人需全部通过",
+      "sequential": "依次审批",
+      "sequential_desc": "按顺序依次审批",
+      "vote": "投票",
+      "vote_desc": "多数通过即可"
     },
+    "approval_method": "审批方式",
+    "vote_threshold": "投票阈值",
+    "vote_threshold_hint": "设置审批人通过票数占总人数的比例",
+    "approver_source": "审批人来源",
+    "approval_role": "审批角色",
+    "skip_condition": "跳过条件",
+    "skip_none": "无",
+    "skip_no_approvers": "审批人为空",
+    "skip_always": "始终跳过",
+    "timeout_hours": "超时时间(小时)",
+    "timeout_hint": "设置审批超时时间",
+    "vote_unit": "票",
+    "approver_source_type_user": "指定人员",
+    "approver_source_type_role": "角色",
+    "approver_source_type_department_manager": "部门负责人",
+    "approver_source_type_project_manager": "项目经理",
+    "approver_source_type_initiator": "发起人",
+    "approver_source_type_form_field": "表单字段",
+    "approver_source_type_expression": "表达式",
+    "service_node": "服务",
+    "service_type": "服务类型",
+    "service_type_http": "HTTP请求",
+    "service_type_script": "脚本",
+    "service_type_email": "发送邮件",
+    "service_type_notification": "发送通知",
+    "service_type_custom": "自定义",
     "status": {
       "pending": "待审批",
       "approved": "已通过",
@@ -804,6 +966,9 @@
       "completed": "已完成",
       "terminated": "已终止",
       "skipped": "已跳过",
+      "normal": "进行中",
+      "success": "成功",
+      "completed_short": "已完结",
       "normal_receiving": "正常收货",
       "exception_receiving": "异常收货",
       "damaged": "损坏",
@@ -889,11 +1054,17 @@
     "action_logs": {
       "title": "操作日志"
     },
+    "basic_info": "基本信息",
+    "form_content": "表单内容",
     "action": {
       "reload": "刷新",
       "submit": "提交",
       "approve": "通过",
       "reject": "驳回",
+      "return_target": "回退目标",
+      "default_previous": "默认 (上一步)",
+      "done_by": "已办",
+      "select_reject_target": "请选择驳回目标并确认",
       "withdraw": "撤回",
       "return": "退回",
       "transfer": "移交",
@@ -902,15 +1073,32 @@
       "click_node": "点击节点",
       "initiate": "发起",
       "process_start": "启动",
+      "required": "待操作",
       "skip": "跳过",
       "approval_panel": "审批操作",
       "confirm_approve": "确认通过",
       "confirm_reject": "确认驳回",
       "select_action": "请选择操作",
-      "view_flow_chart": "查看流程图"
+      "view_flow_chart": "查看流程图",
+      "view_flow": "查看流程",
+      "confirm_withdraw": "确认撤回",
+      "confirm_withdraw_desc": "确定要撤回此申请吗？撤回后申请将作废。",
+      "withdrawn_success": "已成功撤回",
+      "cc": "抄送",
+      "cc_select": "选择抄送人",
+      "more": "更多"
+    },
+    "fields": {
+      "title": "申请标题",
+      "document_no": "单据编号",
+      "apply_date": "申请日期",
+      "applicant": "申请人"
     },
     "task_list": {
       "title": "任务列表"
+    },
+    "hint": {
+      "auto_generate": "提交后自动生成"
     }
   },
   "task": {
@@ -940,7 +1128,7 @@
     "no_name": "未命名流程草稿",
     "draft_archived": "草稿存档",
     "delete_confirm": "确定要永久删除此草稿吗？此操作无法撤销。",
-    "draft_deleted": "草稿已剔除",
+    "draft_deleted": "草稿已删除",
     "load_failed": "加载草稿记录失败",
     "confirm_delete": "确认销毁"
   },
@@ -979,18 +1167,19 @@
     "equipment_repair": "设备维修",
     "equipment_scrap": "设备报废",
     "project_completion": "项目结项",
-    "purchase_request": "采购申请"
+    "purchase_request": "采购申请",
+    "project_approval": "项目审批"
   },
   "login": {
-    "title": "登录系统",
+    "title": "登录",
     "username": "用户名",
     "password": "密码",
     "submit": "登录",
     "error": "登录失败，请检查账号和密码",
     "credentials_required": "请输入用户名和密码",
     "secure_entry": "安全登录",
-    "infrastructure": "cxwell 全局基础设施 v3.0",
-    "copyright": "© 2026 cxwell Technologies. 版权所有"
+    "infrastructure": "CXWELL 全局基础设施 v3.0",
+    "copyright": "© 2026 CXWELL Technologies. 版权所有"
   },
   "notification_center": {
     "title": "通知中心",
@@ -1020,7 +1209,9 @@
       "high": "高",
       "urgent": "紧急",
       "load_pending_failed": "加载待办任务失败: {{message}}"
-    }
+    },
+    "todo_hint": "您当前有 {{count}} 项待处理审批任务，请前往审批中心处理。",
+    "go_to_approvals": "前往审批中心"
   },
   "workflow_visualization": {
     "title": "流程可视化",
@@ -1044,7 +1235,8 @@
       "running": "进行中",
       "completed": "已完成",
       "terminated": "已终止",
-      "unknown": "未知"
+      "unknown": "未知",
+      "label": "状态"
     },
     "task_status": {
       "completed": "已完成",
@@ -1157,7 +1349,7 @@
   },
   "workflow_monitor": {
     "page_title": "流程监控",
-    "page_subtitle": "实时监控工作流执行状态并进行干预操作",
+    "page_subtitle": "实时监控工作流执行状态并进行干预",
     "load_failed": "获取监控数据失败",
     "instance_detail_failed": "获取实例详情失败",
     "select_target_node": "请选择目标节点",
@@ -1206,7 +1398,7 @@
     "intervention_type": "操作类型",
     "force_approve_reject": "强制通过/拒绝",
     "jump_to_node": "跳转到节点",
-    "rollback": "回退上一步",
+    "rollback": "回退",
     "force_close": "强制关闭",
     "reassign": "重新分配",
     "select_task_to_handle": "请选择要强制处理的任务",
@@ -1233,7 +1425,7 @@
     "intervention_type": "操作类型",
     "force_approve_reject": "强制通过/拒绝",
     "jump_to_node": "跳转到节点",
-    "rollback": "回退上一步",
+    "rollback": "回退",
     "force_close": "强制关闭",
     "reassign": "重新分配",
     "select_task_to_handle": "请选择要强制处理的任务",
@@ -1363,7 +1555,8 @@
       "assets": "资产",
       "expenses": "费用",
       "staffing": "人员",
-      "knowledge": "知识"
+      "knowledge": "知识",
+      "tags": "标签"
     },
     "report": {
       "title": "项目状态报告",
@@ -1381,19 +1574,45 @@
       "placeholder_name": "请输入名称"
     },
     "risk": {
-      "title": "风险",
-      "solution": "解决措施",
-      "initiator": "提出人",
-      "created_at": "日期",
-      "follower": "跟进人",
-      "is_closed": "状态",
-      "status_open": "进行中",
-      "status_closed": "已关闭",
+      "title": "风险管理",
+      "risk_no": "风险编号",
+      "category": "风险分类",
+      "severity": "严重程度",
+      "assignee": "责任方/责任人",
+      "deadline": "要求闭环时间",
+      "actual_closed_at": "实际闭环时间",
+      "progress_note": "应对方案/最新进展",
+      "categories": {
+        "progress": "进度风险",
+        "quality": "质量风险",
+        "safety": "安全风险",
+        "supply_chain": "供应链风险"
+      },
+      "levels": {
+        "high": "🔴 高 (High)",
+        "medium": "🟡 中 (Medium)",
+        "low": "🟢 低 (Low)"
+      },
+      "status": {
+        "pending": "未处理",
+        "in_progress": "整改中",
+        "pending_review": "待复核",
+        "closed": "已闭环"
+      },
+      "overdue": "⚠️ 已逾期",
+      "stats": {
+        "active_total": "未闭环风险总数",
+        "high_severity": "紧急/高危风险",
+        "overdue_total": "逾期未整改",
+        "this_week_closed": "本周已闭环"
+      },
+      "tabs": {
+        "active": "进行中 (Active)",
+        "closed": "已闭环 (Closed)"
+      },
       "add_item": "添加风险",
       "placeholder_title": "请输入风险描述",
-      "high_priority_warning": "高风险预警",
-      "visa_overlap": "检测到签证/休假重叠风险",
-      "example": "例如：关键设备到货延迟"
+      "example": "例如：1号柴发机房漏水隐患"
     },
     "asset": {
       "name": "名称",
@@ -1474,7 +1693,11 @@
       "total_tasks": "关联任务",
       "wbs_code": "WBS 编码",
       "permission_desc": "授权成员可直接编辑里程碑与标记完成。",
-      "invalid_dates": "结束日期不能早于开始日期"
+      "invalid_dates": "结束日期不能早于开始日期",
+      "no_parent": "无父级",
+      "add_child": "添加子里程碑",
+      "parent": "父级",
+      "sub_milestones": "子里程碑"
     },
     "reports": {
       "title": "里程碑报告管理",
@@ -1518,6 +1741,11 @@
     "wbs": {
       "resource_placeholder": "输入资源名称..."
     },
+    "no_related_workflow": "暂无关联审批流",
+    "node_branch": "流程节点分支",
+    "initiate_change_request": "立即发起变更申请"
+  },
+  "project_detail": {
     "no_related_workflow": "暂无关联审批流",
     "node_branch": "流程节点分支",
     "initiate_change_request": "立即发起变更申请"
@@ -1804,44 +2032,44 @@
     "urgency_urgent": "紧急"
   },
   "user_management": {
-    "page_title": "成员与访问控制",
-    "page_subtitle": "管理企业数字身份、权限分配及系统访问安全准则",
+    "page_title": "成员管理",
+    "page_subtitle": "管理企业数字身份与系统访问权限",
     "sync_success": "身份档案同步完成",
     "create_success": "新身份已建立",
     "status_changed": "用户 {{name}} 已{{status}}",
     "status_active": "激活",
-    "status_inactive": "临时停用",
+    "status_inactive": "停用",
     "delete_confirm_title": "注销身份令牌",
-    "delete_confirm_content": "该操作将永久注销 \"{{name}}\" 的系统访问令牌及关联权限。此行为不可逆，确定继续？",
-    "delete_success": "身份数据已抹除",
-    "reset_password_success": "重置指令执行成功，新密钥已生效",
-    "no_email": "未绑定通讯资产",
-    "status_active_user": "在线运行",
-    "status_inactive_user": "锁定中",
+    "delete_confirm_content": "该操作将永久注销 \"{{name}}\" 的系统访问令牌及关联权限。此操作不可逆，确定继续？",
+    "delete_success": "身份数据已删除",
+    "reset_password_success": "重置成功，新密码已生效",
+    "no_email": "未绑定通讯邮箱",
+    "status_active_user": "在线",
+    "status_inactive_user": "锁定",
     "sync_profile": "同步身份档案",
     "create_profile": "建立数字化身",
     "create_new_identity": "建立新身份",
     "search_placeholder": "通过 ID、姓名或身份标识进行模糊检索...",
     "loading": "同步身份目录...",
-    "no_results_title": "未发现匹配的数字身份",
-    "no_results_message": "尝试更换搜索词或建立一个新的身份索引",
+    "no_results_title": "未发现匹配的身份",
+    "no_results_message": "尝试更换搜索词或建立新的身份索引",
     "edit_profile": "编辑档案",
-    "reset_password": "密钥重置",
-    "delete_user": "物理抹除",
+    "reset_password": "重置密码",
+    "delete_user": "删除用户",
     "reset_password_title": "重置安全密钥",
     "execute_reset": "执行重置",
-    "table_header_identity": "核心身份图景",
-    "table_header_contact": "联系矩阵",
-    "table_header_role": "职能角色",
-    "table_header_status": "动力状态",
-    "table_header_actions": "协议操作",
+    "table_header_identity": "身份信息",
+    "table_header_contact": "联系信息",
+    "table_header_role": "角色",
+    "table_header_status": "状态",
+    "table_header_actions": "操作",
     "role": {
       "admin": "超级管理员",
-      "project_manager": "项目指挥官",
-      "hr_manager": "人资调度室",
-      "equipment_manager": "资产维护官",
-      "implementer": "一线实施员",
-      "user": "核心业务端"
+      "project_manager": "项目经理",
+      "hr_manager": "人事经理",
+      "equipment_manager": "设备管理员",
+      "implementer": "实施工程师",
+      "user": "普通用户"
     }
   },
   "role_management": {
@@ -2016,6 +2244,7 @@
     "quick_actions": "快捷操作",
     "export_all": "导出所有数据",
     "refresh_stats": "刷新数据统计",
+    "system_settings": "系统设置",
     "data_preview": "数据预览",
     "select_table_hint": "选择数据表查看",
     "add_new": "新增",

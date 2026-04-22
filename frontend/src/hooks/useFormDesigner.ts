@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { API_URL } from '../config/api';
 import { FormField, FormLayout, FormTemplate } from '../types/workflow';
 import { useMessage } from './useMessage';
+import { formApi } from '../api/formApi';
 
 export function useFormDesigner(id: string | undefined) {
   const { t } = useTranslation();
@@ -25,22 +25,14 @@ export function useFormDesigner(id: string | undefined) {
     if (!id || id === 'new') return;
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${API_URL.BASE}/api/workflow/form-templates/${id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const res = await formApi.getTemplate(id);
       
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          const template: FormTemplate = data.data;
-          setTemplateName(template.name);
-          setLayoutType(template.layout.type);
-          setLayoutColumns(template.layout.columns);
-          setFields(template.fields || []);
-        }
+      if (res.success) {
+        const template: FormTemplate = res.data;
+        setTemplateName(template.name);
+        setLayoutType(template.layout?.type || 'single');
+        setLayoutColumns(template.layout?.columns || 2);
+        setFields(template.fields || []);
       }
     } catch (error) {
       console.error('Failed to load form template:', error);
@@ -117,7 +109,6 @@ export function useFormDesigner(id: string | undefined) {
 
     try {
       setSaving(true);
-      const token = localStorage.getItem('token');
       
       const templateData = {
         name: templateName,
@@ -134,28 +125,16 @@ export function useFormDesigner(id: string | undefined) {
         }
       };
 
-      const url = id && id !== 'new' 
-        ? `${API_URL.BASE}/api/workflow/form-templates/${id}` 
-        : `${API_URL.BASE}/api/workflow/form-templates`;
-      
-      const method = id && id !== 'new' ? 'PUT' : 'POST';
+      const res = id && id !== 'new' 
+        ? await formApi.updateTemplate(id, templateData)
+        : await formApi.createTemplate(templateData);
 
-      const res = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(templateData)
-      });
-
-      if (res.ok) {
+      if (res.success) {
         success(t('form_designer_page.save_success'));
         navigate('/forms/templates');
         return true;
       } else {
-        const data = await res.json();
-        showError(data.error || t('form_designer_page.save_failed'));
+        showError(res.error || t('form_designer_page.save_failed'));
       }
     } catch (error) {
       console.error('Failed to save template:', error);

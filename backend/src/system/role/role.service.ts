@@ -35,9 +35,13 @@ export class RoleService {
    * 更新角色
    */
   async update(roleId: string, data: any) {
+    const id = BigInt(roleId);
+    // 过滤掉不可直接更新的 ID 字段
+    const { roleId: _roleId, ...rest } = data;
+    
     return this.prisma.sysRole.update({
-      where: { roleId: BigInt(roleId) },
-      data: { ...data, updateTime: new Date() }
+      where: { roleId: id },
+      data: { ...rest, updateTime: new Date() }
     });
   }
 
@@ -88,9 +92,7 @@ export class RoleService {
 
     // 注入新的策略
     for (const menu of selectedMenus) {
-      // 假设 perms 是类似 "system:user:list" 的字符串，我们可以将其直接作为 Casbin 的资源（Object）
-      // 动作（Action）默认为 read 或者根据 menuId 动态判定，这里简化为 "read"
-      await this.casbinService.enforcer.addPolicy(role.roleKey, menu.perms!, 'read');
+      await this.casbinService.enforcer.addPolicy(role.roleKey, menu.perms!, 'allow');
     }
 
     // 保存策略到数据库并重载

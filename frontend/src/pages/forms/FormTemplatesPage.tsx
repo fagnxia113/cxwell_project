@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { API_URL } from '../../config/api'
+import { formApi } from '../../api/formApi'
+import { workflowApi } from '../../api/workflowApi'
 import {
   Plus,
   Edit,
   Trash2,
   FileText,
   Search,
-  Eye,
   Copy,
   Layout,
   Layers
@@ -52,33 +52,18 @@ const FormTemplatesPage: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem('token')
       
       const [templatesRes, definitionsRes] = await Promise.all([
-        fetch(`${API_URL.BASE}/api/workflow/form-templates/templates`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }),
-        fetch(`${API_URL.BASE}/api/workflow/definitions?pageSize=100`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
+        formApi.getTemplates(),
+        workflowApi.getDefinitions()
       ])
       
-      if (templatesRes.ok) {
-        const data = await templatesRes.json()
-        if (data.success) {
-          setTemplates(data.data || [])
-        }
+      if (templatesRes.success) {
+        setTemplates(templatesRes.data || [])
       }
       
-      if (definitionsRes.ok) {
-        const data = await definitionsRes.json()
-        if (data.success) {
-          setWorkflowDefinitions(data.data || [])
-        }
+      if (definitionsRes.success) {
+        setWorkflowDefinitions(definitionsRes.data || [])
       }
     } catch (error) {
       console.error('加载数据失败', error)
@@ -90,19 +75,13 @@ const FormTemplatesPage: React.FC = () => {
   const handleDelete = async () => {
     if (!deleteTarget) return
     try {
-      const token = localStorage.getItem('token')
-      const res = await fetch(`${API_URL.BASE}/api/workflow/form-templates/templates/${deleteTarget.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      const data = await res.json()
-      if (data.success) {
+      const res = await formApi.deleteTemplate(deleteTarget.id)
+      if (res.success) {
         setTemplates(prev => prev.filter(t => t.id !== deleteTarget.id))
         setDeleteTarget(null)
+        setShowDeleteDialog(false)
       } else {
-        alert(data.error || '删除失败')
+        alert(res.error || '删除失败')
       }
     } catch (error) {
       console.error('删除失败', error)
@@ -112,18 +91,11 @@ const FormTemplatesPage: React.FC = () => {
 
   const handleCopy = async (template: FormTemplate) => {
     try {
-      const token = localStorage.getItem('token')
-      const res = await fetch(`${API_URL.BASE}/api/workflow/form-templates/templates/${template.id}/copy`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      const data = await res.json()
-      if (data.success) {
+      const res = await formApi.copyTemplate(template.id)
+      if (res.success) {
         await loadData()
       } else {
-        alert(data.error || '复制失败')
+        alert(res.error || '复制失败')
       }
     } catch (error) {
       console.error('复制失败', error)
@@ -220,15 +192,15 @@ const FormTemplatesPage: React.FC = () => {
                       <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
                         <div className="flex items-center gap-1">
                           <Layout className="w-4 h-4" />
-                          <span>{getLayoutTypeLabel(template.layout.type)}</span>
+                          <span>{getLayoutTypeLabel(template.layout?.type || 'single')}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Layers className="w-4 h-4" />
-                          <span>{template.fields.length} 个字段</span>
+                          <span>{template.fields?.length || 0} 个字段</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <FileText className="w-4 h-4" />
-                          <span>{template.layout.columns} 列布局</span>
+                          <span>{template.layout?.columns || 1} 列布局</span>
                         </div>
                       </div>
 

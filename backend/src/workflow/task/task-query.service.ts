@@ -95,13 +95,27 @@ export class TaskQueryService {
         initiator_name: inst?.createBy || '系统',
         status: 'pending',
         create_time: task.createTime,
+        form_data: inst?.ext ? JSON.parse(inst.ext) : {},
       };
     });
   }
 
   async getMyTodoTasksCount(userId: string) {
+    const assignments = await this.prisma.flowUser.findMany({
+      where: {
+        processedBy: userId,
+        type: '1',
+      },
+      select: { associated: true }
+    });
+
+    if (assignments.length === 0) return 0;
+
+    const taskIds = assignments.map(a => a.associated);
+
     return this.prisma.flowTask.count({
       where: {
+        id: { in: taskIds },
         flowStatus: 'todo',
         delFlag: '0',
       },
@@ -149,6 +163,7 @@ export class TaskQueryService {
         create_time: task.createTime,
         finish_time: task.updateTime,
         message: task.message,
+        form_data: inst?.ext ? JSON.parse(inst.ext) : {},
       };
     });
   }
@@ -169,20 +184,61 @@ export class TaskQueryService {
     if (instances.length === 0) return [];
 
     const definitionIds = [...new Set(instances.map(i => i.definitionId))];
-    const definitions = await this.prisma.flowDefinition.findMany({
-      where: { id: { in: definitionIds } }
-    });
-    const defMap = new Map(definitions.map(d => [d.id.toString(), d]));
+    const instanceIds = instances.map(i => i.id);
 
-    return instances.map(inst => ({
-      id: inst.id.toString(),
-      instance_id: inst.id.toString(),
-      process_title: inst.businessId || '未命名流程',
-      process_type: defMap.get(inst.definitionId.toString())?.flowName || '未知类型',
-      status: inst.flowStatus,
-      current_node: inst.nodeName,
-      create_time: inst.createTime,
-    }));
+    const [definitions, currentTasks] = await Promise.all([
+      this.prisma.flowDefinition.findMany({ where: { id: { in: definitionIds } } }),
+      this.prisma.flowTask.findMany({
+        where: {
+          instanceId: { in: instanceIds },
+          flowStatus: 'todo',
+          delFlag: '0',
+        },
+      }),
+    ]);
+
+    const defMap = new Map(definitions.map(d => [d.id.toString(), d]));
+    const taskMap = new Map<string, typeof currentTasks[0]>();
+    currentTasks.forEach(t => {
+      const key = t.instanceId.toString();
+      if (!taskMap.has(key)) taskMap.set(key, t);
+    });
+
+    return instances.map(inst => {
+      const def = defMap.get(inst.definitionId.toString());
+      const currentTask = taskMap.get(inst.id.toString());
+      let formData = {};
+      try {
+        formData = inst.ext ? JSON.parse(inst.ext) : {};
+      } catch (e) {
+        formData = {};
+      }
+
+      return {
+        id: inst.id.toString(),
+        instance_id: inst.id.toString(),
+        definition_id: inst.definitionId.toString(),
+        definition_key: def?.flowCode || 'unknown',
+        process_title: inst.businessId || '未命名流程',
+        process_type: def?.flowName || '通用流程',
+        title: inst.businessId || '未命名流程',
+        status: inst.flowStatus,
+        result: null,
+        node_name: inst.nodeName,
+        current_node_id: inst.nodeCode,
+        current_node_name: inst.nodeName,
+        current_assignee_id: currentTask?.createBy || null,
+        current_assignee_name: currentTask?.createBy || null,
+        form_data: formData,
+        variables: { formData },
+        create_time: inst.createTime,
+        created_at: inst.createTime,
+        updated_at: inst.updateTime,
+        initiator_id: inst.createBy,
+        initiator_name: inst.createBy,
+        business_id: inst.businessId,
+      };
+    });
   }
 
   /**
@@ -215,7 +271,8 @@ export class TaskQueryService {
         process_type: def?.flowName || '未知类型',
         process_type_code: def?.flowCode, // 重要：加载表单所需
         create_time: d.createTime,
-        update_time: d.updateTime
+        update_time: d.updateTime,
+        form_data: d.ext ? JSON.parse(d.ext) : {},
       };
     });
   }
@@ -258,12 +315,21 @@ export class TaskQueryService {
         initiator_name: inst?.createBy || '系统',
         status: 'cc',
         create_time: task.createTime,
+        form_data: inst?.ext ? JSON.parse(inst.ext) : {},
       };
     });
   }
   async getInstanceTimeline(instanceId: string) {
     const id = BigInt(instanceId);
     const instance = await this.prisma.flowInstance.findUnique({ where: { id } });
+    
+    if (!instance) {
+      return { instance: null, timeline: [], currentTasks: [] };
+    }
+
+    const definition = await this.prisma.flowDefinition.findUnique({
+      where: { id: instance.definitionId }
+    });
     
     const history = await this.prisma.flowHisTask.findMany({
       where: { instanceId: id, delFlag: '0' },
@@ -274,18 +340,45 @@ export class TaskQueryService {
       where: { instanceId: id, delFlag: '0' },
     });
 
+    let formData = {};
+    try {
+      formData = instance.ext ? JSON.parse(instance.ext) : {};
+    } catch (e) {
+      formData = {};
+    }
+
     return {
-      instance: instance ? {
-        ...instance,
+      instance: {
         id: instance.id.toString(),
-        definitionId: instance.definitionId.toString(),
-      } : null,
+        definition_id: instance.definitionId.toString(),
+        definition_key: definition?.flowCode || 'unknown',
+        title: instance.businessId || '未命名流程',
+        status: instance.flowStatus,
+        result: null,
+        variables: { formData },
+        form_data: formData,
+        initiator_id: instance.createBy,
+        initiator_name: instance.createBy,
+        start_time: instance.createTime,
+        end_time: null,
+        current_node_id: instance.nodeCode,
+        current_node_name: instance.nodeName,
+        business_id: instance.businessId,
+        created_at: instance.createTime,
+        updated_at: instance.updateTime,
+      },
       timeline: history.map(h => ({
-        ...h,
         id: h.id.toString(),
-        definitionId: h.definitionId.toString(),
-        instanceId: h.instanceId.toString(),
-        taskId: h.taskId.toString(),
+        action: h.skipType === 'pass' ? 'approved' : h.skipType === 'reject' ? 'rejected' : h.skipType === 'rollback' ? 'rollback' : h.skipType === 'add_signer' ? 'add_signer' : h.skipType === 'cc' ? 'cc' : h.skipType === 'transfer' ? 'transfer' : h.skipType,
+        node_id: h.nodeCode,
+        node_name: h.nodeName,
+        status: h.flowStatus,
+        operator_id: h.approver,
+        operator_name: h.approver,
+        comment: h.message,
+        cooperateType: h.cooperateType,
+        skipType: h.skipType,
+        created_at: h.createTime,
       })),
       currentTasks: currentTasks.map(t => ({
         ...t,

@@ -15,10 +15,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     ConfigModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        secret: config.get('JWT_SECRET', 'cxwell_secret_key'),
-        signOptions: { expiresIn: config.get('JWT_EXPIRES_IN', '12h') },
-      }),
+      useFactory: (config: ConfigService) => {
+        const secret = config.get('JWT_SECRET');
+        if (!secret) throw new Error('JWT_SECRET environment variable is required');
+        return {
+          secret,
+          signOptions: { expiresIn: config.get('JWT_EXPIRES_IN', '2h') },
+        };
+      },
     }),
   ],
   controllers: [AuthController],

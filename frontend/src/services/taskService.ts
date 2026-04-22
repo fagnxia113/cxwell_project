@@ -48,5 +48,14 @@ export const taskService = {
 
   async transferTask(id: string, targetUserId: string, comment?: string): Promise<void> {
     return apiClient.post(`/api/workflow/tasks/${id}/transfer`, { targetUserId, comment })
+  },
+
+  async predictPath(instanceId: string, variables?: any): Promise<any[]> {
+    const res = await apiClient.post<any>('/api/workflow/predict', { instanceId, variables })
+    return res.data || []
+  },
+
+  async copyTo(instanceId: string, userIds: string[]): Promise<void> {
+    return apiClient.post('/api/workflow/copy', { instanceId, userIds })
   }
 }

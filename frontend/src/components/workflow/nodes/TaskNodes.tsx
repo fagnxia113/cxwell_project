@@ -1,5 +1,6 @@
 import React from 'react'
 import { Handle, Position } from 'reactflow'
+import { useTranslation } from 'react-i18next'
 import {
   User,
   Settings,
@@ -10,24 +11,9 @@ import {
 } from 'lucide-react'
 import { WorkflowNodeData } from '../../../types/workflow-designer'
 
-const approverTypeLabels: Record<string, string> = {
-  'user': '指定人员',
-  'role': '角色',
-  'department_manager': '部门负责人',
-  'project_manager': '项目经理',
-  'initiator': '发起人',
-  'form_field': '表单字段',
-  'expression': '表达式'
-}
-
-const approvalModeLabels: Record<string, string> = {
-  'or_sign': '或签',
-  'and_sign': '会签',
-  'sequential': '依次审批',
-  'vote': '投票'
-}
-
 export const UserTaskNode: React.FC<{ data: WorkflowNodeData; selected: boolean }> = ({ data, selected }) => {
+  const { t } = useTranslation()
+  
   const getApprovalModeIcon = () => {
     switch (data.approvalConfig?.approvalMode) {
       case 'or_sign': return <CheckSquare className="w-3 h-3" />
@@ -39,7 +25,7 @@ export const UserTaskNode: React.FC<{ data: WorkflowNodeData; selected: boolean 
   }
 
   const getApprovalModeLabel = () => {
-    return approvalModeLabels[data.approvalConfig?.approvalMode || 'or_sign'] || '或签'
+    return t(`workflow.approval_mode.${data.approvalConfig?.approvalMode || 'or_sign'}`)
   }
 
   return (
@@ -59,11 +45,11 @@ export const UserTaskNode: React.FC<{ data: WorkflowNodeData; selected: boolean 
           </div>
           <div className="flex-1 min-w-0">
             <div className="font-medium text-sm text-gray-800 truncate">
-              {data.label || '审批'}
+              {data.label || t('workflow.node_approval_config')}
             </div>
             {data.approvalConfig?.approverSource?.type && (
               <div className="text-xs text-gray-500">
-                {approverTypeLabels[data.approvalConfig.approverSource.type] || data.approvalConfig.approverSource.type}
+                {t(`workflow.approver_source_type_${data.approvalConfig.approverSource.type}`) || data.approvalConfig.approverSource.type}
               </div>
             )}
           </div>
@@ -73,7 +59,7 @@ export const UserTaskNode: React.FC<{ data: WorkflowNodeData; selected: boolean 
             {getApprovalModeIcon()}
             <span>{getApprovalModeLabel()}</span>
             {data.approvalConfig.approvalMode === 'vote' && data.approvalConfig.voteThreshold && (
-              <span className="ml-1 text-blue-600">({data.approvalConfig.voteThreshold}票)</span>
+              <span className="ml-1 text-blue-600">({data.approvalConfig.voteThreshold}{t('workflow.vote_unit') || '票'})</span>
             )}
           </div>
         )}
@@ -83,12 +69,13 @@ export const UserTaskNode: React.FC<{ data: WorkflowNodeData; selected: boolean 
 }
 
 export const ServiceTaskNode: React.FC<{ data: WorkflowNodeData; selected: boolean }> = ({ data, selected }) => {
+  const { t } = useTranslation()
   const serviceTypeLabels: Record<string, string> = {
-    'http': 'HTTP请求',
-    'script': '脚本',
-    'email': '发送邮件',
-    'notification': '发送通知',
-    'custom': '自定义'
+    'http': t('workflow.service_type_http') || 'HTTP请求',
+    'script': t('workflow.service_type_script') || '脚本',
+    'email': t('workflow.service_type_email') || '发送邮件',
+    'notification': t('workflow.service_type_notification') || '发送通知',
+    'custom': t('workflow.service_type_custom') || '自定义'
   }
 
   return (
@@ -108,10 +95,10 @@ export const ServiceTaskNode: React.FC<{ data: WorkflowNodeData; selected: boole
           </div>
           <div className="flex-1 min-w-0">
             <div className="font-medium text-sm text-gray-800 truncate">
-              {data.label || '服务'}
+              {data.label || t('workflow.service_node') || '服务'}
             </div>
             <div className="text-xs text-gray-500">
-              {serviceTypeLabels[data.serviceConfig?.serviceType || ''] || '服务类型'}
+              {serviceTypeLabels[data.serviceConfig?.serviceType || ''] || t('workflow.service_type') || '服务类型'}
             </div>
           </div>
         </div>

@@ -26,6 +26,7 @@ const ApprovalCenterPage = lazy(() => import('../pages/approvals/ApprovalCenterP
 const NewProcessPage = lazy(() => import('../pages/approvals/NewProcessPage'))
 const WorkflowFormPage = lazy(() => import('../pages/approvals/WorkflowFormPage'))
 const ApprovalHandlePage = lazy(() => import('../pages/approvals/ApprovalHandlePage'))
+const InstanceDetailPage = lazy(() => import('../pages/approvals/InstanceDetailPage'))
 
 // 工作流管理
 const WorkflowVisualizationPage = lazy(() => import('../pages/workflow/WorkflowVisualizationPage'))
@@ -88,8 +89,8 @@ export const routes: RouteObject[] = [
             { path: 'center', element: <ApprovalCenterPage /> },
             { path: 'new', element: <NewProcessPage /> },
             { path: 'workflow/:definitionKey', element: <WorkflowFormPage /> },
-            { path: 'handle/:taskId', element: <ApprovalHandlePage /> },
-            { path: 'detail/:instanceId', element: <WorkflowDetailPage /> },
+            { path: 'handle/:taskId', element: <WorkflowDetailPage /> },
+            { path: 'instance/:instanceId', element: <WorkflowDetailPage /> },
         ]
     },
 

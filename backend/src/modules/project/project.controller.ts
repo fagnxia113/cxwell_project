@@ -1,9 +1,7 @@
-import { Controller, Get, Query, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Query, Param, Req } from '@nestjs/common';
 import { ProjectService } from './project.service';
-import { AuthGuard } from '@nestjs/passport';
 
 @Controller('project')
-@UseGuards(AuthGuard('jwt'))
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 

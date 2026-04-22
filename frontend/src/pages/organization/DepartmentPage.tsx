@@ -21,6 +21,8 @@ import { useConfirm } from '../../hooks/useConfirm'
 import { useMessage } from '../../hooks/useMessage'
 import { orgApi } from '../../api/orgApi'
 import { cn } from '../../utils/cn'
+import { API_URL } from '../../config/api'
+import { apiClient } from '../../utils/apiClient'
 
 interface Department {
   id: string
@@ -139,7 +141,6 @@ const DeptItem: React.FC<{
             </button>
           </div>
         </div>
-      </div>
 
       <AnimatePresence>
         {isExpanded && hasChildren && (
@@ -170,9 +171,9 @@ const DepartmentPage: React.FC = () => {
 
   const [formData, setFormData] = useState({
     name: '',
-    parent_id: '',
-    manager_id: '',
-    sort_order: 0,
+    parentId: '',
+    managerId: '',
+    sortOrder: 0,
     description: ''
   })
 
@@ -212,9 +213,11 @@ const DepartmentPage: React.FC = () => {
     if (!ok) return
 
     try {
-      // TODO: Implement delete in orgApi
-      success('部门已成功删除')
-      fetchDepartments()
+      const res = await orgApi.deleteDept(id)
+      if (res.success) {
+        success('部门已成功删除')
+        fetchDepartments()
+      }
     } catch (err: any) {
       console.error(err)
     }
@@ -223,14 +226,11 @@ const DepartmentPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const url = editingDept
-        ? API_URL.ORGANIZATION.DEPARTMENT_DETAIL(editingDept.id)
-        : API_URL.ORGANIZATION.DEPARTMENTS
+      const res = editingDept
+        ? await orgApi.updateDept(editingDept.id, formData)
+        : await orgApi.createDept(formData)
 
-      const method = editingDept ? 'put' : 'post'
-      const data = await apiClient[method](url, formData)
-
-      if (data.success) {
+      if (res.success) {
         success(editingDept ? '更新成功' : '创建成功')
         setShowModal(false)
         fetchDepartments()
@@ -284,19 +284,19 @@ const DepartmentPage: React.FC = () => {
     <div className="min-h-screen bg-mesh p-4 lg:p-6 space-y-4 animate-fade-in custom-scrollbar">
       {/* Visual Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <motion.div initial={{ x: -10, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
-          <h1 className="text-3xl font-black text-[#313a72] tracking-tight flex items-center gap-4">
-            <div className="p-2.5 bg-[#313a72] text-white rounded-xl shadow-lg shadow-[#313a72]/20">
-              <Building2 size={24} strokeWidth={2.5} />
+        <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
+          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+            <div className="p-2 bg-primary rounded-lg text-white">
+              <Building2 size={20} strokeWidth={2.5} />
             </div>
             组织架构全景
           </h1>
-          <p className="text-[#4b648c] font-bold text-sm mt-1.5 opacity-70 italic shadow-sm">Holistic Group Hierarchy & Human Capital Distribution</p>
+          <p className="text-slate-500 text-sm mt-0.5">Holistic Group Hierarchy & Human Capital Distribution</p>
         </motion.div>
 
         <button
           onClick={() => handleOpenModal()}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg shadow-sm transition-all text-sm font-medium flex items-center gap-2 hover:bg-blue-600"
+          className="px-4 py-2 bg-primary text-white rounded-lg shadow-sm transition-all text-sm font-medium flex items-center gap-2 hover:brightness-110"
         >
           <Plus size={14} />
           <span>新增部门</span>
@@ -314,7 +314,7 @@ const DepartmentPage: React.FC = () => {
       {/* Intelligence Filter Bar */}
       <div className="premium-card p-4 bg-white/60 backdrop-blur-xl border-none flex flex-wrap items-center gap-4 shadow-sm">
         <div className="flex-1 min-w-[200px] relative group">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={14} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors" size={14} />
           <input
             type="text"
             placeholder="搜索部门..."
@@ -394,8 +394,8 @@ const DepartmentPage: React.FC = () => {
                   <div className="space-y-2.5">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">上级部门</label>
                     <select
-                      value={formData.parent_id}
-                      onChange={(e) => setFormData({ ...formData, parent_id: e.target.value })}
+                      value={formData.parentId}
+                      onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}
                       className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-bold focus:ring-4 focus:ring-blue-600/5 appearance-none"
                     >
                       <option value="">（顶级部门）</option>
@@ -415,8 +415,8 @@ const DepartmentPage: React.FC = () => {
                       <Hash className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
                       <input
                         type="number"
-                        value={formData.sort_order}
-                        onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) || 0 })}
+                        value={formData.sortOrder}
+                        onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })}
                         className="w-full bg-slate-50 border-none rounded-xl pl-12 pr-5 py-3.5 text-sm font-bold focus:ring-4 focus:ring-blue-600/5"
                       />
                     </div>

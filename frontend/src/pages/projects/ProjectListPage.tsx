@@ -46,31 +46,31 @@ export default function ProjectListPage() {
   } = useProjectList()
 
   return (
-    <div className="max-w-full mx-auto space-y-8 animate-fade-in pb-20">
+    <div className="min-h-screen bg-mesh p-4 lg:p-6 space-y-4 animate-fade-in custom-scrollbar pb-16">
       {/* 1. 页面头部与操作区 */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <div className="p-2 bg-primary text-white rounded-xl shadow-brand">
+          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+            <div className="p-2 bg-primary rounded-lg text-white">
               <Briefcase size={20} strokeWidth={2.5} />
             </div>
-            <h1 className="text-xl font-black text-slate-800 tracking-tight">{t('project.list_title')}</h1>
-          </div>
-          <p className="text-slate-400 text-[11px] font-medium mt-0.5">{t('project.fields.list_subtitle')}</p>
+            {t('project.list_title')}
+          </h1>
+          <p className="text-slate-500 text-sm mt-0.5">{t('project.fields.list_subtitle')}</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {/* 视图切换按钮 */}
-          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner">
+          <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
             <button
               onClick={() => setViewMode('table')}
-              className={cn("p-1.5 rounded-lg transition-all", viewMode === 'table' ? "bg-white text-primary shadow-sm" : "text-slate-400 hover:text-slate-600")}
+              className={cn("p-1.5 rounded-md transition-all", viewMode === 'table' ? "bg-white text-primary shadow-sm" : "text-slate-400 hover:text-slate-600")}
             >
               <ListIcon size={14} />
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={cn("p-1.5 rounded-lg transition-all", viewMode === 'grid' ? "bg-white text-primary shadow-sm" : "text-slate-400 hover:text-slate-600")}
+              className={cn("p-1.5 rounded-md transition-all", viewMode === 'grid' ? "bg-white text-primary shadow-sm" : "text-slate-400 hover:text-slate-600")}
             >
               <LayoutGrid size={14} />
             </button>
@@ -79,16 +79,16 @@ export default function ProjectListPage() {
           <HasPermission code="project:create">
             <button
               onClick={() => setShowImportModal(true)}
-              className="btn-primary"
+              className="px-4 py-2 bg-primary text-white rounded-lg shadow-sm transition-all text-sm font-medium flex items-center gap-2 hover:brightness-110"
             >
-              <Upload size={16} /> <span className="hidden sm:inline">{t('project.action.import')}</span>
+              <Upload size={14} /> <span className="hidden sm:inline">{t('project.action.import')}</span>
             </button>
           </HasPermission>
 
           <HasPermission code="project:export">
             <button
               onClick={() => window.open('/api/import/export/projects', '_blank')}
-              className="btn-ghost"
+              className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg shadow-sm transition-all text-sm font-medium flex items-center gap-2 hover:bg-slate-50"
             >
               <FileBarChart size={14} /> <span className="hidden sm:inline">{t('common.export')}</span>
             </button>
@@ -96,7 +96,7 @@ export default function ProjectListPage() {
 
           <PermissionButton
             permission="project:create"
-            onClick={() => navigate('/approvals/new')}
+            onClick={() => navigate('/approvals/workflow/project_approval')}
             className="btn-secondary"
           >
             <Plus size={16} strokeWidth={2.5} /> {t('project.action.initiate')}

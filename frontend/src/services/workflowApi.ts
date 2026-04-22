@@ -55,9 +55,14 @@ export const workflowApi = {
     return apiClient.post<any>('/api/workflow/complete', { taskId, variables, comment })
   },
 
-  /** 驳回任务 */
-  rejectTask: async (taskId: string, comment: string, targetNodeCode?: string) => {
-    return apiClient.post<any>('/api/workflow/reject', { taskId, comment, targetNodeCode })
+  /** 驳回任务 (流程结束) */
+  rejectTask: async (taskId: string, comment: string) => {
+    return apiClient.post<any>('/api/workflow/reject', { taskId, comment })
+  },
+
+  /** 退回任务 (回退到指定节点，继续运行) */
+  rollbackTask: async (taskId: string, comment: string, targetNodeCode?: string) => {
+    return apiClient.post<any>('/api/workflow/rollback', { taskId, comment, targetNodeCode })
   },
 
   /** 撤回/取消实例 */

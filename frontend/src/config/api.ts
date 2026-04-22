@@ -92,6 +92,9 @@ export const API_URL = {
     THIRD_PARTY_CONFIG_DETAIL: (id: string) => `${API_BASE_URL}/api/organization/third-party/configs/${id}`,
     THIRD_PARTY_SYNC: (id: string) => `${API_BASE_URL}/api/organization/third-party/configs/${id}/sync`,
     THIRD_PARTY_SYNC_LOGS: `${API_BASE_URL}/api/organization/third-party/sync-logs`,
+    EMPLOYEE_DETAIL: (id: string) => `${API_BASE_URL}/api/organization/employee/${id}`,
+    EMPLOYEE_UPDATE: (id: string) => `${API_BASE_URL}/api/organization/employee/${id}`,
+    EMPLOYEE_DELETE: (id: string) => `${API_BASE_URL}/api/organization/employee/${id}`,
   },
   EQUIPMENT: {
     TRANSFERS: `${API_BASE_URL}/api/equipment/transfers`,

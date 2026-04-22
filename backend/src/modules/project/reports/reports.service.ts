@@ -54,6 +54,22 @@ export class ReportsService {
     return this.mapReport(report);
   }
 
+  async updateProgress(
+    id: bigint,
+    data: { submittedCount: number; verifiedCount: number; rejectedCount: number }
+  ) {
+    const report = await this.prisma.projectReport.update({
+      where: { id },
+      data: {
+        submittedCount: data.submittedCount,
+        verifiedCount: data.verifiedCount,
+        rejectedCount: data.rejectedCount,
+      },
+      include: { attachments: true },
+    });
+    return this.mapReport(report);
+  }
+
   async remove(id: bigint) {
     // Delete attachments first
     const attachments = await this.prisma.projectReportAttachment.findMany({
@@ -133,15 +149,21 @@ export class ReportsService {
       ...report,
       id: report.id.toString(),
       projectId: report.projectId.toString(),
-      milestone_id: report.milestoneId.toString(), // Match frontend key
+      milestone_id: report.milestoneId.toString(),
       milestoneId: report.milestoneId.toString(),
+      copies: report.copies,
+      submitted_count: report.submittedCount ?? 0,
+      verified_count: report.verifiedCount ?? 0,
+      rejected_count: report.rejectedCount ?? 0,
+      last_updater: report.lastUpdater,
+      last_update_time: report.updateTime?.toISOString(),
       attachments: report.attachments?.map((att: any) => ({
         ...att,
         id: att.id.toString(),
         reportId: att.reportId.toString(),
-        file_url: att.fileUrl, // Match frontend key
-        file_name: att.fileName, // Match frontend key
-        created_at: att.createTime.toISOString(), // Match frontend key
+        file_url: att.fileUrl,
+        file_name: att.fileName,
+        created_at: att.createTime?.toISOString(),
       })),
     };
   }

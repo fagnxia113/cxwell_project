@@ -21,18 +21,39 @@ export class AuthService {
     });
 
     if (user && (await bcrypt.compare(pass, user.password))) {
-      // 这里的 user.roleKey 假设在 sys_user 中已有（或通过关联查询）
-      // 实际上 sys_user 关联 sys_role，这里简化演示取第一个有效角色
-      const userWithRoles = await this.prisma.sysUserRole.findFirst({
+      // 查询用户关联的角色
+      const userRoleRelation = await this.prisma.sysUserRole.findFirst({
         where: { userId: user.userId },
       });
       
-      // 硬核判定：如果是内置 ID 为 1 的用户，强制赋予 admin 角色
-      const role = (user.userId === 1n || userWithRoles) ? 'admin' : 'user';
+      let roleKey = 'user'; // 默认角色
+      
+      if (user.userId === 1n) {
+        roleKey = 'admin'; // 内置管理员强制为 admin
+      } else if (userRoleRelation) {
+        // 查询具体的角色 Key
+        const role = await this.prisma.sysRole.findUnique({
+          where: { roleId: userRoleRelation.roleId },
+        });
+        if (role) {
+          roleKey = role.roleKey;
+        }
+      }
 
       const { password, ...result } = user;
-      // 同时返回 role 和 roleKey 以确保前后端字段兼容性
-      return { ...result, role, roleKey: role };
+      
+      // 获取关联权限集
+      const permissionsData = await this.getUserPermissions(roleKey);
+      
+      // 字段映射：将数据库的 userName 映射为前端期望的 name
+      // 并返回双重字段 role 和 roleKey 以确保兼容性
+      return { 
+        ...result, 
+        name: user.userName, 
+        role: roleKey, 
+        roleKey: roleKey,
+        ...permissionsData
+      };
     }
     return null;
   }
@@ -55,21 +76,27 @@ export class AuthService {
    * 获取当前用户的动态权限码集
    */
   async getUserPermissions(roleKey: string) {
-    // 如果是超级管理员，直接赋予通配符权限，绕过显式策略检查
     if (roleKey === 'admin') {
       return {
         permissions: ['*'],
         menuPermissions: ['*'],
+        buttonPermissions: ['*'],
       };
     }
 
-    // Casbin: 获取该角色的所有权限
-    const policies = await this.casbinService.enforcer.getImplicitPermissionsForUser(`role:${roleKey}`);
-    const permissions = policies.map(p => p[1]);
-    
+    // 正确同步：RoleService 写入时没有 role: 前缀，这里查询也对应去掉
+    const policies = await this.casbinService.enforcer.getImplicitPermissionsForUser(roleKey);
+    const allPerms = policies
+      .filter(p => p[2] === 'allow' || p[2] === '*')
+      .map(p => p[1]);
+
+    const menuPerms = allPerms.filter(p => p.startsWith('menu:'));
+    const buttonPerms = allPerms.filter(p => !p.startsWith('menu:') && p !== '*');
+
     return {
-      permissions,
-      menuPermissions: permissions.filter(p => p.startsWith('menu:')),
+      permissions: allPerms,
+      menuPermissions: menuPerms,
+      buttonPermissions: buttonPerms,
     };
   }
 }

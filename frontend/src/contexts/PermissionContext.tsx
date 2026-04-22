@@ -4,11 +4,13 @@ import { API_URL } from '../config/api'
 interface PermissionContextType {
   permissions: string[]
   menus: string[]
+  buttons: string[]
   role: string
   loading: boolean
   hasPermission: (code: string) => boolean
   hasAnyPermission: (codes: string[]) => boolean
   hasAllPermissions: (codes: string[]) => boolean
+  hasButton: (code: string) => boolean
   refreshPermissions: () => Promise<void>
 }
 
@@ -17,6 +19,7 @@ const PermissionContext = createContext<PermissionContextType | null>(null)
 export const PermissionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [permissions, setPermissions] = useState<string[]>([])
   const [menus, setMenus] = useState<string[]>([])
+  const [buttons, setButtons] = useState<string[]>([])
   const [role, setRole] = useState<string>('user')
   const [loading, setLoading] = useState(true)
 
@@ -39,6 +42,7 @@ export const PermissionProvider: React.FC<{ children: ReactNode }> = ({ children
           if (result.success && result.data) {
             setPermissions(result.data.permissions || [])
             setMenus(result.data.menuPermissions || [])
+            setButtons(result.data.buttonPermissions || [])
           }
         }
       }
@@ -78,16 +82,23 @@ export const PermissionProvider: React.FC<{ children: ReactNode }> = ({ children
     return codes.every(code => permissions.includes(code))
   }
 
+  const hasButton = (code: string): boolean => {
+    if (role === 'admin' || role === 'root' || permissions.includes('*')) return true
+    return buttons.includes(code)
+  }
+
   return (
     <PermissionContext.Provider
       value={{
         permissions,
         menus,
+        buttons,
         role,
         loading,
         hasPermission,
         hasAnyPermission,
         hasAllPermissions,
+        hasButton,
         refreshPermissions
       }}
     >

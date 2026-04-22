@@ -64,20 +64,20 @@ export const getStatusConfig = (t: any): Record<string, { label: string; color: 
 })
 
 export const getProcessTypeLabels = (t: any): Record<string, string> => ({
-  'person_onboard': t('workflow.definitions.personnel_onboard'),
-  'personnel_onboard': t('workflow.definitions.personnel_onboard'),
-  'personnel_offboard': t('workflow.definitions.personnel_offboard'),
-  'personnel_transfer': t('workflow.definitions.personnel_transfer'),
-  'personnel_leave': t('workflow.definitions.personnel_leave'),
-  'personnel_trip': t('workflow.definitions.personnel_trip'),
-  'equipment_inbound': t('workflow.definitions.equipment_inbound'),
-  'equipment_outbound': t('workflow.definitions.equipment_outbound'),
-  'equipment_transfer': t('workflow.definitions.equipment_transfer'),
-  'equipment_repair': t('workflow.definitions.equipment_repair'),
-  'equipment_scrap': t('workflow.definitions.equipment_scrap'),
-  'project_completion': t('workflow.definitions.project_completion'),
-  'purchase_request': t('workflow.definitions.purchase_request'),
-  'project-approval': t('workflow.definitions.project_approval')
+  'person_onboard': t('order_types.personnel_onboard'),
+  'personnel_onboard': t('order_types.personnel_onboard'),
+  'personnel_offboard': t('order_types.personnel_offboard'),
+  'personnel_transfer': t('order_types.personnel_transfer'),
+  'personnel_leave': t('order_types.personnel_leave'),
+  'personnel_trip': t('order_types.personnel_trip'),
+  'equipment_inbound': t('order_types.equipment_inbound'),
+  'equipment_outbound': t('order_types.equipment_outbound'),
+  'equipment_transfer': t('order_types.equipment_transfer'),
+  'equipment_repair': t('order_types.equipment_repair'),
+  'equipment_scrap': t('order_types.equipment_scrap'),
+  'project_completion': t('order_types.project_completion'),
+  'purchase_request': t('order_types.purchase_request'),
+  'project_approval': t('order_types.project_approval')
 })
 
 export const formatDateTime = (dateStr: string | Date | null | undefined) => {

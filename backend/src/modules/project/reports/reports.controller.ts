@@ -1,16 +1,14 @@
 import { 
   Controller, Get, Post, Put, Delete, Body, Query, Param, 
-  UseInterceptors, UploadedFile, UseGuards 
+  UseInterceptors, UploadedFile
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ReportsService } from './reports.service';
-import { AuthGuard } from '@nestjs/passport';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { ConfigService } from '@nestjs/config';
 
 @Controller('reports')
-@UseGuards(AuthGuard('jwt'))
 export class ReportsController {
   constructor(
     private readonly reportsService: ReportsService,
@@ -44,6 +42,19 @@ export class ReportsController {
       remarks: body.remarks,
       milestoneId: body.milestone_id ? BigInt(body.milestone_id) : undefined,
     });
+    return { success: true, data };
+  }
+
+  @Put(':id/progress')
+  async updateProgress(@Param('id') id: string, @Body() body: any) {
+    const data = await this.reportsService.updateProgress(
+      BigInt(id),
+      {
+        submittedCount: body.submitted_count ?? 0,
+        verifiedCount: body.verified_count ?? 0,
+        rejectedCount: body.rejected_count ?? 0,
+      }
+    );
     return { success: true, data };
   }
 

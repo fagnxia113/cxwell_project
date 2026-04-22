@@ -50,7 +50,7 @@ export default function ModalDialog({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 md:left-64 animate-fade-in">
       {/* 背景遮罩 */}
       <div
         className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity"

@@ -1,6 +1,5 @@
-import React, { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { DollarSign, Plus, Trash2, PieChart, ArrowUpRight } from 'lucide-react'
+import { DollarSign, Plus, Trash2, PieChart, ArrowUpRight, Zap, Briefcase } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { cn } from '../../utils/cn'
 import type { ProjectExpense, Project } from '../../types/project'
 
@@ -14,6 +13,7 @@ interface ExpensesTabProps {
 
 export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteExpense, isAdmin }: ExpensesTabProps) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [showAddForm, setShowAddForm] = useState(false)
   const [newExpense, setNewExpense] = useState({ category: 'equipment', amount: 0, date: new Date().toISOString().split('T')[0], notes: '' })
 
@@ -85,6 +85,41 @@ export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteE
             <Plus size={20} />
           </div>
           <span className="text-[11px] font-black text-slate-400 group-hover:text-slate-900 uppercase tracking-widest">{t('project.expense.add_item')}</span>
+        </button>
+      </div>
+
+      {/* 快速流程入口 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <button 
+          onClick={() => navigate(`/approvals/workflow/expense_reimbursement?project_id=${project?.id}`)}
+          className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-xl hover:border-emerald-500 hover:shadow-lg transition-all group"
+        >
+          <div className="flex items-center gap-3">
+             <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+               <Zap size={20} />
+             </div>
+             <div className="text-left">
+               <h4 className="text-sm font-black text-slate-800">发起费用报销</h4>
+               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">流程结束后自动同步至本项目</p>
+             </div>
+          </div>
+          <ArrowUpRight size={18} className="text-slate-300 group-hover:text-emerald-500 transition-colors" />
+        </button>
+
+        <button 
+          onClick={() => navigate(`/approvals/workflow/flight_booking?project_id=${project?.id}`)}
+          className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-xl hover:border-indigo-500 hover:shadow-lg transition-all group"
+        >
+          <div className="flex items-center gap-3">
+             <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg group-hover:bg-indigo-500 group-hover:text-white transition-colors">
+               <Briefcase size={20} />
+             </div>
+             <div className="text-left">
+               <h4 className="text-sm font-black text-slate-800">发起机票预定</h4>
+               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">支持预定员执行并记录最终票价</p>
+             </div>
+          </div>
+          <ArrowUpRight size={18} className="text-slate-300 group-hover:text-indigo-500 transition-colors" />
         </button>
       </div>
 

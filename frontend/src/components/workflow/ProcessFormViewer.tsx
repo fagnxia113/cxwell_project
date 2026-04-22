@@ -45,6 +45,8 @@ export default function ProcessFormViewer({ instance, formFields, dynamicOptions
 
   const getDisplayValue = (fieldName: string, value: any): React.ReactNode => {
     if (value === null || value === undefined || value === '') return '-'
+    if (fieldName === 'gender' && value === 'unknown') return '-'
+
     const options = dynamicOptions[fieldName]
     if (options) {
       const option = options.find(o => o.value === value || o.value === String(value))
@@ -85,6 +87,36 @@ export default function ProcessFormViewer({ instance, formFields, dynamicOptions
                 </div>
               </div>
             ))}
+          </div>
+        )
+      }
+      
+      // 报销明细渲染
+      if (fieldName === 'items' && value.length > 0 && (value[0].category || value[0].amount)) {
+        return (
+          <div className="w-full mt-2 overflow-x-auto rounded-xl border border-slate-100 shadow-sm">
+            <table className="min-w-full divide-y divide-slate-100">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-4 py-2 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">类别</th>
+                  <th className="px-4 py-2 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">项目</th>
+                  <th className="px-4 py-2 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">金额</th>
+                  <th className="px-4 py-2 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">事由</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50 bg-white">
+                {value.map((item: any, i: number) => (
+                  <tr key={i} className="text-xs">
+                    <td className="px-4 py-2 font-bold text-slate-700">{item.category}</td>
+                    <td className="px-4 py-2 text-slate-500">
+                      {(dynamicOptions['project'] || []).find(o => String(o.value) === String(item.project_id))?.label || item.project_id || '-'}
+                    </td>
+                    <td className="px-4 py-2 font-black text-blue-600">¥{Number(item.amount).toLocaleString()}</td>
+                    <td className="px-4 py-2 text-slate-500 italic">{item.item_reason || '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )
       }

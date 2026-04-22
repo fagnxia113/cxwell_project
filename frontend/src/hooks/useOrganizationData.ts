@@ -11,18 +11,38 @@ export function useOrganizationData() {
 
   const loadEmployees = useCallback(async () => {
     try {
+      setLoading(true)
       const token = localStorage.getItem('token')
-      const response = await fetch(`${API_URL.DATA('Employee')}?page=1&pageSize=1000`, {
+      const response = await fetch(`${API_BASE_URL}/api/organization/employee/list?page=1&pageSize=1000`, {
         headers: {
           'Content-Type': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` })
         }
       })
+      if (!response.ok) {
+        console.error('[useOrganizationData] Employee API error:', response.status, response.statusText)
+        setError(`API error: ${response.status}`)
+        return
+      }
       const result = await response.json()
-      setEmployees(result.data || [])
+      console.log('[useOrganizationData] Employee API response:', result)
+      const rawList = result.data?.list || result.data || []
+      const mapped = (Array.isArray(rawList) ? rawList : []).map((emp: any) => ({
+        id: emp.employeeId?.toString() || emp.id?.toString() || '',
+        name: emp.name || emp.employeeName || emp.userName || '',
+        employeeNo: emp.employeeNo || emp.empNo || '',
+        position: emp.position || emp.postName || '',
+        department: emp.department || emp.deptName || '',
+        department_name: emp.department_name || emp.deptName || '',
+        email: emp.email || '',
+        phone: emp.phone || emp.mobile || '',
+      }))
+      setEmployees(mapped)
     } catch (err) {
       console.error('Failed to load employee list:', err)
       setError('Failed to load employees')
+    } finally {
+      setLoading(false)
     }
   }, [])
 

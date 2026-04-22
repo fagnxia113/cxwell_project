@@ -29,6 +29,25 @@ interface WorkflowVisualizationProps {
   onNodeClick?: (node: any) => void
 }
 
+const getNodeIcon = (type: string) => {
+  switch (type) {
+    case 'startEvent':
+      return <Play className="w-5 h-5 text-green-500" />
+    case 'endEvent':
+      return <CheckSquare className="w-5 h-5 text-red-500" />
+    case 'userTask':
+      return <User className="w-5 h-5 text-blue-500" />
+    case 'exclusiveGateway':
+      return <XCircle className="w-5 h-5 text-orange-500" />
+    case 'parallelGateway':
+      return <MoreHorizontal className="w-5 h-5 text-purple-500" />
+    case 'inclusiveGateway':
+      return <MoreHorizontal className="w-5 h-5 text-indigo-500" />
+    default:
+      return <Circle className="w-5 h-5 text-gray-500" />
+  }
+}
+
 const WorkflowVisualization: React.FC<WorkflowVisualizationProps> = ({ 
   instanceId, 
   definition, 
@@ -117,39 +136,20 @@ const WorkflowVisualization: React.FC<WorkflowVisualizationProps> = ({
     setEdges(flowEdges)
   }, [definition, tasks, instanceId])
 
-  const getNodeIcon = (type: string) => {
-    switch (type) {
-      case 'startEvent':
-        return <Play className="w-5 h-5 text-green-500" />
-      case 'endEvent':
-        return <CheckSquare className="w-5 h-5 text-red-500" />
-      case 'userTask':
-        return <User className="w-5 h-5 text-blue-500" />
-      case 'exclusiveGateway':
-        return <XCircle className="w-5 h-5 text-orange-500" />
-      case 'parallelGateway':
-        return <MoreHorizontal className="w-5 h-5 text-purple-500" />
-      case 'inclusiveGateway':
-        return <MoreHorizontal className="w-5 h-5 text-indigo-500" />
-      default:
-        return <Circle className="w-5 h-5 text-gray-500" />
-    }
-  }
-
-  const onNodeMouseEnter = (event: any, node: any) => {
+  const onNodeMouseEnter = useCallback((event: any, node: any) => {
     setSelectedNode(node)
-  }
+  }, [])
 
-  const onNodeMouseLeave = () => {
+  const onNodeMouseLeave = useCallback(() => {
     setSelectedNode(null)
-  }
+  }, [])
 
-  const handleNodeClick = (event: any, node: any) => {
+  const handleNodeClick = useCallback((event: any, node: any) => {
     setSelectedNode(node)
     onNodeClick?.(node)
-  }
+  }, [onNodeClick])
 
-  const nodeTypes = {
+  const nodeTypes = useMemo(() => ({
     customNode: ({ data, selected }: any) => {
       const isSelected = selected
       const statusColor = data.statusColor || '#94a3b8'
@@ -193,7 +193,7 @@ const WorkflowVisualization: React.FC<WorkflowVisualizationProps> = ({
         </div>
       )
     }
-  }
+  }), [t, getNodeIcon, onNodeMouseEnter, onNodeMouseLeave, handleNodeClick])
 
   return (
     <div className="w-full h-full" style={{ backgroundColor: '#f8fafc' }}>

@@ -21,13 +21,14 @@ import { useMessage } from '../../hooks/useMessage'
 import { useConfirm } from '../../hooks/useConfirm'
 import { cn } from '../../utils/cn'
 import ModalDialog from '../../components/ModalDialog'
+import { usePermission } from '../../contexts/PermissionContext'
 
 interface User {
   userId: string
   loginName: string
   userName: string
   email: string
-  roleId: string
+  roles: any[]
   status: '0' | '1' // 0正常 1停用
   createTime: string
 }
@@ -44,6 +45,7 @@ const roleConfigs: Record<string, { label: string; color: string; icon: any; gra
 export default function UserManagementPage() {
   const message = useMessage()
   const { confirm } = useConfirm()
+  const { hasButton } = usePermission()
   const [users, setUsers] = useState<User[]>([])
   const [dynamicRoles, setDynamicRoles] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -100,7 +102,7 @@ export default function UserManagementPage() {
         loginName: user.loginName,
         userName: user.userName,
         email: user.email || '',
-        roleId: user.roleId || '',
+        roleId: (user.roles && user.roles.length > 0) ? user.roles[0].roleId : '',
         password: '',
         status: user.status
       })
@@ -199,6 +201,7 @@ export default function UserManagementPage() {
           <p className="text-slate-400 text-xs font-medium">管理企业数字身份、权限分配及系统访问安全准则</p>
         </div>
         
+        {hasButton('system:user:create') && (
         <button
           onClick={() => handleOpenModal()}
           className="px-5 py-2 bg-indigo-600 text-white rounded-xl text-[11px] font-black shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 hover:-translate-y-0.5 transition-all uppercase tracking-wider"
@@ -206,6 +209,7 @@ export default function UserManagementPage() {
           <UserPlus size={16} />
           建立新身份
         </button>
+        )}
       </div>
 
       <div className="bg-white/70 backdrop-blur-md p-3 rounded-2xl border border-slate-100 shadow-lg shadow-slate-200/30">
@@ -244,7 +248,7 @@ export default function UserManagementPage() {
                 </tr>
               ) : (
                 filteredUsers.map((user, i) => {
-                  const role = dynamicRoles.find(r => r.roleId === user.roleId)
+                  const role = user.roles && user.roles.length > 0 ? user.roles[0] : null
                   return (
                     <motion.tr 
                       key={user.userId}
@@ -286,19 +290,23 @@ export default function UserManagementPage() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
+                          {hasButton('system:user:update') && (
                           <button 
                             onClick={(e) => { e.stopPropagation(); handleOpenModal(user); }}
                             className="p-2 bg-white text-slate-500 hover:bg-indigo-600 hover:text-white rounded-lg shadow-sm border border-slate-100 transition-all"
                           >
                             <Edit3 size={14} />
                           </button>
+                          )}
+                          {hasButton('system:user:resetPwd') && (
                           <button 
                             onClick={(e) => handleOpenResetPwd(user, e)}
                             className="p-2 bg-white text-slate-500 hover:bg-orange-600 hover:text-white rounded-lg shadow-sm border border-slate-100 transition-all"
                           >
                             <Key size={14} />
                           </button>
-                          {user.loginName !== 'admin' && (
+                          )}
+                          {user.loginName !== 'admin' && hasButton('system:user:delete') && (
                             <button 
                               onClick={(e) => handleDelete(user, e)}
                               className="p-2 bg-white text-slate-300 hover:bg-rose-600 hover:text-white rounded-lg shadow-sm border border-slate-100 transition-all"

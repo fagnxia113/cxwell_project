@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Request } from '@nestjs/common';
 import { MonitorService } from './monitor.service';
-import { AuthGuard } from '@nestjs/passport';
+import { Roles } from '../../auth/roles.decorator';
 
 @Controller('workflow/monitor')
-@UseGuards(AuthGuard('jwt'))
+@Roles('admin')
 export class MonitorController {
   constructor(private readonly monitorService: MonitorService) {}
 

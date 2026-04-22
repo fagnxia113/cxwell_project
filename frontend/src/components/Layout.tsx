@@ -153,7 +153,7 @@ const getMenus = (t: any): MenuItem[] => [
 
   // 3. 审批中心
   {
-    key: 'workflow-center',
+    key: 'wf-pending',
     label: t('sidebar.workflowCenter'),
     icon: 'clipboard',
     path: '/approvals/center',
@@ -218,7 +218,7 @@ const getMenus = (t: any): MenuItem[] => [
 export default function Layout({ children }: { children: ReactNode }) {
   const { t, i18n } = useTranslation()
   const { user } = useUser()
-  const { hasPermission } = usePermission()
+  const { hasPermission, permissions: allPermissions } = usePermission()
   const { pathname: currentPath } = useLocation()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -261,8 +261,31 @@ export default function Layout({ children }: { children: ReactNode }) {
       .filter(item => {
         // 1. 检查管理员权限
         if (item.adminOnly && user?.role !== 'admin' && user?.role !== 'root') return false
-        // 2. 检查权限要求 (无论是否有子菜单)
-        if (item.permission && !hasPermission(item.permission)) return false
+        
+        // 2. 检查权限要求
+        if (item.permission) {
+          // 如果用户拥有通配符或该精确权限，直接通过
+          if (user?.role === 'admin' || user?.role === 'root' || allPermissions.includes('*')) return true
+          if (allPermissions.includes(item.permission)) return true
+
+          // 智能降级：如果该权限码是模块级的（如 menu:project），则检查是否有任何 project: 开头的权限
+          const moduleMap: Record<string, string> = {
+            'menu:project': 'project:',
+            'menu:workflow': 'workflow:',
+            'menu:personnel': 'personnel:',
+            'menu:organization': 'org:',
+            'menu:admin': 'system:',
+            'menu:knowledge': 'knowledge:'
+          }
+
+          const prefix = moduleMap[item.permission]
+          if (prefix) {
+            return allPermissions.some(p => p.startsWith(prefix))
+          }
+
+          return false
+        }
+        
         return true
       })
       .map(item => ({
@@ -285,11 +308,17 @@ export default function Layout({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (user) {
       setMenuConfig(filterMenus(getMenus(t)))
-      fetchNotificationData(showNotifDropdown)
+      fetchNotificationData(false)
     } else {
       setMenuConfig([])
     }
-  }, [user, hasPermission, t, i18n.resolvedLanguage, i18n.language, showNotifDropdown, fetchNotificationData])
+  }, [user, allPermissions, t, i18n.resolvedLanguage, i18n.language])
+
+  useEffect(() => {
+    if (showNotifDropdown && user) {
+      fetchNotificationData(true)
+    }
+  }, [showNotifDropdown])
 
   return (
     <div className="flex h-screen bg-[#f8fafc] bg-mesh overflow-hidden">
@@ -302,83 +331,77 @@ export default function Layout({ children }: { children: ReactNode }) {
       )}
 
       {/* Sidebar - 手机端默认隐藏，通过 translate 控制滑出 */}
-      <aside className={`fixed md:relative w-64 bg-slate-900 flex flex-col shadow-2xl z-50 h-full transition-transform duration-300 ease-in-out
+      <aside className={`fixed md:relative w-60 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-800 flex flex-col shadow-2xl z-50 h-full transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
         overflow-hidden group/sidebar`}>
         {/* 背景装饰 */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -ml-16 -mb-16"></div>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -ml-16 -mb-16"></div>
 
         {/* Logo区域 */}
-        <div className="p-8 pt-10 relative z-10 flex flex-col items-center">
-          <div 
+        <div className="px-5 pt-6 pb-3 relative z-10">
+          <div
             onClick={() => navigate('/')}
-            className="w-full h-16 flex items-center justify-center p-2 cursor-pointer hover:scale-105 active:scale-95 transition-all duration-500 group/logo overflow-hidden"
+            className="h-10 flex items-center cursor-pointer hover:opacity-80 transition-opacity"
           >
-            <img src={logo} alt="cxwell logo" className="w-full h-full object-contain relative z-10" />
+            <img src={logo} alt="cxwell logo" className="h-9 w-[240px] object-contain" />
           </div>
         </div>
 
         {/* 导航菜单 */}
-        <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto custom-scrollbar pt-4 relative z-10">
+        <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto custom-scrollbar py-2 relative z-10">
           {menuConfig.map((item) => (
-            <div key={item.key} className="space-y-1">
+            <div key={item.key} className="space-y-0.5">
               {item.children ? (
                 <>
                   {/* 有子菜单的项 */}
                   <button
                     onClick={() => setExpanded(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all group ${
-                      expanded[item.key] 
-                        ? 'text-white bg-white/5' 
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all group ${
+                      expanded[item.key]
+                        ? 'text-white bg-white/10'
                         : 'text-slate-400 hover:text-white hover:bg-white/5'
                     }`}
                   >
-                    <div className="flex items-center gap-3.5">
-                      <div className={`p-1.5 rounded-lg transition-colors ${expanded[item.key] ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-400 group-hover:text-slate-200'}`}>
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-1.5 rounded-lg transition-colors ${expanded[item.key] ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-500 group-hover:text-slate-300'}`}>
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon ? icons[item.icon] : ''} />
                         </svg>
                       </div>
-                      <span className="text-[13px] font-bold tracking-tight">{item.label}</span>
+                      <span className="text-sm font-semibold tracking-tight">{item.label}</span>
                     </div>
-                    <svg 
-                      className={`w-4 h-4 transition-transform duration-500 ${expanded[item.key] ? 'rotate-180' : ''} text-slate-600`} 
-                      fill="none" 
-                      viewBox="0 0 24 24" 
+                    <svg
+                      className={`w-3.5 h-3.5 transition-transform duration-300 ${expanded[item.key] ? 'rotate-180' : ''} text-slate-600`}
+                      fill="none"
+                      viewBox="0 0 24 24"
                       stroke="currentColor"
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={icons.chevron} />
                     </svg>
                   </button>
-                  
+
                   {/* 子菜单 */}
                   {expanded[item.key] && (
-                    <div className="pl-12 pr-2 space-y-1 animate-in fade-in slide-in-from-top-2 duration-500">
+                    <div className="pl-10 pr-2 space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-200">
                       {item.children.map(child => (
                         <button
                           key={child.path || child.label}
                           onClick={() => child.path && navigate(child.path)}
-                          className={`w-full text-left px-4 py-2.5 text-xs font-bold rounded-xl transition-all flex items-center justify-between group/sub ${
-                            child.path && isActivePath(child.path) 
-                              ? 'text-emerald-400 bg-emerald-500/10' 
-                              : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                          className={`w-full text-left px-3 py-2 text-xs font-medium rounded-lg transition-all flex items-center justify-between group/sub ${
+                            child.path && isActivePath(child.path)
+                              ? 'text-emerald-400 bg-emerald-500/10'
+                              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
                           }`}
                         >
                           <div className="flex items-center gap-2">
-                            <span className={`w-1 h-1 rounded-full transition-all ${child.path && isActivePath(child.path) ? 'bg-emerald-400 scale-150' : 'bg-slate-700 group-hover/sub:bg-slate-500'}`}></span>
+                            <span className={`w-1 h-1 rounded-full transition-all ${child.path && isActivePath(child.path) ? 'bg-emerald-400' : 'bg-slate-700 group-hover/sub:bg-slate-500'}`}></span>
                             <span>{child.label}</span>
                           </div>
                           {/* 显示待办数量徽章 */}
                           {child.key === 'wf-pending' && pendingCount > 0 && (
-                            <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-black min-w-[20px] text-center shadow-lg shadow-red-500/20">
+                            <span className="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold min-w-[16px] text-center">
                               {pendingCount > 99 ? '99+' : pendingCount}
-                            </span>
-                          )}
-                          {/* 管理员标识 */}
-                          {child.adminOnly && (
-                            <span className="text-[8px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded-md font-black">
-                              {t('common.role.admin')}
                             </span>
                           )}
                         </button>
@@ -390,27 +413,21 @@ export default function Layout({ children }: { children: ReactNode }) {
                 // 无子菜单的项
                 <button
                   onClick={() => item.path && navigate(item.path)}
-                  className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl transition-all group ${
-                    isActivePath(item.path || '') 
-                      ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-2xl shadow-emerald-500/40 relative overflow-hidden' 
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
+                    isActivePath(item.path || '')
+                      ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/20'
                       : 'text-slate-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  {isActivePath(item.path || '') && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
-                  )}
                   <div className={`p-1.5 rounded-lg transition-colors ${isActivePath(item.path || '') ? 'bg-white/20 text-white' : 'text-slate-500 group-hover:text-slate-300'}`}>
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon ? icons[item.icon] : ''} />
                     </svg>
                   </div>
-                  <span className="text-[13px] font-bold tracking-tight">{item.label}</span>
-                  {/* 工作台显示待办总数 */}
-                  {item.key === 'dashboard' && totalUnreadCount > 0 && (
-                    <span className={`ml-auto text-[10px] px-2 py-0.5 rounded-full font-black min-w-[20px] text-center shadow-lg ${
-                      isActivePath(item.path || '') ? 'bg-white text-emerald-600' : 'bg-red-500 text-white shadow-red-500/20'
-                    }`}>
-                      {totalUnreadCount > 99 ? '99+' : totalUnreadCount}
+                  <span className="text-sm font-semibold tracking-tight">{item.label}</span>
+                  {item.key === 'wf-pending' && pendingCount > 0 && (
+                    <span className="ml-auto bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold min-w-[16px] text-center">
+                      {pendingCount > 99 ? '99+' : pendingCount}
                     </span>
                   )}
                 </button>
@@ -423,35 +440,35 @@ export default function Layout({ children }: { children: ReactNode }) {
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 relative w-full">
         {/* 顶部导航栏 */}
-        <header className="h-16 md:h-20 bg-white/70 backdrop-blur-xl border-b border-slate-200/60 px-4 md:px-10 flex items-center justify-between sticky top-0 z-30">
+        <header className="h-14 bg-white/80 backdrop-blur-md border-b border-slate-200/50 px-4 md:px-6 flex items-center justify-between sticky top-0 z-30">
           {/* 汉堡菜单（手机端） */}
-          <button 
-            className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-xl mr-2"
+          <button
+            className="md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg mr-2"
             onClick={() => setSidebarOpen(true)}
           >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
           {/* 面包屑导航 */}
           <div className="flex items-center">
             {currentPath === '/' ? (
-              <span className="text-xl font-black text-slate-900 tracking-tight">{t('sidebar.dashboard')}</span>
+              <span className="text-base font-bold text-slate-800">{t('sidebar.dashboard')}</span>
             ) : (
-              <nav className="flex items-center space-x-3">
-                <div className="bg-slate-100 p-2 rounded-xl text-slate-400">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <nav className="flex items-center gap-2">
+                <div className="bg-slate-100 p-1.5 rounded-lg text-slate-400">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={icons.home} />
                   </svg>
                 </div>
-                <span className="text-slate-300 text-lg">/</span>
-                <span className="text-lg font-black text-slate-900 tracking-tight capitalize">
+                <span className="text-slate-300 text-sm">/</span>
+                <span className="text-sm font-semibold text-slate-700 capitalize">
                   {getPathName(currentPath.split('/')[1], t)}
                 </span>
                 {currentPath.split('/')[2] && (
                   <>
-                    <span className="text-slate-300 text-lg">/</span>
-                    <span className="text-slate-500 font-bold text-sm">
+                    <span className="text-slate-300 text-sm">/</span>
+                    <span className="text-xs font-medium text-slate-500">
                       {getSubPathName(currentPath.split('/')[1], currentPath.split('/')[2], t)}
                     </span>
                   </>
@@ -459,9 +476,9 @@ export default function Layout({ children }: { children: ReactNode }) {
               </nav>
             )}
           </div>
-          
+
           {/* 右侧操作区 */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {/* 语言切换 */}
             <LanguageSwitcher />
 
@@ -483,30 +500,30 @@ export default function Layout({ children }: { children: ReactNode }) {
             <div className="relative user-dropdown">
               <button
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
-                className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm shadow-md hover:shadow-lg hover:scale-105 transition-all"
+                className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white font-bold text-xs shadow-md hover:shadow-lg hover:scale-105 transition-all"
               >
                 {user?.name?.[0] || 'A'}
               </button>
               {showUserDropdown && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-100 py-2 animate-in fade-in slide-in-from-top-2 z-50">
-                  <div className="px-4 py-3 border-b border-slate-100">
-                    <p className="text-sm font-bold text-slate-900 truncate">{user?.name || 'Admin'}</p>
-                    <p className="text-xs text-slate-500">{user?.role === 'admin' || user?.role === 'root' ? t('common.role.admin') : t('common.role.employee')}</p>
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-1.5 animate-in fade-in slide-in-from-top-2 z-50">
+                  <div className="px-4 py-2.5 border-b border-slate-100">
+                    <p className="text-xs font-bold text-slate-800 truncate">{user?.name || 'Admin'}</p>
+                    <p className="text-[10px] text-slate-500">{user?.role === 'admin' || user?.role === 'root' ? t('common.role.admin') : t('common.role.employee')}</p>
                   </div>
                   <button
                     onClick={() => { navigate('/settings/password'); setShowUserDropdown(false); }}
-                    className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                    className="w-full px-4 py-2 text-left text-xs text-slate-600 hover:bg-slate-50 flex items-center gap-2"
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                     </svg>
                     {t('sidebar.settings')}
                   </button>
                   <button
                     onClick={() => { localStorage.clear(); window.location.href = '/'; }}
-                    className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                    className="w-full px-4 py-2 text-left text-xs text-red-600 hover:bg-red-50 flex items-center gap-2"
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
                     {t('common.logout') || 'Logout'}
@@ -518,7 +535,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         </header>
         
         {/* 页面内容 */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-10 animate-fade-in">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 animate-fade-in">
           <div className="max-w-[1600px] mx-auto">
             {children}
           </div>

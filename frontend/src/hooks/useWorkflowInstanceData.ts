@@ -10,10 +10,15 @@ import { WorkflowInstance, WorkflowTask, WorkflowLog } from '../types/workflow-i
 
 export function useWorkflowInstanceData() {
   const { t } = useTranslation()
-  const { instanceId } = useParams<{ instanceId: string }>()
+  const { instanceId: pInstanceId, taskId } = useParams<{ instanceId: string; taskId: string }>()
+  const [instanceId, setInstanceId] = useState<string | undefined>(pInstanceId)
   const navigate = useNavigate()
   const { success, error, warning } = useMessage()
   const { confirm } = useConfirm()
+
+  useEffect(() => {
+    if (pInstanceId) setInstanceId(pInstanceId)
+  }, [pInstanceId])
 
   const [loading, setLoading] = useState(true)
   const [instance, setInstance] = useState<WorkflowInstance | null>(null)
@@ -25,7 +30,6 @@ export function useWorkflowInstanceData() {
   const [formFields, setFormFields] = useState<any[]>([])
   const [activeFormData, setActiveFormData] = useState<any>({})
 
-  // Master Data Maps
   const [masterData, setMasterData] = useState({
     depts: {} as Record<string, string>,
     positions: {} as Record<string, string>,
@@ -35,86 +39,181 @@ export function useWorkflowInstanceData() {
     customers: {} as Record<string, string>
   })
 
-  // Business State
   const [transferOrder, setTransferOrder] = useState<any>(null)
   const [repairOrder, setRepairOrder] = useState<any>(null)
-  const [scrapSaleOrder, setScrapSaleOrder] = useState<any>(null)
 
-  // Fetching Master Data
-  const { data: deptsData } = useFetch(['departments'], '/api/organization/departments')
-  const { data: positionsData } = useFetch(['positions'], '/api/organization/positions')
-  const { data: warehousesData } = useFetch(['warehouses'], '/api/warehouses')
-  const { data: projectsData } = useFetch(['projects'], '/api/projects')
   const { data: employeesData } = useFetch(['employees'], '/api/personnel/employees?pageSize=1000')
-  const { data: customersData } = useFetch(['customers'], '/api/customers')
 
-  // Sync Maps
   useEffect(() => {
-    const newMaps = { ...masterData }
-    if (deptsData?.data) newMaps.depts = Object.fromEntries(deptsData.data.map((d: any) => [d.id, d.name]))
-    if (positionsData?.data) newMaps.positions = Object.fromEntries(positionsData.data.map((p: any) => [p.id, p.name]))
-    if (warehousesData?.data) newMaps.warehouses = Object.fromEntries(warehousesData.data.map((w: any) => [w.id, w.name]))
-    if (projectsData?.data) newMaps.projects = Object.fromEntries(projectsData.data.map((p: any) => [p.id, p.name]))
-    if (customersData?.data) newMaps.customers = Object.fromEntries(customersData.data.map((c: any) => [c.id, c.name]))
-    
+    const token = localStorage.getItem('token')
+    if (token) {
+      const decoded = parseJWTToken(token)
+      if (decoded?.loginName) setCurrentUserId(decoded.loginName)
+    }
+  }, [])
+
+  useEffect(() => {
     if (employeesData?.data) {
       const uMap: Record<string, string> = {}
       employeesData.data.forEach((u: any) => {
-        uMap[u.id] = u.name
         if (u.user_id) uMap[u.user_id] = u.name
+        uMap[u.loginName || u.id] = u.name
       })
-      newMaps.users = uMap
+      setMasterData(prev => ({ ...prev, users: uMap }))
     }
-    setMasterData(newMaps)
-  }, [deptsData, positionsData, warehousesData, projectsData, employeesData, customersData])
+  }, [employeesData])
 
   const loadInstanceData = useCallback(async () => {
-    if (!instanceId) return
+    let activeInstanceId = instanceId
+
+    // Resolve instanceId from taskId if needed
+    if (!activeInstanceId && taskId) {
+      try {
+        setLoading(true)
+        const res = await apiClient.get<any>(`/api/workflow/tasks/${taskId}/detail`)
+        if (res?.success && res.data?.instanceId) {
+          activeInstanceId = res.data.instanceId
+          setInstanceId(activeInstanceId)
+        } else {
+          error(t('workflow.error.load_failed'))
+          setLoading(false)
+          return
+        }
+      } catch (e) {
+        error(t('workflow.error.load_failed'))
+        setLoading(false)
+        return
+      }
+    }
+
+    if (!activeInstanceId) return
     try {
       setLoading(true)
-      
-      // 1. 获取流程流转时间轴 (Timeline/Logs)
-      const logsRes = await workflowApi.getTimeline(instanceId)
-      if (logsRes && logsRes.success) {
-        setLogs(logsRes.data.map((log: any) => ({
-          id: log.id.toString(),
-          action: log.skipType === '1' ? 'reject' : 'approve',
-          node_id: log.nodeCode,
-          node_name: log.nodeName,
-          status: 'completed',
-          operator_name: log.approver || t('common.system'),
-          comment: log.message || '',
-          created_at: log.updateTime
-        })))
+
+      const res = await apiClient.get<any>(`/api/workflow/tasks/timeline/${activeInstanceId}`)
+      if (!res || !res.success || !res.data) {
+        // Don't show error if we are just transitioning from taskId to instanceId
+        if (!loading) error(t('workflow.error.load_failed'))
+        return
       }
 
-      // 2. 获取当前待办任务 (如果是当前处理人)
-      const todoRes = await workflowApi.getTodoTasks()
-      if (todoRes && todoRes.success) {
-        const myTask = todoRes.data.find((t: any) => t.instanceId.toString() === instanceId)
-        if (myTask) {
-          setCurrentTask({
-            ...myTask,
-            id: myTask.id.toString(),
-            node_id: myTask.nodeCode,
-            node_name: myTask.nodeName
-          })
-          
-          // 获取关联的实例与定义信息
-          setInstance(myTask.instance)
-          if (myTask.instance?.definitionId) {
-             const defRes = await workflowApi.getDefinitionDetail(myTask.instance.definitionId.toString())
-             if (defRes.success) {
-               setDefinition(defRes.data)
-               // 重构表单字段逻辑 (此处暂且简单处理)
-               setFormFields([]) 
-             }
+      const data = res.data
+      const rawInstance = data.instance
+      const rawTimeline = data.timeline || []
+      const rawCurrentTasks = data.currentTasks || []
+
+      if (!rawInstance) {
+        setInstance(null)
+        return
+      }
+
+      let formData = rawInstance.form_data || rawInstance.variables?.formData || {}
+      if (typeof formData === 'string') {
+        try { formData = JSON.parse(formData) } catch { formData = {} }
+      }
+
+      const mappedInstance: WorkflowInstance = {
+        id: rawInstance.id || '',
+        definition_id: rawInstance.definition_id || rawInstance.definitionId || '',
+        definition_key: rawInstance.definition_key || rawInstance.flowCode || 'unknown',
+        title: rawInstance.title || rawInstance.business_id || '未命名流程',
+        status: rawInstance.status || rawInstance.flowStatus || 'running',
+        result: rawInstance.result || null,
+        initiator_id: rawInstance.initiator_id || rawInstance.createBy || '',
+        initiator_name: rawInstance.initiator_name || rawInstance.createBy || '',
+        start_time: rawInstance.start_time || rawInstance.createTime || '',
+        end_time: rawInstance.end_time || null,
+        current_node_id: rawInstance.current_node_id || rawInstance.nodeCode || null,
+        current_node_name: rawInstance.current_node_name || rawInstance.nodeName || null,
+        business_id: rawInstance.business_id || rawInstance.businessId || null,
+        variables: { formData, ...rawInstance.variables },
+      }
+      setInstance(mappedInstance)
+      setActiveFormData(formData)
+
+      const mappedLogs: WorkflowLog[] = rawTimeline.map((log: any) => ({
+        id: log.id || '',
+        action: log.action || (log.skipType === 'reject' ? 'rejected' :
+          log.skipType === 'rollback' ? 'rollback' :
+            log.skipType === 'pass' ? 'approved' :
+              log.skipType === 'auto_skip' ? 'auto_skip' :
+                log.skipType === 'add_signer' ? 'add_signer' :
+                  log.skipType === 'cc' ? 'cc' :
+                    log.skipType === 'transfer' ? 'transfer' :
+                      log.cooperateType === 2 ? 'transfer' :
+                        log.cooperateType === 6 ? 'add_signer' : 'approved'),
+        node_id: log.node_id || log.nodeCode || '',
+        node_name: log.node_name || log.nodeName || '',
+        status: log.status || log.flowStatus || 'completed',
+        operator_id: log.operator_id || log.approver || '',
+        operator_name: log.operator_name || log.approver || t('common.system'),
+        comment: log.comment || log.message || '',
+        created_at: log.created_at || log.createTime || '',
+      }))
+      setLogs(mappedLogs)
+
+      const mappedTasks: WorkflowTask[] = rawCurrentTasks.map((task: any) => ({
+        id: task.id?.toString() || '',
+        name: task.name || task.nodeName || '',
+        node_id: task.node_id || task.nodeCode || '',
+        status: task.status || (task.flowStatus === 'todo' ? 'assigned' : task.flowStatus) || 'assigned',
+        assignee_id: task.assignee_id || task.approver || task.createBy || '',
+        assignee_name: task.assignee_name || task.approver || task.createBy || '',
+        result: task.result || null,
+        comment: task.comment || task.message || null,
+        created_at: task.created_at || task.createTime || '',
+        completed_at: task.completed_at || null,
+      }))
+      setTasks(mappedTasks)
+
+      const myTask = mappedTasks.length > 0 ? mappedTasks[0] : null
+      setCurrentTask(myTask)
+
+      if (mappedInstance.definition_id) {
+        try {
+          const defRes = await apiClient.get<any>(`/api/workflow/definitions/${mappedInstance.definition_id}`)
+          if (defRes?.success && defRes.data) {
+            const defData = defRes.data
+            setDefinition(defData)
+
+            let fields = defData.form_schema || defData.form_fields || []
+            if (typeof fields === 'string') {
+              try { fields = JSON.parse(fields) } catch { fields = [] }
+            }
+            if (!Array.isArray(fields)) fields = []
+            setFormFields(fields)
+
+            if (fields.length === 0 && formData && Object.keys(formData).length > 0) {
+              const autoFields = Object.keys(formData).map(key => ({
+                name: key,
+                label: key,
+                type: 'text',
+                required: false,
+              }))
+              setFormFields(autoFields)
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to load definition, auto-generating form fields from data')
+          if (formData && Object.keys(formData).length > 0) {
+            const autoFields = Object.keys(formData).map(key => ({
+              name: key,
+              label: key,
+              type: 'text',
+              required: false,
+            }))
+            setFormFields(autoFields)
           }
         }
+      } else if (formData && Object.keys(formData).length > 0) {
+        const autoFields = Object.keys(formData).map(key => ({
+          name: key,
+          label: key,
+          type: 'text',
+          required: false,
+        }))
+        setFormFields(autoFields)
       }
-
-      // 3. 业务特定数据加载 (项目/设备等)
-      // TODO: 后续根据 Phase 5 的业务模块实现进行对接
 
     } catch (e: any) {
       console.error(e)
@@ -128,23 +227,22 @@ export function useWorkflowInstanceData() {
     loadInstanceData()
   }, [loadInstanceData])
 
-  // --- Actions ---
-
   const getNodeActions = () => {
     if (!currentTask) return []
-    // 新引擎默认开启所有基础操作：审批、驳回、退回
     return [
       { type: 'approve', label: t('workflow.action.approve'), icon: 'CheckCircle', className: 'bg-emerald-600' },
       { type: 'reject', label: t('workflow.action.reject'), icon: 'XCircle', className: 'bg-rose-600' },
-      { type: 'return', label: t('workflow.action.return'), icon: 'RotateCcw', className: 'bg-amber-600' }
+      { type: 'return', label: t('workflow.action.return'), icon: 'RotateCcw', className: 'bg-amber-600' },
+      { type: 'transfer', label: t('workflow.action.transfer'), icon: 'Share2', className: 'bg-purple-600' },
+      { type: 'cc', label: t('workflow.action.cc') || '抄送', icon: 'ClipboardCopy', className: 'bg-indigo-600' }
     ]
   }
 
   const handleWithdraw = async () => {
     if (!instanceId) return
-    if (!(await confirm({ title: t('workflow.message.confirm_withdraw'), content: t('workflow.message.confirm_withdraw_desc') }))) return
+    if (!(await confirm({ title: t('workflow.message.confirm_withdraw') || t('workflow.action.confirm_withdraw'), content: t('workflow.message.confirm_withdraw_desc') || t('workflow.action.confirm_withdraw_desc') }))) return
     try {
-      const res = await workflowApi.cancelProcess(instanceId)
+      const res = await apiClient.post<any>(`/api/workflow/processes/${instanceId}/withdraw`, {})
       if (res.success) {
         success(t('common.success'))
         loadInstanceData()
@@ -153,17 +251,29 @@ export function useWorkflowInstanceData() {
   }
 
   const submitAction = async (action: string, params: any) => {
-    if (!currentTask) return
+    if (!currentTask) return false
     try {
-      let res;
+      let res: any;
+      const taskId = String(currentTask.id);
+      const instId = instanceId ? String(instanceId) : '';
+
       if (action === 'approve') {
-        res = await workflowApi.completeTask(currentTask.id, {}, params.comment)
+        res = await apiClient.post(`/api/workflow/complete`, { taskId, comment: params.comment, variables: params.variables })
       } else if (action === 'reject') {
-        res = await workflowApi.rejectTask(currentTask.id, params.comment)
+        res = await apiClient.post(`/api/workflow/reject`, { taskId, comment: params.comment })
       } else if (action === 'return') {
-        res = await workflowApi.rejectTask(currentTask.id, params.comment, params.targetNodeId)
+        res = await apiClient.post(`/api/workflow/rollback`, { taskId, comment: params.comment, targetNodeCode: params.targetNodeId })
+      } else if (action === 'transfer') {
+        const targetId = params.targetUser?.id ? String(params.targetUser.id) : '';
+        res = await apiClient.post(`/api/workflow/tasks/${taskId}/transfer`, { targetUserId: targetId, comment: params.comment })
+      } else if (action === 'cc') {
+        const userIds = (params.signers || []).map((s: any) => String(s.id));
+        res = await apiClient.post(`/api/workflow/copy`, { instanceId: instId, userIds })
+      } else if (action === 'addSigner') {
+        const userIds = (params.signers || []).map((s: any) => String(s.id));
+        res = await apiClient.post(`/api/workflow/add-signer`, { instanceId: instId, userIds })
       }
-      
+
       if (res && res.success) {
         success(t('common.success'))
         navigate('/approvals/pending')
@@ -177,27 +287,9 @@ export function useWorkflowInstanceData() {
   }
 
   return {
-    loading,
-    instance,
-    definition,
-    tasks,
-    logs,
-    currentTask,
-    currentUserId,
-    formFields,
-    activeFormData,
-    masterData,
-    transferOrder,
-    repairOrder,
-    scrapSaleOrder,
-    loadInstanceData,
-    getNodeActions,
-    submitAction,
-    handleWithdraw,
-    confirm,
-    success,
-    error,
-    warning,
-    t
+    loading, instance, definition, tasks, logs, currentTask, currentUserId,
+    formFields, activeFormData, masterData, transferOrder, repairOrder,
+    loadInstanceData, getNodeActions, submitAction, handleWithdraw, confirm,
+    success, error, warning, t
   }
 }

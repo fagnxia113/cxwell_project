@@ -91,7 +91,24 @@ export function useProjectDetail(id: string | undefined) {
         setTasks(mappedTasks)
 
         // 映射里程碑
+        const mapMilestone = (milestone: any): Milestone => ({
+          id: milestone.id,
+          project_id: milestone.projectId,
+          parent_id: milestone.parentId,
+          name: milestone.name,
+          description: milestone.description || null,
+          planned_start_date: milestone.plannedStartDate || milestone.plannedDate || '',
+          planned_end_date: milestone.plannedEndDate || milestone.plannedDate || '',
+          actual_end_date: milestone.actualDate || null,
+          weight: milestone.weight || 0,
+          progress: milestone.progress || 0,
+          status: milestone.status === '1' ? 'completed' : (milestone.status === '2' ? 'in_progress' : 'pending'),
+          resources: milestone.resources || [],
+          children: milestone.children?.map((child: any) => mapMilestone(child))
+        })
         const mappedMilestones: Milestone[] = (data.milestones || [])
+          .filter((m: any) => m.parentId === null || m.parentId === undefined || String(m.parentId) === '0' || String(m.parentId) === '')
+          .map(mapMilestone)
         setMilestones(mappedMilestones)
 
         // 映射阶段 (用于侧边栏进度视图)
@@ -131,8 +148,7 @@ export function useProjectDetail(id: string | undefined) {
       if (expensesRes.status === 'fulfilled') setExpenses(expensesRes.value?.data || [])
       if (risksRes.status === 'fulfilled') {
         const allRisks = risksRes.value?.data || []
-        // 根据用户需求：闭环的不在上面显示
-        setRisks(allRisks.filter((r: any) => r.status === 'open'))
+        setRisks(allRisks)
       }
       if (staffingRes.status === 'fulfilled') setStaffingPlans(staffingRes.value?.data || [])
     } catch (error: any) {
@@ -382,12 +398,7 @@ export function useProjectDetail(id: string | undefined) {
     updateRisk: async (riskId: string, data: any) => {
       const res = await apiClient.put<any>(`/api/project/extension/risks/${riskId}`, data)
       if (res?.success) {
-        // 如果状态改为 closed，则从当前显示列表中移除
-        if (data.status === 'closed') {
-          setRisks(prev => prev.filter(r => r.id !== riskId))
-        } else {
-          setRisks(prev => prev.map(r => r.id === riskId ? res.data : r))
-        }
+        setRisks(prev => prev.map(r => r.id === riskId ? res.data : r))
         success(t('common.success'))
       }
     },

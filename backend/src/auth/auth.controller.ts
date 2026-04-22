@@ -1,14 +1,16 @@
-import { Controller, Post, Body, UnauthorizedException, Get, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, UnauthorizedException, Get, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthGuard } from '@nestjs/passport';
+import { Public } from './public.decorator';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @Public()
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('login')
   async login(@Body() body: any) {
-    console.log('Login request body:', body);
     const user = await this.authService.validateUser(body.loginName, body.password);
     if (!user) {
       throw new UnauthorizedException('登录失败：账号或密码错误');
@@ -20,16 +22,11 @@ export class AuthController {
     };
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Get('verify')
   getProfile(@Req() req) {
     return req.user;
   }
 
-  /**
-   * 获取当前登录用户的权限码与菜单位
-   */
-  @UseGuards(AuthGuard('jwt'))
   @Get('permissions/me')
   async getMyPermissions(@Req() req) {
     const result = await this.authService.getUserPermissions(req.user.role);

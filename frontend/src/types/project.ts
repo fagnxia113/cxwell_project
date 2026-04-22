@@ -61,6 +61,7 @@ export interface MilestoneResource {
 export interface Milestone {
   id: string
   project_id: string
+  parent_id: string | null
   name: string
   description: string | null
   planned_start_date: string
@@ -70,6 +71,8 @@ export interface Milestone {
   progress: number
   status: 'pending' | 'in_progress' | 'completed'
   resources: MilestoneResource[]
+  children?: Milestone[]
+  level?: number
 }
 
 export interface Task {
@@ -113,14 +116,20 @@ export interface ProjectReport {
 
 export interface ProjectRisk {
   id: string
+  risk_no?: string
   title: string
   description: string
+  category?: string
+  milestone_id?: string
   level: 'low' | 'medium' | 'high'
-  status: 'open' | 'closed'
-  owner_id: string
+  status: 'pending' | 'in_progress' | 'pending_review' | 'closed'
+  owner_id?: string
   owner_name?: string
-  created_at: string
-  updated_at: string
+  progress_note?: string
+  deadline?: string
+  closed_at?: string
+  create_time: string
+  update_time: string
 }
 
 export interface ProjectExpense {

@@ -1,144 +1,363 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AlertTriangle, Plus, CheckCircle, Trash2, User } from 'lucide-react'
+import { 
+  AlertTriangle, Plus, Trash2, User, Clock, Calendar, 
+  LayoutGrid, ShieldCheck, History, MoreVertical, Edit2
+} from 'lucide-react'
 import { cn } from '../../utils/cn'
-import type { ProjectRisk } from '../../types/project'
+import type { ProjectRisk, Milestone } from '../../types/project'
+import { motion, AnimatePresence } from 'framer-motion'
+import { flattenMilestones } from '../../utils/milestoneUtils'
 
 interface RisksTabProps {
   risks: ProjectRisk[]
+  milestones: Milestone[]
   onAddRisk: (data: any) => void
   onUpdateRisk: (id: string, data: any) => void
   onDeleteRisk: (id: string) => void
   isAdmin: boolean
 }
 
-export default function RisksTab({ risks, onAddRisk, onUpdateRisk, onDeleteRisk, isAdmin }: RisksTabProps) {
+const severityConfig = {
+  high: { color: 'text-rose-600', bgColor: 'bg-rose-50', borderColor: 'border-rose-100', dot: 'bg-rose-500', label: '高 (High)' },
+  medium: { color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-100', dot: 'bg-amber-500', label: '中 (Medium)' },
+  low: { color: 'text-emerald-600', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-100', dot: 'bg-emerald-500', label: '低 (Low)' },
+}
+
+const statusConfig = {
+  pending: { label: '未处理', color: 'text-slate-500', bgColor: 'bg-slate-100' },
+  in_progress: { label: '整改中', color: 'text-blue-500', bgColor: 'bg-blue-50' },
+  pending_review: { label: '待复核', color: 'text-amber-500', bgColor: 'bg-amber-50' },
+  closed: { label: '已闭环', color: 'text-emerald-500', bgColor: 'bg-emerald-50' },
+}
+
+const categoryOptions = [
+  { value: 'progress', label: '进度风险' },
+  { value: 'quality', label: '质量风险' },
+  { value: 'safety', label: '安全风险' },
+  { value: 'supply_chain', label: '供应链风险' },
+]
+
+export default function RisksTab({ risks, milestones, onAddRisk, onUpdateRisk, onDeleteRisk, isAdmin }: RisksTabProps) {
   const { t } = useTranslation()
+  const [activeTab, setActiveTab] = useState<'active' | 'closed'>('active')
   const [showAddForm, setShowAddForm] = useState(false)
-  const [newRisk, setNewRisk] = useState({ title: '', description: '', level: 'medium' })
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    level: 'medium' as 'low' | 'medium' | 'high',
+    category: 'quality',
+    milestoneId: '',
+    deadline: '',
+    status: 'pending'
+  })
+
+  const flattenedMilestones = useMemo(() => flattenMilestones(milestones), [milestones]);
+
+  const stats = useMemo(() => {
+    const now = new Date();
+    const activeRisks = risks.filter(r => r.status !== 'closed');
+    const closedRisks = risks.filter(r => r.status === 'closed');
+    const overdueRisks = activeRisks.filter(r => r.deadline && new Date(r.deadline) < now);
+    
+    const startOfWeek = new Date();
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    const thisWeekClosed = closedRisks.filter(r => r.closed_at && new Date(r.closed_at) >= startOfWeek);
+
+    return {
+      activeTotal: activeRisks.length,
+      highSeverity: activeRisks.filter(r => r.level === 'high').length,
+      overdueTotal: overdueRisks.length,
+      thisWeekClosed: thisWeekClosed.length
+    }
+  }, [risks]);
+
+  const filteredRisks = useMemo(() => {
+    return risks.filter(r => (activeTab === 'active' ? r.status !== 'closed' : r.status === 'closed'));
+  }, [risks, activeTab]);
 
   const handleAdd = () => {
-    if (!newRisk.title) return
-    onAddRisk(newRisk)
-    setNewRisk({ title: '', description: '', level: 'medium' })
+    if (!formData.title) return
+    onAddRisk(formData)
+    setFormData({
+      title: '',
+      description: '',
+      level: 'medium',
+      category: 'quality',
+      milestoneId: '',
+      deadline: '',
+      status: 'pending'
+    })
     setShowAddForm(false)
   }
 
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case 'high': return 'text-rose-600 bg-rose-50 border-rose-100'
-      case 'medium': return 'text-amber-600 bg-amber-50 border-amber-100'
-      case 'low': return 'text-emerald-600 bg-emerald-50 border-emerald-100'
-      default: return 'text-slate-600 bg-slate-50 border-slate-100'
-    }
+  const isOverdue = (risk: ProjectRisk) => {
+    if (risk.status === 'closed' || !risk.deadline) return false;
+    return new Date(risk.deadline) < new Date();
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-          <AlertTriangle size={18} className="text-amber-500" /> {t('project.tabs.risks')}
-        </h3>
+      {/* 统计卡片 (保持精美度) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: t('project.risk.stats.active_total'), value: stats.activeTotal, color: 'slate', icon: LayoutGrid },
+          { label: t('project.risk.stats.high_severity'), value: stats.highSeverity, color: 'rose', icon: AlertTriangle },
+          { label: t('project.risk.stats.overdue_total'), value: stats.overdueTotal, color: 'amber', icon: Clock },
+          { label: t('project.risk.stats.this_week_closed'), value: stats.thisWeekClosed, color: 'emerald', icon: ShieldCheck },
+        ].map(s => (
+          <div key={s.label} className={cn(
+            "rounded-xl border p-4 shadow-sm transition-all",
+            s.color === 'slate' ? "bg-white border-slate-100" : 
+            s.color === 'rose' ? "bg-rose-50 border-rose-100" :
+            s.color === 'amber' ? "bg-amber-50 border-amber-100" : "bg-emerald-50 border-emerald-100"
+          )}>
+            <div className={cn("text-[9px] font-black uppercase tracking-widest mb-1", `text-${s.color}-500`)}>{s.label}</div>
+            <div className="flex items-end justify-between">
+              <div className={cn("text-xl font-black", `text-${s.color}-900`)}>{s.value}</div>
+              <s.icon size={16} className={cn(`text-${s.color}-200`)} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 控制栏 */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex bg-slate-100 p-1 rounded-xl w-fit">
+          {(['active', 'closed'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={cn(
+                "px-5 py-2 rounded-lg text-xs font-black transition-all",
+                activeTab === tab ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              {tab === 'active' ? t('project.risk.tabs.active') : t('project.risk.tabs.closed')}
+            </button>
+          ))}
+        </div>
+
         <button 
           onClick={() => setShowAddForm(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-black shadow-lg hover:bg-slate-800 transition-all"
+          className="flex items-center gap-2 px-5 py-2 bg-slate-900 text-white rounded-xl text-xs font-black shadow-lg hover:bg-slate-800 transition-all w-fit"
         >
           <Plus size={16} /> {t('project.risk.add_item')}
         </button>
       </div>
 
-      {showAddForm && (
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xl space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('project.risk.placeholder_title')}</label>
-              <input 
-                type="text" 
-                value={newRisk.title}
-                onChange={e => setNewRisk({...newRisk, title: e.target.value})}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold focus:ring-2 focus:ring-blue-600 outline-none transition-all"
-                placeholder={t('project.risk.example')}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('daily_report.risk_level')}</label>
-              <select 
-                value={newRisk.level}
-                onChange={e => setNewRisk({...newRisk, level: e.target.value as any})}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold focus:ring-2 focus:ring-blue-600 outline-none transition-all"
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('daily_report.risk_description')}</label>
-            <textarea 
-              value={newRisk.description}
-              onChange={e => setNewRisk({...newRisk, description: e.target.value})}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold focus:ring-2 focus:ring-blue-600 outline-none transition-all resize-none"
-              rows={3}
-            />
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => setShowAddForm(false)} className="px-5 py-2 text-[11px] font-black text-slate-400 hover:text-slate-600">{t('common.cancel')}</button>
-            <button onClick={handleAdd} className="px-5 py-2 bg-slate-900 text-white rounded-lg text-[11px] font-black shadow-lg hover:bg-slate-800 transition-all">{t('common.submit')}</button>
-          </div>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 gap-4">
-        {risks.length === 0 ? (
-          <div className="py-16 text-center bg-white rounded-xl border border-slate-100 border-dashed">
-            <p className="text-slate-300 font-bold uppercase tracking-widest text-[9px]">{t('daily_report.no_active_risks')}</p>
-          </div>
-        ) : (
-          risks.map(risk => (
-            <div key={risk.id} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group">
-              <div className="flex items-start gap-4 flex-1">
-                <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border", getLevelColor(risk.level))}>
-                  <AlertTriangle size={18} />
+      <AnimatePresence>
+        {showAddForm && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xl mb-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.risk.placeholder_title')}</label>
+                  <input 
+                    type="text" 
+                    value={formData.title}
+                    onChange={e => setFormData({...formData, title: e.target.value})}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:ring-2 focus:ring-slate-900 outline-none transition-all"
+                    placeholder={t('project.risk.example')}
+                  />
                 </div>
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-3">
-                    <h4 className="text-[13px] font-black text-slate-800 uppercase tracking-tight">{risk.title}</h4>
-                    <span className={cn("px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border", getLevelColor(risk.level))}>
-                      {risk.level}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed line-clamp-2">{risk.description || 'No detailed description'}</p>
-                  <div className="flex items-center gap-4 pt-1">
-                    <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-400">
-                      <User size={10} /> {risk.owner_name || 'Unassigned'}
-                    </div>
-                    <div className="text-[9px] font-bold text-slate-300">
-                      {new Date(risk.created_at || new Date()).toLocaleDateString()}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-2 shrink-0">
-                <button 
-                  onClick={() => onUpdateRisk(risk.id, { status: 'closed' })}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase hover:bg-emerald-100 transition-all"
-                >
-                  <CheckCircle size={12} /> Close Loop
-                </button>
-                {isAdmin && (
-                  <button 
-                    onClick={() => onDeleteRisk(risk.id)}
-                    className="p-1.5 text-slate-300 hover:text-rose-500 transition-colors"
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.risk.category')}</label>
+                  <select 
+                    value={formData.category}
+                    onChange={e => setFormData({...formData, category: e.target.value})}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:ring-2 focus:ring-slate-900 outline-none transition-all"
                   >
-                    <Trash2 size={14} />
-                  </button>
-                )}
+                    {categoryOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.risk.severity')}</label>
+                  <select 
+                    value={formData.level}
+                    onChange={e => setFormData({...formData, level: e.target.value as any})}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:ring-2 focus:ring-slate-900 outline-none transition-all"
+                  >
+                    <option value="low">🟢 低 (Low)</option>
+                    <option value="medium">🟡 中 (Medium)</option>
+                    <option value="high">🔴 高 (High)</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">关联阶段</label>
+                  <select 
+                    value={formData.milestoneId}
+                    onChange={e => setFormData({...formData, milestoneId: e.target.value})}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:ring-2 focus:ring-slate-900 outline-none transition-all"
+                  >
+                    <option value="">不关联</option>
+                    {flattenedMilestones.map(m => (
+                      <option key={m.id} value={m.id}>{m.displayName}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.risk.deadline')}</label>
+                  <input 
+                    type="date" 
+                    value={formData.deadline}
+                    onChange={e => setFormData({...formData, deadline: e.target.value})}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:ring-2 focus:ring-slate-900 outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button onClick={() => setShowAddForm(false)} className="px-6 py-2.5 text-xs font-black text-slate-400 hover:text-slate-600">取消</button>
+                <button onClick={handleAdd} className="px-8 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black shadow-lg hover:bg-slate-800 transition-all">确认创建</button>
               </div>
             </div>
-          ))
+          </motion.div>
         )}
+      </AnimatePresence>
+
+      {/* 表格视图 */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-slate-100">
+                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-24">{t('project.risk.risk_no')}</th>
+                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">风险描述</th>
+                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-28">关联阶段</th>
+                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-28">{t('project.risk.category')}</th>
+                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-32">{t('project.risk.severity')}</th>
+                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-32">
+                  {activeTab === 'active' ? t('project.risk.deadline') : t('project.risk.actual_closed_at')}
+                </th>
+                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-32">更新时间</th>
+                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-28">状态</th>
+                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-24 text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {filteredRisks.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-20 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <ShieldCheck size={40} className="text-slate-100" />
+                      <p className="text-slate-300 font-bold uppercase tracking-widest text-[9px]">暂无匹配的风险数据</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredRisks.map(risk => {
+                  const overdue = isOverdue(risk);
+                  const severity = severityConfig[risk.level] || severityConfig.medium;
+                  const status = statusConfig[risk.status] || statusConfig.pending;
+                  
+                  return (
+                    <tr 
+                      key={risk.id} 
+                      className={cn(
+                        "group transition-all hover:bg-slate-50/50",
+                        overdue && "bg-rose-50/30"
+                      )}
+                    >
+                      <td className="px-4 py-4">
+                        <span className="text-[10px] font-black text-slate-400 font-mono tracking-tighter bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                          {risk.risk_no || `RSK-OLD-${risk.id.slice(-3)}`}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="space-y-1">
+                          <div className={cn("text-xs font-black tracking-tight", overdue ? "text-rose-700" : "text-slate-900")}>
+                            {overdue && "⚠️ "}{risk.title}
+                          </div>
+                          {risk.description && (
+                            <div className="text-[10px] text-slate-400 font-medium line-clamp-1 group-hover:line-clamp-none transition-all">
+                              {risk.description}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className="text-[10px] font-bold text-slate-600">
+                          {flattenedMilestones.find(m => m.id === risk.milestone_id)?.name || '-'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                          {categoryOptions.find(o => o.value === risk.category)?.label || '未分类'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className={cn("flex items-center gap-2 text-[10px] font-black", severity.color)}>
+                          <span className={cn("w-1.5 h-1.5 rounded-full", severity.dot)} />
+                          {severity.label}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className={cn(
+                          "flex items-center gap-1.5 text-[10px] font-bold",
+                          overdue ? "text-rose-600" : "text-slate-500"
+                        )}>
+                          {activeTab === 'active' ? (
+                            <>
+                              <Calendar size={12} className={overdue ? "text-rose-400" : "text-slate-300"} />
+                              {risk.deadline ? new Date(risk.deadline).toLocaleDateString() : '-'}
+                            </>
+                          ) : (
+                            <>
+                              <History size={12} className="text-emerald-400" />
+                              {risk.closed_at ? new Date(risk.closed_at).toLocaleDateString() : '-'}
+                            </>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400">
+                          <Clock size={12} className="text-slate-200" />
+                          {risk.update_time ? new Date(risk.update_time).toLocaleDateString() : '-'}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <select
+                          value={risk.status}
+                          onChange={(e) => onUpdateRisk(risk.id, { status: e.target.value })}
+                          className={cn(
+                            "text-[10px] font-black px-2 py-1 rounded-lg border-none focus:ring-2 focus:ring-slate-900 transition-all cursor-pointer outline-none",
+                            status.bgColor, status.color
+                          )}
+                        >
+                          <option value="pending">未处理</option>
+                          <option value="in_progress">整改中</option>
+                          <option value="pending_review">待复核</option>
+                          <option value="closed">确认闭环</option>
+                        </select>
+                      </td>
+                      <td className="px-4 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          {isAdmin && (
+                            <button 
+                              onClick={() => onDeleteRisk(risk.id)}
+                              className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )

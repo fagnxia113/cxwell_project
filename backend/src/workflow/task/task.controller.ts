@@ -1,15 +1,16 @@
-import { Controller, Get, Post, Body, Param, Request, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Request } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { TaskQueryService } from './task-query.service';
 import { WorkflowEngineService } from '../engine/workflow-engine.service';
-import { AuthGuard } from '@nestjs/passport';
 
 @Controller('workflow/tasks')
-@UseGuards(AuthGuard('jwt'))
 export class TaskController {
+  private readonly logger = new Logger(TaskController.name);
+
   constructor(
     private readonly taskQueryService: TaskQueryService,
     private readonly workflowEngine: WorkflowEngineService,
-  ) {}
+  ) { }
 
   /**
    * 获取当前用户的待办任务
@@ -64,6 +65,12 @@ export class TaskController {
     return { success: true, data };
   }
 
+  @Get('hub/todo/count')
+  async hubTodoCount(@Request() req: any) {
+    const count = await this.taskQueryService.getMyTodoTasksCount(req.user.loginName);
+    return { success: true, data: { count } };
+  }
+
   @Get(':id/detail')
   async getTaskDetail(@Param('id') id: string) {
     const data = await this.taskQueryService.getTaskDetail(id);
@@ -109,8 +116,21 @@ export class TaskController {
   }
 
   @Post('reject')
-  async reject(@Body() body: { taskId: string; comment: string; targetNodeCode?: string }, @Request() req: any) {
+  async reject(@Body() body: { taskId: string; comment: string }, @Request() req: any) {
     const data = await this.workflowEngine.rejectTask(
+      BigInt(body.taskId),
+      req.user.loginName,
+      body.comment
+    );
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  @Post('rollback')
+  async rollback(@Body() body: { taskId: string; comment: string; targetNodeCode?: string }, @Request() req: any) {
+    const data = await this.workflowEngine.rollbackTask(
       BigInt(body.taskId),
       req.user.loginName,
       body.comment,
@@ -128,19 +148,41 @@ export class TaskController {
   @Post(':id/submit')
   async submitTask(
     @Param('id') id: string,
-    @Body() body: { action: 'pass' | 'reject'; variables?: any; message?: string; targetNodeCode?: string },
+    @Body() body: { action: 'pass' | 'reject' | 'rollback'; variables?: any; message?: string; targetNodeCode?: string },
     @Request() req: any
   ) {
     const taskId = BigInt(id);
     const approver = req.user.loginName;
     const { action, variables = {}, message = '', targetNodeCode } = body;
 
-    if (action === 'pass') {
-      const result = await this.workflowEngine.completeTask(taskId, approver, variables, message);
-      return { success: true, ...result };
-    } else {
-      const result = await this.workflowEngine.rejectTask(taskId, approver, message, targetNodeCode);
-      return { success: true, ...result };
+    this.logger.log(`Submit Task: taskId=${id}, action=${action}, approver=${approver}`);
+
+    try {
+      if (action === 'pass') {
+        const result = await this.workflowEngine.completeTask(taskId, approver, variables, message);
+        return { success: true, data: result };
+      } else if (action === 'rollback') {
+        const result = await this.workflowEngine.rollbackTask(taskId, approver, message, targetNodeCode);
+        return { success: true, data: result };
+      } else {
+        const result = await this.workflowEngine.rejectTask(taskId, approver, message);
+        return { success: true, data: result };
+      }
+    } catch (error) {
+      this.logger.error(`Submit task failed: ${error.message}`);
+      throw error;
     }
+  }
+
+  @Post(':id/transfer')
+  async transferTask(
+    @Param('id') id: string,
+    @Body() body: { targetUserId: string; comment?: string },
+    @Request() req: any
+  ) {
+    const taskId = BigInt(id);
+    const currentUserId = req.user.loginName;
+    const result = await this.workflowEngine.transferTask(taskId, currentUserId, body.targetUserId, body.comment);
+    return { success: true, data: result };
   }
 }

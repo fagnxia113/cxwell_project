@@ -30,5 +30,47 @@ export const orgApi = {
     status?: string;
   }) => {
     return apiClient.get<any>('/api/organization/position/list', { params });
+  },
+
+  /**
+   * 创建部门
+   */
+  createDept: (data: any) => {
+    return apiClient.post<any>('/api/organization/departments', data);
+  },
+
+  /**
+   * 更新部门
+   */
+  updateDept: (id: string, data: any) => {
+    return apiClient.put<any>(`/api/organization/departments/${id}`, data);
+  },
+
+  /**
+   * 删除部门
+   */
+  deleteDept: (id: string) => {
+    return apiClient.delete<any>(`/api/organization/departments/${id}`);
+  },
+
+  /**
+   * 创建岗位
+   */
+  createPosition: (data: any) => {
+    return apiClient.post<any>('/api/organization/positions', data);
+  },
+
+  /**
+   * 更新岗位
+   */
+  updatePosition: (id: string, data: any) => {
+    return apiClient.put<any>(`/api/organization/positions/${id}`, data);
+  },
+
+  /**
+   * 删除岗位
+   */
+  deletePosition: (id: string) => {
+    return apiClient.delete<any>(`/api/organization/positions/${id}`);
   }
 };

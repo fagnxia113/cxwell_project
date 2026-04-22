@@ -95,15 +95,6 @@ export default function OverviewTab({
                   editValue={editForm.manager || ''}
                   onChange={v => onEditFormChange({ manager: String(v) })}
                 />
-                <EditableField
-                  label={t('project.fields.tech_manager')}
-                  icon={Wrench}
-                  value={project.tech_manager}
-                  isEditing={isEditing}
-                  inputType="text"
-                  editValue={editForm.tech_manager || ''}
-                  onChange={v => onEditFormChange({ tech_manager: String(v) })}
-                />
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-1.5">
                     <Calendar size={12} className="text-emerald-500" /> {t('project.fields.period')}

@@ -18,6 +18,9 @@ import {
   X
 } from 'lucide-react'
 import { customerApi } from '../../api/customerApi'
+import { useMessage } from '../../hooks/useMessage'
+import { useConfirm } from '../../hooks/useConfirm'
+import { cn } from '../../utils/cn'
 
 interface Customer {
   id: string
@@ -149,23 +152,51 @@ export default function CustomerListPage() {
     })
   }, [customers, keyword])
 
+  const StatCard = ({ title, value, icon: Icon, color, delay }: any) => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, type: 'spring', damping: 25 }}
+      className="bg-white p-6 rounded-lg border border-slate-100/80 shadow-sm relative overflow-hidden group"
+    >
+      <div className={cn(
+        "absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-[0.03]",
+        color === 'blue' ? 'bg-blue-500' : color === 'emerald' ? 'bg-emerald-500' : color === 'amber' ? 'bg-amber-500' : 'bg-indigo-500'
+      )} />
+      <div className="flex items-center gap-5 relative z-10">
+        <div className={cn(
+          "p-4 rounded-2xl",
+          color === 'blue' ? 'bg-blue-50 text-blue-600' :
+            color === 'emerald' ? 'bg-emerald-50 text-emerald-600' :
+              color === 'amber' ? 'bg-amber-50 text-amber-600' : 'bg-indigo-50 text-indigo-600'
+        )}>
+          <Icon size={24} strokeWidth={2.5} />
+        </div>
+        <div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1.5">{title}</p>
+          <h3 className="text-3xl font-black text-slate-900 tracking-tighter leading-none">{value}</h3>
+        </div>
+      </div>
+    </motion.div>
+  )
+
   return (
     <div className="min-h-screen bg-mesh p-4 lg:p-6 space-y-4 animate-fade-in custom-scrollbar">
       {/* Visual Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
-          <h1 className="text-2xl font-bold text-slate-700">
-            <div className="p-2 bg-primary text-white rounded-xl shadow-brand">
+          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+            <div className="p-2 bg-primary rounded-lg text-white">
               <Building2 size={20} strokeWidth={2.5} />
             </div>
             {t('customer.page_title')}
           </h1>
-          <p className="text-secondary font-bold text-sm mt-1.5 opacity-70 italic">{t('customer.page_subtitle')}</p>
+          <p className="text-slate-500 text-sm mt-0.5">{t('customer.page_subtitle')}</p>
         </motion.div>
 
         <button
           onClick={() => handleOpenModal()}
-          className="btn-primary"
+          className="px-4 py-2 bg-primary text-white rounded-lg shadow-sm transition-all text-sm font-medium flex items-center gap-2 hover:brightness-110"
         >
           <UserPlus size={14} />
           <span>{t('customer.add_customer')}</span>

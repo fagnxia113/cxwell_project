@@ -7,12 +7,17 @@ import { TaskController } from './task/task.controller';
 import { TaskQueryService } from './task/task-query.service';
 import { MonitorModule } from './monitor/monitor.module';
 
+import { WorkflowFormTemplateController } from './definition/workflow-form-template.controller';
+import { FormModule } from '../modules/form/form.module';
+import { NotificationModule } from '../modules/notification/notification.module';
+
 @Module({
-  imports: [MonitorModule],
+  imports: [MonitorModule, FormModule, NotificationModule],
   controllers: [
     WorkflowController,
     DefinitionController,
     TaskController,
+    WorkflowFormTemplateController,
   ],
   providers: [
     WorkflowEngineService,
@@ -24,6 +29,7 @@ import { MonitorModule } from './monitor/monitor.module';
     DefinitionService,
     TaskQueryService,
     MonitorModule,
+    NotificationModule,
   ],
 })
-export class WorkflowModule {}
+export class WorkflowModule { }

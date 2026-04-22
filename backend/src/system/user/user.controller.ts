@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Patch } from '@nestjs/common';
 import { UserService } from './user.service';
-import { AuthGuard } from '@nestjs/passport';
+import { Roles } from '../../auth/roles.decorator';
 
 @Controller('system/user')
-@UseGuards(AuthGuard('jwt'))
+@Roles('admin')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -17,6 +17,22 @@ export class UserController {
         userId: user.userId.toString(),
         deptId: user.deptId?.toString(),
       }))
+    };
+  }
+
+  @Get(':id')
+  async findById(@Param('id') id: string) {
+    const user = await this.userService.findById(id);
+    if (!user) {
+      return { success: false, error: '用户不存在' };
+    }
+    return {
+      success: true,
+      data: {
+        ...user,
+        userId: user.userId.toString(),
+        deptId: user.deptId?.toString(),
+      }
     };
   }
 

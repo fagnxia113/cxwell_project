@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Node } from 'reactflow'
+import { useTranslation } from 'react-i18next'
 import {
   Settings,
   User,
@@ -29,6 +30,7 @@ interface NodeConfigPanelProps {
 }
 
 const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onUpdate, onDelete, readOnly }) => {
+  const { t } = useTranslation()
   const [activeSection, setActiveSection] = useState<'basic' | 'approval' | 'gateway' | 'service'>('basic')
   const [showEmployeeSelector, setShowEmployeeSelector] = useState(false)
   
@@ -138,13 +140,13 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onUpdate, onDel
     return (
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">审批方式</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t('workflow.approval_method')}</label>
           <div className="grid grid-cols-2 gap-2">
             {[
-              { value: 'or_sign', label: '或签', icon: CheckSquare, desc: '任一审批人通过即可' },
-              { value: 'and_sign', label: '会签', icon: Users, desc: '所有审批人需全部通过' },
-              { value: 'sequential', label: '依次审批', icon: ListOrdered, desc: '按顺序依次审批' },
-              { value: 'vote', label: '投票', icon: Vote, desc: '多数通过即可' }
+              { value: 'or_sign', label: t('workflow.approval_mode.or_sign'), icon: CheckSquare, desc: t('workflow.approval_mode.or_sign_desc') },
+              { value: 'and_sign', label: t('workflow.approval_mode.and_sign'), icon: Users, desc: t('workflow.approval_mode.and_sign_desc') },
+              { value: 'sequential', label: t('workflow.approval_mode.sequential'), icon: ListOrdered, desc: t('workflow.approval_mode.sequential_desc') },
+              { value: 'vote', label: t('workflow.approval_mode.vote'), icon: Vote, desc: t('workflow.approval_mode.vote_desc') }
             ].map((mode) => (
               <button
                 key={mode.value}
@@ -166,7 +168,7 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onUpdate, onDel
 
         {config.approvalMode === 'vote' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">投票阈值</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('workflow.vote_threshold')}</label>
             <input
               type="number"
               min={1}
@@ -175,12 +177,12 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onUpdate, onDel
               disabled={readOnly}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
             />
-            <p className="mt-1 text-xs text-gray-500">设置审批人通过票数占总人数的比例</p>
+            <p className="mt-1 text-xs text-gray-500">{t('workflow.vote_threshold_hint')}</p>
           </div>
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">审批人来源</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t('workflow.approver_source')}</label>
           <select
             value={config.approverSource?.type || 'role'}
             onChange={(e) => updateApproverSource('type', e.target.value as any)}
@@ -199,20 +201,20 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onUpdate, onDel
 
         {config.approverSource?.type === 'role' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">审批角色</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('workflow.approval_role')}</label>
             <select
               value={config.approverSource?.value || ''}
               onChange={(e) => updateApproverSource('value', e.target.value)}
               disabled={readOnly}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
             >
-              <option value="">请选择角色</option>
-              <option value="admin">系统管理员</option>
-              <option value="project_manager">项目经理</option>
-              <option value="hr_manager">人事经理</option>
-              <option value="equipment_manager">设备管理员</option>
-              <option value="finance_manager">财务经理</option>
-              <option value="general_manager">总经理</option>
+              <option value="">{t('common.select')}</option>
+              <option value="admin">{t('user_management.role.admin')}</option>
+              <option value="project_manager">{t('user_management.role.project_manager')}</option>
+              <option value="hr_manager">{t('user_management.role.hr_manager')}</option>
+              <option value="equipment_manager">{t('user_management.role.equipment_manager')}</option>
+              <option value="finance_manager">{t('user_management.role.finance_manager') || '财务经理'}</option>
+              <option value="general_manager">{t('user_management.role.general_manager') || '总经理'}</option>
             </select>
           </div>
         )}
@@ -277,21 +279,21 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onUpdate, onDel
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">跳过条件</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t('workflow.skip_condition')}</label>
           <select
             value={config.skipCondition || 'none'}
             onChange={(e) => updateConfig('skipCondition', e.target.value)}
             disabled={readOnly}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
           >
-            <option value="none">无</option>
-            <option value="no_approvers">审批人为空</option>
-            <option value="always">始终跳过</option>
+            <option value="none">{t('workflow.skip_none')}</option>
+            <option value="no_approvers">{t('workflow.skip_no_approvers')}</option>
+            <option value="always">{t('workflow.skip_always')}</option>
           </select>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">超时时间(小时)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t('workflow.timeout_hours')}</label>
           <input
             type="number"
             min={0}
@@ -300,7 +302,7 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onUpdate, onDel
             disabled={readOnly}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
           />
-          <p className="mt-1 text-xs text-gray-500">设置审批超时时间</p>
+          <p className="mt-1 text-xs text-gray-500">{t('workflow.timeout_hint')}</p>
         </div>
 
         {config.timeout && config.timeout > 0 && (

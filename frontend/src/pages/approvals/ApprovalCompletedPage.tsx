@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   History,
@@ -35,6 +36,7 @@ interface DoneTask {
 }
 
 export default function ApprovalCompletedPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const message = useMessage()
   const [tasks, setTasks] = useState<DoneTask[]>([])
@@ -51,7 +53,7 @@ export default function ApprovalCompletedPage() {
       const res = await workflowApi.getDoneTasks()
       setTasks(res?.data || [])
     } catch (e: any) {
-      message.error(`历史库同步失败: ${e.message}`)
+      message.error(t('approval_completed.load_failed'))
     } finally {
       setLoading(false)
     }
@@ -78,9 +80,9 @@ export default function ApprovalCompletedPage() {
             <div className="p-2 bg-slate-900 text-white rounded-2xl shadow-xl shadow-slate-900/20">
               <History size={24} />
             </div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">已办任务概览</h1>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">{t('approval_completed.title')}</h1>
           </div>
-          <p className="text-slate-500 font-medium">追溯历史决策轨迹，确立业务流程的闭环可观测性</p>
+          <p className="text-slate-500 font-medium">{t('approval_completed.subtitle')}</p>
         </div>
 
         <button
@@ -96,7 +98,7 @@ export default function ApprovalCompletedPage() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
           <input
             type="text"
-            placeholder="检索历史流程、节点动作或意见备注..."
+            placeholder={t('approval_completed.search_placeholder')}
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             className="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all text-sm font-bold shadow-inner"
@@ -109,11 +111,11 @@ export default function ApprovalCompletedPage() {
           <table className="min-w-full divide-y divide-slate-100">
             <thead className="bg-slate-50/50">
               <tr>
-                <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">业务流主题</th>
-                <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">执行节点</th>
-                <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">决策动作</th>
-                <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">审批意见</th>
-                <th className="px-8 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">办理时间</th>
+                <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('approval_completed.task')}</th>
+                <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('approval_completed.node')}</th>
+                <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('approval_completed.result')}</th>
+                <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('common.comment')}</th>
+                <th className="px-8 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">{t('common.updateTime')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -124,7 +126,7 @@ export default function ApprovalCompletedPage() {
               ) : filteredTasks.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-20 text-center">
-                    <p className="text-sm font-bold text-slate-300 uppercase tracking-widest">暂无历史办理记录</p>
+                    <p className="text-sm font-bold text-slate-300 uppercase tracking-widest">{t('approval_completed.no_records')}</p>
                   </td>
                 </tr>
               ) : (

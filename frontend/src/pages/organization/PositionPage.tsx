@@ -89,11 +89,11 @@ const PositionPage: React.FC = () => {
 
   const [formData, setFormData] = useState({
     name: '',
-    department_id: '',
+    deptId: '',
     level: 1,
     category: 'management',
     description: '',
-    sort_order: 0,
+    sortOrder: 0,
     status: 'active' as 'active' | 'inactive'
   })
 
@@ -135,7 +135,7 @@ const PositionPage: React.FC = () => {
       })
     } else {
       setEditingPos(null)
-      setEditFormData({
+      setFormData({
         name: '',
         deptId: '',
         level: 1,
@@ -153,15 +153,11 @@ const PositionPage: React.FC = () => {
     if (!formData.name) return showError('请定义岗位协议标识')
 
     try {
-      const url = editingPos
-        ? API_URL.ORGANIZATION.POSITION_DETAIL(editingPos.id)
-        : API_URL.ORGANIZATION.POSITIONS
+      const res = editingPos
+        ? await orgApi.updatePosition(editingPos.id, formData)
+        : await orgApi.createPosition(formData)
 
-      const res: any = editingPos
-        ? await apiClient.put(url, formData)
-        : await apiClient.post(url, formData)
-
-      if (res.success || res.id) {
+      if (res.success) {
         success('协议同步成功')
         setShowModal(false)
         loadData()
@@ -180,7 +176,7 @@ const PositionPage: React.FC = () => {
     })
     if (confirmed) {
       try {
-        const res = await apiClient.delete(API_URL.ORGANIZATION.POSITION_DETAIL(id))
+        const res = await orgApi.deletePosition(id)
         if (res.success) {
           success('岗位已移除')
           loadData()
@@ -196,9 +192,21 @@ const PositionPage: React.FC = () => {
     mgmt: positions.filter(p => p.category === 'management').length
   }), [positions, departments])
 
+  const flatDepartments = useMemo(() => {
+    const list: any[] = []
+    const flatten = (nodes: any[]) => {
+      nodes.forEach(node => {
+        list.push(node)
+        if (node.children) flatten(node.children)
+      })
+    }
+    flatten(departments)
+    return list
+  }, [departments])
+
   const filteredPositions = useMemo(() => {
     let result = [...positions]
-    if (filterDept) result = result.filter(p => p.department_id === filterDept)
+    if (filterDept) result = result.filter(p => p.deptId === filterDept)
     if (searchTerm) {
       const lowSearch = searchTerm.toLowerCase()
       result = result.filter(p =>
@@ -263,7 +271,7 @@ const PositionPage: React.FC = () => {
           onChange={(e) => setFilterDept(e.target.value)}
         >
           <option value="">全部部门</option>
-          {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+          {flatDepartments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
         </select>
 
         <div className="flex items-center gap-1 bg-slate-100/50 p-1 rounded-lg">
@@ -428,12 +436,12 @@ const PositionPage: React.FC = () => {
                   <div className="space-y-2.5">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">所属部门</label>
                     <select
-                      value={formData.department_id}
-                      onChange={(e) => setFormData({ ...formData, department_id: e.target.value })}
+                      value={formData.deptId}
+                      onChange={(e) => setFormData({ ...formData, deptId: e.target.value })}
                       className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-bold focus:ring-4 focus:ring-emerald-600/5 appearance-none"
                     >
                       <option value="">（全局架构）</option>
-                      {departments.map(dept => <option key={dept.id} value={dept.id}>{dept.name}</option>)}
+                      {flatDepartments.map(dept => <option key={dept.id} value={dept.id}>{dept.name}</option>)}
                     </select>
                   </div>
 
@@ -471,8 +479,8 @@ const PositionPage: React.FC = () => {
                       <ArrowUpDown className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
                       <input
                         type="number"
-                        value={formData.sort_order}
-                        onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) || 0 })}
+                        value={formData.sortOrder}
+                        onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })}
                         className="w-full bg-slate-50 border-none rounded-xl pl-12 pr-5 py-3.5 text-sm font-bold focus:ring-4 focus:ring-emerald-600/5"
                       />
                     </div>

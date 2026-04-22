@@ -40,6 +40,9 @@ import { API_URL } from '../../config/api'
 import { apiClient } from '../../utils/apiClient'
 import { cn } from '../../utils/cn'
 import { useTranslation } from 'react-i18next'
+import FlowDetailView from '../../components/workflow/FlowDetailView'
+import { workflowApi } from '../../api/workflowApi'
+import { formApi } from '../../api/formApi'
 
 interface ApprovalOrder {
   id: string
@@ -69,7 +72,7 @@ const getFormFieldLabels = (t: any): Record<string, string> => ({
   'waybillNo': t('workflow.fields.shipping_no'), 'shippingNotes': t('workflow.fields.shipping_note'), 'receiveStatus': t('workflow.fields.receiving_status') || 'Receiving Status', 'receiveComment': t('workflow.fields.receiving_note') || 'Receiving Note'
 })
 
-const getGenderLabels = (t: any): Record<string, string> => ({ 'male': t('personnel.gender.male'), 'female': t('personnel.gender.female'), 'other': t('personnel.gender.other') })
+const getGenderLabels = (t: any): Record<string, string> => ({ 'male': t('personnel.gender.male'), 'female': t('personnel.gender.female') })
 const getEmployeeTypeLabels = (t: any): Record<string, string> => ({
   'regular': t('personnel.employee_type_labels.regular'),
   'probation': t('personnel.employee_type_labels.probation'),
@@ -92,7 +95,8 @@ const getOrderTypeLabels = (t: any): Record<string, { label: string; color: stri
   'equipment_repair': { label: t('workflow.categories.equipment'), color: 'pink', icon: Activity },
   'equipment_scrap': { label: t('workflow.categories.equipment'), color: 'slate', icon: Database },
   'project_completion': { label: t('workflow.categories.project'), color: 'violet', icon: CheckCircle2 },
-  'purchase_request': { label: t('workflow.categories.purchase'), color: 'cyan', icon: FileText }
+  'purchase_request': { label: t('workflow.categories.purchase'), color: 'cyan', icon: FileText },
+  'project_approval': { label: t('workflow.categories.project'), color: 'violet', icon: CheckCircle2 }
 })
 
 const getStatusConfig = (t: any): Record<string, { label: string; color: string; bgColor: string; icon: any; glow: string }> => ({
@@ -149,6 +153,8 @@ export default function ApprovalMinePageNew() {
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
   const [searchKeyword, setSearchKeyword] = useState('')
   const [selectedOrder, setSelectedOrder] = useState<ApprovalOrder | null>(null)
+  const [formTemplate, setFormTemplate] = useState<any>(null)
+  const [timeline, setTimeline] = useState<any[]>([])
   const [transferOrderDetail, setTransferOrderDetail] = useState<any>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(10)
@@ -166,7 +172,23 @@ export default function ApprovalMinePageNew() {
         } catch (e) { console.warn('加载调拨单详情失败', e) }
       } else setTransferOrderDetail(null)
     }
+    const loadFormTemplate = async () => {
+      if (!selectedOrder?.order_type) { setFormTemplate(null); return }
+      try {
+        const res = await formApi.getTemplate(selectedOrder.order_type)
+        setFormTemplate(res.data)
+      } catch { setFormTemplate(null) }
+    }
+    const loadTimeline = async () => {
+      if (!selectedOrder?.id) { setTimeline([]); return }
+      try {
+        const res = await workflowApi.getTimeline(selectedOrder.id)
+        setTimeline(res.data?.timeline || [])
+      } catch { setTimeline([]) }
+    }
     loadTransferDetail()
+    loadFormTemplate()
+    loadTimeline()
   }, [selectedOrder])
 
   const loadOrders = async () => {
@@ -187,9 +209,9 @@ export default function ApprovalMinePageNew() {
             order_type: item.definition_key,
             title: item.title,
             status: displayStatus,
-            current_node: item.current_node_name || '已完结',
+            current_node: item.current_node_name || t('workflow.status.completed_short'),
             current_assignee_name: item.current_assignee_name || '',
-            form_data: item.variables?.formData || {},
+            form_data: item.form_data || item.variables?.formData || {},
             audit_logs: [],
             created_at: item.created_at,
             updated_at: item.updated_at,
@@ -341,7 +363,7 @@ export default function ApprovalMinePageNew() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.02 }}
-                  onClick={() => navigate(`/workflow/detail/${order.id}`)}
+                  onClick={() => setSelectedOrder(order)}
                   className="grid grid-cols-12 gap-3 px-4 py-3 items-center premium-card border-none bg-white hover:bg-slate-50 hover:shadow-md cursor-pointer transition-all group"
                 >
                   <div className="col-span-1">
@@ -454,121 +476,23 @@ export default function ApprovalMinePageNew() {
           <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
             className="bg-white rounded-[40px] shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
           >
-            <div className="px-10 py-10 flex justify-between items-start bg-mesh border-b border-slate-100 relative shrink-0">
-               <div className="relative z-10">
-                  <div className="flex items-center gap-3 mb-2">
-                    {getStatusBadge(selectedOrder.status)}
-                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest font-mono">Ref Order: {selectedOrder.order_no}</span>
-                  </div>
-                  <h3 className="text-3xl font-black text-slate-900 tracking-tight">{selectedOrder.title}</h3>
-               </div>
-               <button onClick={() => setSelectedOrder(null)} className="w-12 h-12 flex items-center justify-center bg-white shadow-sm border border-slate-100 hover:bg-rose-50 hover:border-rose-100 rounded-2xl transition-all">
-                  <X size={24} className="text-slate-400 group-hover:text-rose-500" />
-               </button>
-            </div>
-            
-            <div className="p-10 overflow-y-auto custom-scrollbar flex-1 space-y-10">
-              {/* Process Metadata Grid */}
-              <div className="grid grid-cols-4 gap-6">
-                <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">{t('workflow.fields.node')}</p>
-                  <div className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                    <GitBranch size={14} className="text-indigo-500" />
-                    {selectedOrder.current_node}
-                  </div>
-                </div>
-                <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">{t('workflow.fields.handler')}</p>
-                  <div className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                    <User size={14} className="text-indigo-500" />
-                    {selectedOrder.current_assignee_name || '--'}
-                  </div>
-                </div>
-                <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">{t('workflow.fields.type')}</p>
-                  <div className="font-bold text-slate-900 text-sm">{ORDER_TYPE_LABELS[selectedOrder.order_type]?.label || selectedOrder.order_type}</div>
-                </div>
-                <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">{t('workflow.fields.time')}</p>
-                  <div className="font-bold text-slate-900 text-sm">{formatDate(selectedOrder.created_at)}</div>
-                </div>
-              </div>
-              
-              {/* Dynamic Payload Data */}
-              <div className="space-y-6">
-                <h4 className="text-sm font-black text-slate-900 uppercase tracking-[0.15em] flex items-center gap-2">
-                   <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full" />
-                   {t('workflow.fields.payload')}
-                </h4>
-                
-                <div className="bg-white border border-slate-100 rounded-[32px] p-8 space-y-8">
-                  {Object.entries(selectedOrder.form_data).length > 0 ? (
-                    <div className="space-y-10">
-                      {/* Special: Equipment Transfer Matrix */}
-                      {selectedOrder.order_type === 'equipment-transfer' && selectedOrder.form_data.items && (
-                        <div className="space-y-4">
-                          <h5 className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{t('equipment.fields.items')}</h5>
-                          <div className="overflow-hidden rounded-2xl border border-slate-100">
-                            <table className="w-full text-left">
-                              <thead className="bg-slate-50/50">
-                                <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                  <th className="px-6 py-4">{t('equipment.fields.name')}</th>
-                                  <th className="px-6 py-4">{t('equipment.fields.model')}</th>
-                                  <th className="px-6 py-4 text-center">{t('equipment.fields.qty')}</th>
-                                  <th className="px-6 py-4">{t('equipment.fields.code')}</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-slate-100">
-                                {selectedOrder.form_data.items.map((item: any, idx: number) => (
-                                  <tr key={idx} className="text-sm text-slate-700">
-                                    <td className="px-6 py-4 font-bold">{item.equipment_name}</td>
-                                    <td className="px-6 py-4">{item.model_no}</td>
-                                    <td className="px-6 py-4 text-center font-mono font-bold text-indigo-600">{item.quantity}</td>
-                                    <td className="px-6 py-4 font-mono text-xs">{item.manage_code}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Common Key-Value Matrix */}
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-y-8 gap-x-12">
-                        {(() => {
-                           const deptMap = selectedOrder.form_data._deptMap || {}
-                           const posMap = selectedOrder.form_data._posMap || {}
-                           return Object.entries(selectedOrder.form_data)
-                            .filter(([key]) => !key.startsWith('_') && key !== 'items')
-                            .filter(([key]) => selectedOrder.order_type !== 'equipment-transfer' || !['fromLocationId', 'toLocationId', 'fromManagerId', 'toManagerId'].includes(key))
-                            .map(([key, value]) => {
-                              let displayValue = typeof value === 'object' ? JSON.stringify(value) : String(value)
-                              if (key === 'gender') displayValue = GENDER_LABELS[String(value)] || displayValue
-                              else if (key === 'employee_type') displayValue = EMPLOYEE_TYPE_LABELS[String(value)] || displayValue
-                              else if (key === 'inbound_type') displayValue = INBOUND_TYPE_LABELS[String(value)] || displayValue
-                              else if (key === 'receiveStatus') displayValue = RECEIVE_STATUS_LABELS[String(value)] || displayValue
-                              else if (key === 'department_id') displayValue = deptMap[String(value)] || displayValue
-                              else if (key === 'position_id') displayValue = posMap[String(value)] || displayValue
-                              
-                              return (
-                                <div key={key} className="space-y-1">
-                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">
-                                    {FORM_FIELD_LABELS[key] || key}
-                                  </p>
-                                  <p className="text-sm font-bold text-slate-800 leading-tight">
-                                    {displayValue === 'null' || !displayValue ? '--' : displayValue}
-                                  </p>
-                                </div>
-                              )
-                            })
-                        })()}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="py-20 text-center text-slate-400 text-sm font-medium">{t('common.noData')}</div>
-                  )}
-                </div>
-              </div>
+            {/* FlowDetailView - Unified */}
+            <div className="p-10 overflow-y-auto custom-scrollbar flex-1">
+              <FlowDetailView
+                title={selectedOrder.title}
+                processTitle={selectedOrder.title}
+                initiatorName={selectedOrder.initiator_name}
+                createdAt={selectedOrder.created_at}
+                nodeName={selectedOrder.current_node}
+                orderType={ORDER_TYPE_LABELS[selectedOrder.order_type]?.label || selectedOrder.order_type}
+                handlerName={selectedOrder.current_assignee_name}
+                formTemplate={formTemplate}
+                formData={selectedOrder.form_data}
+                readOnly={true}
+                timeline={timeline}
+                showTimeline={true}
+                currentNodeName={selectedOrder.current_node}
+              />
             </div>
 
             <div className="px-10 py-8 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">

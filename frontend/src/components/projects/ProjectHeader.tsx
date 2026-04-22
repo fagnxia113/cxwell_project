@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import StatusBadge from './StatusBadge'
 import type { Project } from '../../types/project'
+import { getCountryBilingual } from '../../utils/country'
 
 interface ProjectHeaderProps {
   project: Project
@@ -60,7 +61,7 @@ export default function ProjectHeader({
             <div className="w-1 h-1 bg-slate-200 rounded-full" />
             <span className="flex items-center gap-1.5">
               <MapPin size={14} className="text-emerald-500" />
-              {project.country || t('project.fields.country_pending')}
+              {getCountryBilingual(project.country) || t('project.fields.country_pending')}
             </span>
             <div className="w-1 h-1 bg-slate-200 rounded-full" />
             <span className="flex items-center gap-1.5 px-2 py-0.5 bg-slate-100 rounded text-slate-600">

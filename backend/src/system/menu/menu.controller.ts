@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
 import { MenuService } from './menu.service';
-import { AuthGuard } from '@nestjs/passport';
+import { Roles } from '../../auth/roles.decorator';
 
 @Controller('system/menu')
-@UseGuards(AuthGuard('jwt'))
+@Roles('admin')
 export class MenuController {
   constructor(private readonly menuService: MenuService) {}
 
