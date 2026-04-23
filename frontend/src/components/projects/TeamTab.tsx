@@ -7,9 +7,9 @@ import React, { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import dayjs from 'dayjs'
 import { 
-  Users, Activity, ShieldCheck, Loader2, UserPlus, 
-  ArrowRightLeft, Trash2, Search, Calendar,
-  ChevronLeft, ChevronRight, Briefcase, Plane, Home, Info 
+  Users, Loader2, UserPlus, 
+  ArrowRightLeft, Trash2, Search,
+  ChevronLeft, ChevronRight, Briefcase
 } from 'lucide-react'
 import { useMessage } from '../../hooks/useMessage'
 import { apiClient } from '../../utils/apiClient'
@@ -21,16 +21,18 @@ interface TeamTabProps {
   projectId: string
   personnel: ProjectPersonnel[]
   isAdmin?: boolean
+  isProjectManager?: boolean
   onUpdatePermission?: (employeeId: string, canEdit: boolean) => void
   onAddPersonnel?: (data: { employeeId: string, transferInDate?: string }) => Promise<void>
   onTransferPersonnel?: (data: { employeeId: string, targetProjectId: string, transferDate: string, remark?: string }) => Promise<void>
   onRemovePersonnel?: (employeeId: string, data?: { transferOutDate?: string, remark?: string }) => Promise<void>
 }
 
-export default function TeamTab({ 
+export default function TeamTab({
   projectId,
-  personnel, 
-  isAdmin, 
+  personnel,
+  isAdmin,
+  isProjectManager,
   onUpdatePermission,
   onAddPersonnel,
   onTransferPersonnel,
@@ -148,16 +150,17 @@ export default function TeamTab({
             disabled={syncing}
             className="flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black border border-emerald-100 hover:bg-emerald-100 transition-all disabled:opacity-50"
           >
-            {syncing ? <Loader2 size={12} className="animate-spin" /> : <Activity size={12} />} 
+            {syncing ? <Loader2 size={12} className="animate-spin" /> : <Users size={12} />} 
             {t('personnel.action.sync_attendance')}
           </button>
           
-          <button 
+          <button
             onClick={() => {
               setIsAddModalOpen(true)
               loadEmployees()
             }}
             className="flex items-center gap-2 px-3 py-1 bg-emerald-500 text-white rounded-lg text-[10px] font-black hover:bg-emerald-600 transition-all shadow-sm"
+            style={{ display: isProjectManager ? 'flex' : 'none' }}
           >
             <UserPlus size={12} /> {t('personnel.action.add_to_project')}
           </button>
@@ -188,34 +191,12 @@ export default function TeamTab({
 
       {activeView === 'list' ? (
         <>
-          {/* 风险预警卡片 (保持不变) */}
-          <div className="bg-emerald-950 p-6 rounded-2xl shadow-xl relative overflow-hidden group border border-emerald-800">
-            <div className="absolute top-0 right-0 p-6 text-emerald-500/10 opacity-50 group-hover:scale-125 transition-transform duration-700">
-              <ShieldCheck size={120} />
-            </div>
-            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
-                  <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em]">{t('project.risk.high_priority_warning')}</span>
-                </div>
-                <h4 className="text-lg font-black text-white tracking-tight leading-tight">
-                  {t('project.compliance.team_health')}
-                </h4>
-                <p className="text-[11px] font-bold text-emerald-300 max-w-md">
-                  {t('project.risk.visa_overlap')} • 
-                  <span className="ml-1 opacity-80">{t('project.compliance.action_hint')}</span>
-                </p>
-              </div>
-            </div>
-          </div>
-
           {/* 人员列表网格 */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {personnel.map(p => (
               <div key={p.employee_id} className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 -mr-12 -mt-12 rounded-full group-hover:scale-110 transition-transform opacity-50" />
-                <div className="flex items-start justify-between relative z-10 mb-6">
+                <div className="flex items-start justify-between relative z-10">
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-2xl bg-slate-900 flex items-center justify-center text-emerald-400 font-black text-xl shadow-lg group-hover:bg-emerald-600 group-hover:text-white transition-all">
                       {p.employee_name?.charAt(0) || '?'}
@@ -225,49 +206,25 @@ export default function TeamTab({
                       <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{p.position}</div>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1.5">
-                    <span className={cn(
-                      "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm",
-                      p.on_duty_status === 'on_duty' ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-400"
-                    )}>
-                      {p.on_duty_status === 'on_duty' ? t('personnel.rotation.on_duty') : t('personnel.rotation.local_rest')}
-                    </span>
-                    
-                    <div className="flex gap-1">
-                      <button 
-                        onClick={() => {
-                          setTargetPersonnel(p)
-                          setIsTransferModalOpen(true)
-                          loadProjects()
-                        }}
-                        title="Transfer"
-                        className="p-1.5 bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                      >
-                        <ArrowRightLeft size={14} />
-                      </button>
-                      <button 
-                        onClick={() => onRemovePersonnel?.(p.employee_id)}
-                        title="Remove"
-                        className="p-1.5 bg-slate-50 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-slate-50 relative z-10">
-                  <div>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                      <Calendar size={10} className="text-emerald-500" /> {t('personnel.fields.hire_date')}
-                    </p>
-                    <p className="text-xs font-black text-slate-900 tabular-nums">{p.transfer_in_date?.split('T')[0] || '--'}</p>
-                  </div>
-                  <div>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                      <Activity size={10} className="text-emerald-500" /> {t('common.status')}
-                    </p>
-                    <p className="text-xs font-black text-emerald-600 tabular-nums">{t('personnel.status.active')}</p>
+                  <div className="flex gap-1" style={{ display: isProjectManager ? 'flex' : 'none' }}>
+                    <button
+                      onClick={() => {
+                        setTargetPersonnel(p)
+                        setIsTransferModalOpen(true)
+                        loadProjects()
+                      }}
+                      title="Transfer"
+                      className="p-1.5 bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                    >
+                      <ArrowRightLeft size={14} />
+                    </button>
+                    <button
+                      onClick={() => onRemovePersonnel?.(p.employee_id)}
+                      title="Remove"
+                      className="p-1.5 bg-slate-50 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -398,7 +355,7 @@ export default function TeamTab({
                 </div>
                 <button 
                   onClick={() => {
-                    onAddPersonnel?.({ employeeId: e.id })
+                    onAddPersonnel?.({ employeeId: e.employeeId })
                     setIsAddModalOpen(false)
                   }}
                   className="px-4 py-1.5 bg-slate-900 text-white rounded-lg text-xs font-black hover:bg-emerald-600 transition-all shadow-sm"

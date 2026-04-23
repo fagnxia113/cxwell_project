@@ -57,6 +57,9 @@ export default function ProjectDetailPage() {
     addPersonnel, transferPersonnel, removePersonnel
   } = useProjectDetail(id)
 
+  // 计算用户是否是该项目经理
+  const isProjectManager = currentUser?.id === project?.manager_id
+
   const [activeTab, setActiveTab] = useState('overview')
 
   // 初始化 Tab
@@ -157,8 +160,9 @@ export default function ProjectDetailPage() {
           <div>
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{t('project.fields.budget_progress') || 'Budget Execution'}</p>
             {(() => {
-              const totalSpent = (expenses || []).reduce((sum, exp) => sum + Number(exp.amount), 0);
-              const budgetPercent = project.budget > 0 ? (totalSpent / project.budget) * 100 : 0;
+              const totalSpentInYuan = (expenses || []).reduce((sum, exp) => sum + Number(exp.amount), 0);
+              const totalSpentInWan = totalSpentInYuan / 10000;
+              const budgetPercent = project.budget > 0 ? (totalSpentInWan / project.budget) * 100 : 0;
               return (
                 <p className="text-lg font-black text-slate-900 leading-none">{Math.min(100, Math.round(budgetPercent))}%</p>
               );
@@ -228,41 +232,44 @@ export default function ProjectDetailPage() {
                   />
                 )}
                 {activeTab === 'team' && (
-                  <TeamTab 
+                  <TeamTab
                     projectId={id!}
-                    personnel={personnel} 
-                    isAdmin={isAdmin} 
-                    onUpdatePermission={updatePersonnelPermission} 
+                    personnel={personnel}
+                    isAdmin={isAdmin}
+                    isProjectManager={isProjectManager}
+                    onUpdatePermission={updatePersonnelPermission}
                     onAddPersonnel={addPersonnel}
                     onTransferPersonnel={transferPersonnel}
                     onRemovePersonnel={removePersonnel}
                   />
                 )}
                 {activeTab === 'risks' && (
-                  <RisksTab 
-                    risks={risks} 
+                  <RisksTab
+                    risks={risks}
                     milestones={milestones}
-                    isAdmin={isAdmin} 
-                    onAddRisk={addRisk} 
-                    onUpdateRisk={updateRisk} 
-                    onDeleteRisk={deleteRisk} 
+                    isAdmin={isAdmin}
+                    isProjectManager={isProjectManager}
+                    onAddRisk={addRisk}
+                    onUpdateRisk={updateRisk}
+                    onDeleteRisk={deleteRisk}
                   />
                 )}
                 {activeTab === 'expenses' && (
-                  <ExpensesTab 
-                    project={project} 
-                    expenses={expenses} 
-                    isAdmin={isAdmin} 
-                    onAddExpense={addExpense} 
-                    onDeleteExpense={deleteExpense} 
+                  <ExpensesTab
+                    project={project}
+                    expenses={expenses}
+                    isAdmin={isAdmin}
+                    isProjectManager={isProjectManager}
+                    onAddExpense={addExpense}
+                    onDeleteExpense={deleteExpense}
                   />
                 )}
                 {/* 占位符 */}
                 {activeTab === 'reports' && (
-                  <ReportsTab projectId={id!} milestones={milestones} />
+                  <ReportsTab projectId={id!} milestones={milestones} isProjectManager={isProjectManager} />
                 )}
                 {activeTab === 'tags' && (
-                  <TagsTab projectId={id!} milestones={milestones} />
+                  <TagsTab projectId={id!} milestones={milestones} isProjectManager={isProjectManager} />
                 )}
               </motion.div>
             </AnimatePresence>

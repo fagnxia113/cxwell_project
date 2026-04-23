@@ -225,6 +225,8 @@ const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
     '商务信息': Hash,
     '项目规模': Archive,
     '技术架构': Layers,
+    '请假信息': Calendar,
+    '补充材料': Upload,
   }
 
   return (

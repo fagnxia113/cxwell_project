@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { workflowApi } from '../api/workflowApi'
-import { formApi } from '../api/formApi'
 import { useMessage } from '../hooks/useMessage'
 import { useConfirm } from '../hooks/useConfirm'
 import FormTemplateRenderer from './workflow/FormTemplateRenderer'
@@ -55,25 +54,23 @@ const WorkflowFormLauncher: React.FC<WorkflowFormLauncherProps> = ({
         setDefinition(target)
         if (target) {
           setTitle(`${target.flowName || ''}-${new Date().toLocaleDateString(i18n.language)}`)
-          
+
           if (target.id) {
             try {
-              const defDetailRes = await workflowApi.getDefinitionDetail(target.id.toString())
+              const defDetailRes = await workflowApi.getDefinitionDetail(target.id.toString() + '?t=' + Date.now())
               if (defDetailRes?.success && defDetailRes?.data) {
                 const defData = defDetailRes.data.definition || defDetailRes.data
                 let fields: any[] = []
                 if (defData.ext) {
                   try {
-                    const parsed = JSON.parse(defData.ext)
+                    const parsed = typeof defData.ext === 'string' ? JSON.parse(defData.ext) : defData.ext
                     fields = parsed.form_schema || parsed.fields || parsed.form_fields || []
                   } catch { fields = [] }
                 }
                 if (typeof fields === 'string') {
                   try { fields = JSON.parse(fields) } catch { fields = [] }
                 }
-                if (Array.isArray(fields) && fields.length > 0) {
-                  setFormFields(fields)
-                }
+                setFormFields(fields)
               }
             } catch (e) {
               console.warn('Failed to load definition detail for form fields')
@@ -82,15 +79,8 @@ const WorkflowFormLauncher: React.FC<WorkflowFormLauncherProps> = ({
         }
       }
 
-      try {
-        const formRes = await formApi.getTemplate(definitionKey)
-        if (formRes.success && formRes.data) {
-          const fields = formRes.data.fields || []
-          if (fields.length > 0) setFormFields(fields)
-        }
-      } catch (e) {
-        console.warn('Form template not found for key:', definitionKey)
-      }
+      // formApi.getTemplate 逻辑已移除 - workflow definition 的 ext 字段已包含完整表单 schema
+      // 不再需要从 bizFormTemplate 查找，否则可能导致显示错误的表单字段
 
       if (draftId) {
         const taskRes = await workflowApi.getTaskDetail(draftId)

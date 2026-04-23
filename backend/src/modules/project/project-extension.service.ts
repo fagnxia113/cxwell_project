@@ -1,12 +1,50 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class ProjectExtensionService {
   constructor(private prisma: PrismaService) {}
 
+  private async checkUserProjectRole(projectId: bigint, user: any): Promise<'manager' | 'member' | null> {
+    const userId = user?.sub || user?.userId;
+    if (!userId) return null;
+
+    if (userId === '1' || userId === 1) return 'manager';
+
+    const project = await this.prisma.project.findUnique({
+      where: { projectId },
+      select: { managerId: true }
+    });
+
+    if (project?.managerId && project.managerId.toString() === userId.toString()) {
+      return 'manager';
+    }
+
+    const employee = await this.prisma.sysEmployee.findFirst({
+      where: { userId: BigInt(userId) },
+      select: { employeeId: true }
+    });
+
+    if (employee) {
+      const membership = await this.prisma.projectMember.findFirst({
+        where: {
+          projectId,
+          employeeId: employee.employeeId
+        }
+      });
+      if (membership) return 'member';
+    }
+
+    return null;
+  }
+
   // ---- Risks ----
-  async getRisks(projectId: bigint) {
+  async getRisks(projectId: bigint, user: any) {
+    const role = await this.checkUserProjectRole(projectId, user);
+    if (!role) {
+      throw new ForbiddenException('您不是该项目成员');
+    }
+
     const list = await this.prisma.projectRisk.findMany({
       where: { projectId },
       orderBy: { createTime: 'desc' }
@@ -19,15 +57,20 @@ export class ProjectExtensionService {
       ...item,
       id: item.id.toString(),
       projectId: item.projectId.toString(),
-      milestone_id: item.milestoneId?.toString() || null, // 兼容前端字段名
-      owner_name: item.ownerName, // 兼容前端字段名
-      closed_at: item.closedAt, // 兼容前端字段名
+      milestone_id: item.milestoneId?.toString() || null,
+      owner_name: item.ownerName,
+      closed_at: item.closedAt,
       create_time: item.createTime,
       update_time: item.updateTime
     };
   }
 
-  async addRisk(projectId: bigint, data: any) {
+  async addRisk(projectId: bigint, data: any, user: any) {
+    const role = await this.checkUserProjectRole(projectId, user);
+    if (role !== 'manager') {
+      throw new ForbiddenException('只有项目经理可以新建风险');
+    }
+
     try {
       const year = new Date().getFullYear();
       const count = await this.prisma.projectRisk.count({
@@ -40,12 +83,10 @@ export class ProjectExtensionService {
       });
       const riskNo = `RSK-${year}-${(count + 1).toString().padStart(3, '0')}`;
 
-      // 提取字段并处理类型，兼容驼峰和下划线
       const mId = data.milestoneId || data.milestone_id;
       const oName = data.ownerName || data.owner_name;
       const dLine = data.deadline;
 
-      // 移除可能冲突的字段
       const { id, projectId: pId, owner_name, ownerName, milestoneId, milestone_id, deadline, ...rest } = data;
 
       const res = await this.prisma.projectRisk.create({
@@ -66,7 +107,22 @@ export class ProjectExtensionService {
     }
   }
 
-  async updateRisk(id: bigint, data: any) {
+  async updateRisk(id: bigint, data: any, user: any) {
+    const risk = await this.prisma.projectRisk.findUnique({ where: { id } });
+    if (!risk) throw new NotFoundException('风险不存在');
+
+    const role = await this.checkUserProjectRole(risk.projectId, user);
+    if (!role) {
+      throw new ForbiddenException('您不是该项目成员');
+    }
+
+    // 成员只能更新 progressNote
+    if (role === 'member') {
+      if (Object.keys(data).some(k => k !== 'progressNote' && k !== 'progress_note')) {
+        throw new ForbiddenException('项目成员只能更新风险进度备注');
+      }
+    }
+
     const mId = data.milestoneId || data.milestone_id;
     const oName = data.ownerName || data.owner_name;
     const dLine = data.deadline;
@@ -97,7 +153,15 @@ export class ProjectExtensionService {
     return this.mapRisk(res);
   }
 
-  async deleteRisk(id: bigint) {
+  async deleteRisk(id: bigint, user: any) {
+    const risk = await this.prisma.projectRisk.findUnique({ where: { id } });
+    if (!risk) throw new NotFoundException('风险不存在');
+
+    const role = await this.checkUserProjectRole(risk.projectId, user);
+    if (role !== 'manager') {
+      throw new ForbiddenException('只有项目经理可以删除风险');
+    }
+
     await this.prisma.projectRisk.delete({ where: { id } });
     return { success: true };
   }
@@ -116,7 +180,12 @@ export class ProjectExtensionService {
     }));
   }
 
-  async addExpense(projectId: bigint, data: any) {
+  async addExpense(projectId: bigint, data: any, user: any) {
+    const role = await this.checkUserProjectRole(projectId, user);
+    if (!role) {
+      throw new ForbiddenException('您不是该项目成员');
+    }
+
     const res = await this.prisma.projectExpense.create({
       data: {
         ...data,
@@ -128,7 +197,15 @@ export class ProjectExtensionService {
     return { ...res, id: res.id.toString(), projectId: res.projectId.toString(), amount: res.amount.toString() };
   }
 
-  async deleteExpense(id: bigint) {
+  async deleteExpense(id: bigint, user: any) {
+    const expense = await this.prisma.projectExpense.findUnique({ where: { id } });
+    if (!expense) throw new NotFoundException('费用不存在');
+
+    const role = await this.checkUserProjectRole(expense.projectId, user);
+    if (role !== 'manager') {
+      throw new ForbiddenException('只有项目经理可以删除费用');
+    }
+
     await this.prisma.projectExpense.delete({ where: { id } });
     return { success: true };
   }
@@ -146,7 +223,12 @@ export class ProjectExtensionService {
     }));
   }
 
-  async addStaffingPlan(projectId: bigint, data: any) {
+  async addStaffingPlan(projectId: bigint, data: any, user: any) {
+    const role = await this.checkUserProjectRole(projectId, user);
+    if (role !== 'manager') {
+      throw new ForbiddenException('只有项目经理可以添加人员计划');
+    }
+
     const res = await this.prisma.projectStaffingPlan.create({
       data: {
         ...data,
@@ -158,13 +240,26 @@ export class ProjectExtensionService {
     return { ...res, id: res.id.toString(), projectId: res.projectId.toString() };
   }
 
-  async deleteStaffingPlan(id: bigint) {
+  async deleteStaffingPlan(id: bigint, user: any) {
+    const plan = await this.prisma.projectStaffingPlan.findUnique({ where: { id } });
+    if (!plan) throw new NotFoundException('人员计划不存在');
+
+    const role = await this.checkUserProjectRole(plan.projectId, user);
+    if (role !== 'manager') {
+      throw new ForbiddenException('只有项目经理可以删除人员计划');
+    }
+
     await this.prisma.projectStaffingPlan.delete({ where: { id } });
     return { success: true };
   }
 
   // ---- Personnel Permissions ----
-  async updatePersonnelPermission(projectId: bigint, employeeId: bigint, canEdit: boolean) {
+  async updatePersonnelPermission(projectId: bigint, employeeId: bigint, canEdit: boolean, user: any) {
+    const role = await this.checkUserProjectRole(projectId, user);
+    if (role !== 'manager') {
+      throw new ForbiddenException('只有项目经理可以修改成员权限');
+    }
+
     const res = await this.prisma.projectMember.update({
       where: {
         projectId_employeeId: {

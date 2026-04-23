@@ -25,9 +25,9 @@ export class AuthService {
       const userRoleRelation = await this.prisma.sysUserRole.findFirst({
         where: { userId: user.userId },
       });
-      
+
       let roleKey = 'user'; // 默认角色
-      
+
       if (user.userId === 1n) {
         roleKey = 'admin'; // 内置管理员强制为 admin
       } else if (userRoleRelation) {
@@ -41,17 +41,30 @@ export class AuthService {
       }
 
       const { password, ...result } = user;
-      
+
+      // 查询关联的员工ID
+      let employee_id: string | undefined;
+      const employee = await this.prisma.sysEmployee.findFirst({
+        where: { userId: user.userId },
+        select: { employeeId: true }
+      });
+      if (employee) {
+        employee_id = employee.employeeId.toString();
+      }
+
       // 获取关联权限集
       const permissionsData = await this.getUserPermissions(roleKey);
-      
+
       // 字段映射：将数据库的 userName 映射为前端期望的 name
       // 并返回双重字段 role 和 roleKey 以确保兼容性
-      return { 
-        ...result, 
-        name: user.userName, 
-        role: roleKey, 
+      return {
+        ...result,
+        id: user.userId.toString(),
+        username: user.loginName,
+        name: user.userName,
+        role: roleKey,
         roleKey: roleKey,
+        employee_id,
         ...permissionsData
       };
     }

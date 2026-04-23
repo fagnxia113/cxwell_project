@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Req } from '@nestjs/common';
 import { ProjectExtensionService } from './project-extension.service';
 
 @Controller('project/extension')
@@ -7,26 +7,26 @@ export class ProjectExtensionController {
 
   // ---- Risks ----
   @Get(':projectId/risks')
-  async getRisks(@Param('projectId') projectId: string) {
-    const data = await this.extensionService.getRisks(BigInt(projectId));
+  async getRisks(@Param('projectId') projectId: string, @Req() req: any) {
+    const data = await this.extensionService.getRisks(BigInt(projectId), req.user);
     return { success: true, data };
   }
 
   @Post(':projectId/risks')
-  async addRisk(@Param('projectId') projectId: string, @Body() data: any) {
-    const res = await this.extensionService.addRisk(BigInt(projectId), data);
+  async addRisk(@Param('projectId') projectId: string, @Body() data: any, @Req() req: any) {
+    const res = await this.extensionService.addRisk(BigInt(projectId), data, req.user);
     return { success: true, data: res };
   }
 
   @Put('risks/:id')
-  async updateRisk(@Param('id') id: string, @Body() data: any) {
-    const res = await this.extensionService.updateRisk(BigInt(id), data);
+  async updateRisk(@Param('id') id: string, @Body() data: any, @Req() req: any) {
+    const res = await this.extensionService.updateRisk(BigInt(id), data, req.user);
     return { success: true, data: res };
   }
 
   @Delete('risks/:id')
-  async deleteRisk(@Param('id') id: string) {
-    await this.extensionService.deleteRisk(BigInt(id));
+  async deleteRisk(@Param('id') id: string, @Req() req: any) {
+    await this.extensionService.deleteRisk(BigInt(id), req.user);
     return { success: true };
   }
 
@@ -38,14 +38,14 @@ export class ProjectExtensionController {
   }
 
   @Post(':projectId/expenses')
-  async addExpense(@Param('projectId') projectId: string, @Body() data: any) {
-    const res = await this.extensionService.addExpense(BigInt(projectId), data);
+  async addExpense(@Param('projectId') projectId: string, @Body() data: any, @Req() req: any) {
+    const res = await this.extensionService.addExpense(BigInt(projectId), data, req.user);
     return { success: true, data: res };
   }
 
   @Delete('expenses/:id')
-  async deleteExpense(@Param('id') id: string) {
-    await this.extensionService.deleteExpense(BigInt(id));
+  async deleteExpense(@Param('id') id: string, @Req() req: any) {
+    await this.extensionService.deleteExpense(BigInt(id), req.user);
     return { success: true };
   }
 
@@ -57,14 +57,14 @@ export class ProjectExtensionController {
   }
 
   @Post(':projectId/staffing-plans')
-  async addStaffingPlan(@Param('projectId') projectId: string, @Body() data: any) {
-    const res = await this.extensionService.addStaffingPlan(BigInt(projectId), data);
+  async addStaffingPlan(@Param('projectId') projectId: string, @Body() data: any, @Req() req: any) {
+    const res = await this.extensionService.addStaffingPlan(BigInt(projectId), data, req.user);
     return { success: true, data: res };
   }
 
   @Delete('staffing-plans/:id')
-  async deleteStaffingPlan(@Param('id') id: string) {
-    await this.extensionService.deleteStaffingPlan(BigInt(id));
+  async deleteStaffingPlan(@Param('id') id: string, @Req() req: any) {
+    await this.extensionService.deleteStaffingPlan(BigInt(id), req.user);
     return { success: true };
   }
 
@@ -73,9 +73,10 @@ export class ProjectExtensionController {
   async updatePersonnelPermission(
     @Param('projectId') projectId: string,
     @Param('employeeId') employeeId: string,
-    @Body('canEdit') canEdit: boolean
+    @Body('canEdit') canEdit: boolean,
+    @Req() req: any
   ) {
-    const res = await this.extensionService.updatePersonnelPermission(BigInt(projectId), BigInt(employeeId), canEdit);
+    const res = await this.extensionService.updatePersonnelPermission(BigInt(projectId), BigInt(employeeId), canEdit, req.user);
     return { success: true, data: res };
   }
 }

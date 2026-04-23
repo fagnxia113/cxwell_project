@@ -476,6 +476,26 @@ model FlowSkip {
   @@map("flow_skip")
 }
 
+model Leave {
+  leaveId      BigInt    @id @default(autoincrement()) @map("leave_id")
+  employeeId   BigInt?   @map("employee_id")
+  employeeName String?   @db.VarChar(100)
+  employeeNo   String?   @map("employee_no") @db.VarChar(50)
+  leaveType    String    @db.VarChar(20)
+  startDate    DateTime  @map("start_date")
+  endDate      DateTime  @map("end_date")
+  days         Decimal   @db.Decimal(5, 1)
+  reason       String?   @db.Text
+  status       String    @default("pending") @db.VarChar(20)
+  sourceType   String    @default("workflow") @map("source_type") @db.VarChar(20)
+  sourceId     BigInt?   @map("source_id")
+  instanceId   BigInt?   @map("instance_id")
+  createTime   DateTime  @default(now()) @map("create_time")
+  updateTime   DateTime  @updatedAt @map("update_time")
+
+  @@map("leave")
+}
+
 model FlowInstance {
   id             BigInt    @id @map("id")
   definitionId   BigInt    @map("definition_id")

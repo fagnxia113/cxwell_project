@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { unlink } from 'fs/promises';
@@ -10,6 +10,43 @@ export class ReportsService {
     private prisma: PrismaService,
     private configService: ConfigService,
   ) {}
+
+  private async checkUserProjectRole(projectId: bigint, user: any): Promise<'manager' | 'member' | null> {
+    const userId = user?.sub || user?.userId;
+    if (!userId) return null;
+
+    // 超级管理员
+    if (userId === '1' || userId === 1) return 'manager';
+
+    // 检查是否是项目经理
+    const project = await this.prisma.project.findUnique({
+      where: { projectId },
+      select: { managerId: true }
+    });
+
+    if (project?.managerId && project.managerId.toString() === userId.toString()) {
+      return 'manager';
+    }
+
+    // 检查是否是项目成员
+    const employee = await this.prisma.sysEmployee.findFirst({
+      where: { userId: BigInt(userId) },
+      select: { employeeId: true }
+    });
+
+    if (employee) {
+      const membership = await this.prisma.projectMember.findFirst({
+        where: {
+          projectId,
+          employeeId: employee.employeeId
+        }
+      });
+
+      if (membership) return 'member';
+    }
+
+    return null;
+  }
 
   async findAll(projectId: bigint) {
     const reports = await this.prisma.projectReport.findMany({
@@ -30,7 +67,12 @@ export class ReportsService {
     copies: number;
     remarks?: string;
     status: string;
-  }) {
+  }, user: any) {
+    const role = await this.checkUserProjectRole(data.projectId, user);
+    if (role !== 'manager') {
+      throw new ForbiddenException('只有项目经理可以新建报告');
+    }
+
     const report = await this.prisma.projectReport.create({
       data: {
         projectId: data.projectId,
@@ -45,20 +87,37 @@ export class ReportsService {
     return this.mapReport(report);
   }
 
-  async update(id: bigint, data: any) {
-    const report = await this.prisma.projectReport.update({
+  async update(id: bigint, data: any, user: any) {
+    const report = await this.prisma.projectReport.findUnique({ where: { id } });
+    if (!report) throw new NotFoundException('报告不存在');
+
+    const role = await this.checkUserProjectRole(report.projectId, user);
+    if (role !== 'manager') {
+      throw new ForbiddenException('只有项目经理可以编辑报告');
+    }
+
+    const updated = await this.prisma.projectReport.update({
       where: { id },
       data,
       include: { attachments: true },
     });
-    return this.mapReport(report);
+    return this.mapReport(updated);
   }
 
   async updateProgress(
     id: bigint,
-    data: { submittedCount: number; verifiedCount: number; rejectedCount: number }
+    data: { submittedCount: number; verifiedCount: number; rejectedCount: number },
+    user: any
   ) {
-    const report = await this.prisma.projectReport.update({
+    const report = await this.prisma.projectReport.findUnique({ where: { id } });
+    if (!report) throw new NotFoundException('报告不存在');
+
+    const role = await this.checkUserProjectRole(report.projectId, user);
+    if (!role) {
+      throw new ForbiddenException('您不是该项目成员');
+    }
+
+    const updated = await this.prisma.projectReport.update({
       where: { id },
       data: {
         submittedCount: data.submittedCount,
@@ -67,10 +126,18 @@ export class ReportsService {
       },
       include: { attachments: true },
     });
-    return this.mapReport(report);
+    return this.mapReport(updated);
   }
 
-  async remove(id: bigint) {
+  async remove(id: bigint, user: any) {
+    const report = await this.prisma.projectReport.findUnique({ where: { id } });
+    if (!report) throw new NotFoundException('报告不存在');
+
+    const role = await this.checkUserProjectRole(report.projectId, user);
+    if (role !== 'manager') {
+      throw new ForbiddenException('只有项目经理可以删除报告');
+    }
+
     // Delete attachments first
     const attachments = await this.prisma.projectReportAttachment.findMany({
       where: { reportId: id },

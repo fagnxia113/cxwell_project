@@ -18,8 +18,8 @@
     "drafts": "草稿箱",
     "transfer": "人员调动",
     "attendance": "考勤管理",
-    "rotationReport": "月度休假计划报备",
-    "attendanceOverview": "预计出勤一览表",
+    "rotationReport": "出勤计划",
+    "attendanceOverview": "预计出勤",
     "ledger": "资产台账",
     "history": "历史记录",
     "warehouse": "仓库管理",
@@ -134,6 +134,7 @@
     "博士": "博士",
     "其他": "其他",
     "startTime": "开始时间",
+    "endTime": "结束时间",
     "remaining": "剩余",
     "show_more": "展开更多",
     "detail": "详情"
@@ -263,8 +264,16 @@
       "bank_name": "开户银行",
       "employee_type": "员工类型",
       "id_card": "身份证号",
-      "start_date": "入职日期"
+      "start_date": "入职日期",
+      "cost": "日成本",
+      "userId": "用户ID"
     },
+    "sections": {
+      "professional": "专业信息",
+      "contact": "联系方式",
+      "other": "其他信息"
+    },
+    "title": "员工详情",
     "empty": {
       "no_records": "暂无人员"
     },
@@ -298,12 +307,23 @@
       "engineer": "工程师",
       "staff": "员工"
     },
+    "roles": {
+      "admin": "管理员",
+      "project_manager": "项目经理",
+      "hr_manager": "人事经理",
+      "equipment_manager": "设备管理员",
+      "implementer": "实施人员",
+      "user": "普通用户"
+    },
     "status": {
       "active": "在职",
       "inactive": "离职",
       "on_leave": "休假",
-      "resigned": "已离职",
-      "leave": "休假"
+      "on_duty": "在职",
+      "leave": "休假",
+      "business_trip": "出差",
+      "other": "其他",
+      "resigned": "已离职"
     },
     "gender": {
       "male": "男",
@@ -326,7 +346,7 @@
     "rotation": {
       "report_title": "月度行程报备",
       "report_subtitle": "提前上报您的工作与休息计划，以便团队高效协作。",
-      "overview_title": "预计出勤一览看板",
+      "overview_title": "预计出勤看板",
       "overview_subtitle": "基于员工提前报备的数据，展示未来的人力可用性。",
       "guide_title": "报备说明",
       "important": "注意事项",
@@ -673,8 +693,6 @@
       "address": "详细地址",
       "managerId": "项目经理",
       "customerId": "客户",
-      "startDate": "项目预计开始时间",
-      "endDate": "项目预计结束时间",
       "budget": "预算金额(万元)",
       "description": "项目描述",
       "attachments": "附件",
@@ -685,7 +703,9 @@
       "powerArchitecture": "供电架构",
       "hvacArchitecture": "暖通架构",
       "fireArchitecture": "消防架构",
-      "weakElectricArchitecture": "弱电架构"
+      "weakElectricArchitecture": "弱电架构",
+      "leaveStartDate": "开始日期",
+      "leaveEndDate": "结束日期"
     }
   },
   "process_form_launcher": {

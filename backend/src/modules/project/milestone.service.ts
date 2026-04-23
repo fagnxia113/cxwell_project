@@ -99,10 +99,17 @@ export class MilestoneService {
     if (!currentMilestone) return { success: false };
 
     const data: any = { progress };
+    // 自动更新里程碑状态
     if (status) {
       data.status = status === 'completed' ? '1' : (status === 'in_progress' ? '2' : '0');
+    } else if (progress >= 100) {
+      // 进度100%自动设为已完成
+      data.status = '1';
+    } else if (progress > 0) {
+      // 进度>0且<100%自动设为进行中
+      data.status = '2';
     }
-    
+
     // 1. 更新当前里程碑
     await this.prisma.projectMilestone.update({
       where: { id },
@@ -229,10 +236,20 @@ export class MilestoneService {
       console.log(`[Sync] Project simple average: ${simpleSum} / ${rootMilestones.length} = ${projectProgress}`);
     }
 
-    console.log(`[Sync] Updating project progress to ${projectProgress}`);
+    // 确定项目状态
+    const allCompleted = rootMilestones.every(m => m.status === '1');
+    const anyInProgress = rootMilestones.some(m => m.status === '2');
+    let projectStatus = '2'; // 默认进行中
+    if (allCompleted) {
+      projectStatus = '3'; // 已完成
+    } else if (projectProgress === 0) {
+      projectStatus = '0'; // 未开始
+    }
+
+    console.log(`[Sync] Updating project progress to ${projectProgress}, status to ${projectStatus}`);
     await this.prisma.project.update({
       where: { projectId },
-      data: { progress: projectProgress }
+      data: { progress: projectProgress, status: projectStatus }
     });
     console.log(`[Sync] === Project sync completed ===`);
   }

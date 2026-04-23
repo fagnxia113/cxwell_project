@@ -12,6 +12,7 @@ interface Employee {
   name: string
   gender: 'male' | 'female'
   phone: string
+  phoneCountryCode?: string
   email: string
   userId: string | null
   deptId: string | null
@@ -19,15 +20,17 @@ interface Employee {
   positionName?: string
   departmentName?: string
   status: 'active' | 'resigned' | 'probation'
-  currentStatus: 'onDuty' | 'leave' | 'businessTrip' | 'other'
+  currentStatus: 'on_duty' | 'leave' | 'business_trip' | 'other'
   hireDate: string
   leaveDate: string | null
-  role: 'admin' | 'projectManager' | 'hrManager' | 'equipmentManager' | 'implementer' | 'user'
-  dailyCost: number
-  skills: any
+  role?: string
   avatarColor: string
   createTime: string
   updateTime: string
+  dingtalkUserId?: string | null
+  dingtalkDeptId?: string | null
+  education?: string
+  university?: string
 }
 
 interface Department {
@@ -248,7 +251,7 @@ export default function EmployeeDetailPage() {
   }
 
   const statusInfo = getStatusLabel(employee.status)
-  const currentStatusInfo = getCurrentStatusLabel(employee.current_status)
+  const currentStatusInfo = getCurrentStatusLabel(employee.currentStatus)
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -257,7 +260,7 @@ export default function EmployeeDetailPage() {
           onClick={() => navigate('/personnel')}
           className="text-blue-600 hover:text-blue-800 text-sm transition-colors"
         >
-          �?{t('sidebar.personnel')}
+          {t('sidebar.personnel')}
         </button>
       </div>
 
@@ -311,7 +314,7 @@ export default function EmployeeDetailPage() {
               <div className="flex flex-col items-center text-center">
                 <div
                   className="w-20 h-20 rounded-lg flex items-center justify-center text-white text-2xl font-bold mb-4 shadow-sm"
-                  style={{ backgroundColor: employee.avatar_color || '#3B82F6' }}
+                  style={{ backgroundColor: employee.avatarColor || '#3B82F6' }}
                 >
                   {employee.name.charAt(0)}
                 </div>
@@ -380,8 +383,8 @@ export default function EmployeeDetailPage() {
                     <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">{t('personnel.fields.dept')}</label>
                     {isEditing ? (
                       <select
-                        value={editForm.department_id || ''}
-                        onChange={(e) => setEditForm({ ...editForm, department_id: e.target.value })}
+                        value={editForm.deptId || ''}
+                        onChange={(e) => setEditForm({ ...editForm, deptId: e.target.value })}
                         className="w-full bg-slate-50 border border-slate-100 rounded-md px-3 py-1.5 text-xs font-bold focus:ring-4 focus:ring-blue-600/5 transition-all outline-none focus:border-blue-500"
                       >
                         <option value="">{t('common.search') + t('personnel.fields.dept')}</option>
@@ -430,22 +433,6 @@ export default function EmployeeDetailPage() {
                     )}
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">{t('personnel.fields.cost')}</label>
-                    {isEditing ? (
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">¥</span>
-                        <input
-                          type="number"
-                          value={editForm.dailyCost || 0}
-                          onChange={(e) => setEditForm({ ...editForm, dailyCost: parseFloat(e.target.value) || 0 })}
-                          className="w-full bg-slate-50 border border-slate-100 rounded-md pl-7 pr-3 py-1.5 text-xs font-bold focus:ring-4 focus:ring-blue-600/5 transition-all outline-none focus:border-blue-500"
-                        />
-                      </div>
-                    ) : (
-                      <div className="text-xs font-bold text-blue-600 tabular-nums">{formatCurrency(employee.dailyCost)}</div>
-                    )}
-                  </div>
-                  <div>
                     <label className="block text-xs font-bold text-gray-400 uppercase mb-1">{t('personnel.fields.hireDate')}</label>
                     {isEditing ? (
                       <input
@@ -482,19 +469,27 @@ export default function EmployeeDetailPage() {
                 <div className="bg-slate-50 rounded-lg p-5 grid grid-cols-2 gap-4 border border-slate-100">
                   <div>
                     <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">{t('personnel.fields.id')}</label>
-                    <div className="text-[10px] font-bold text-slate-500 break-all select-all">{employee.id}</div>
+                    <div className="text-[10px] font-bold text-slate-500 break-all select-all">{employee.employeeId}</div>
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">{t('personnel.fields.userId')}</label>
-                    <div className="text-[10px] font-bold text-slate-500">{employee.user_id || t('common.noData')}</div>
+                    <div className="text-[10px] font-bold text-slate-500">{employee.userId || t('common.noData')}</div>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">钉钉用户ID</label>
+                    <div className="text-[10px] font-bold text-slate-500">{employee.dingtalkUserId || t('common.noData')}</div>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">钉钉部门ID</label>
+                    <div className="text-[10px] font-bold text-slate-500">{employee.dingtalkDeptId || t('common.noData')}</div>
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">{t('common.startTime')}</label>
-                    <div className="text-[10px] font-bold text-slate-600">{new Date(employee.created_at).toLocaleString(i18n.language)}</div>
+                    <div className="text-[10px] font-bold text-slate-600">{new Date(employee.createTime).toLocaleString(i18n.language)}</div>
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">{t('common.endTime')}</label>
-                    <div className="text-[10px] font-bold text-slate-600">{new Date(employee.updated_at).toLocaleString(i18n.language)}</div>
+                    <div className="text-[10px] font-bold text-slate-600">{new Date(employee.updateTime).toLocaleString(i18n.language)}</div>
                   </div>
                 </div>
               </section>

@@ -66,20 +66,20 @@ export class PersonnelMgmtController {
   constructor(private readonly projectService: ProjectService) {}
 
   @Post(':id/personnel/add')
-  async addPersonnel(@Param('id') id: string, @Body() data: any) {
-    const res = await this.projectService.addMember(BigInt(id), data);
+  async addPersonnel(@Param('id') id: string, @Body() data: any, @Req() req: any) {
+    const res = await this.projectService.addMember(BigInt(id), data, req.user);
     return { success: true, data: res };
   }
 
   @Post(':id/personnel/:employeeId/remove')
-  async removePersonnel(@Param('id') id: string, @Param('employeeId') employeeId: string) {
-    await this.projectService.removeMember(BigInt(id), BigInt(employeeId));
+  async removePersonnel(@Param('id') id: string, @Param('employeeId') employeeId: string, @Req() req: any) {
+    await this.projectService.removeMember(BigInt(id), BigInt(employeeId), req.user);
     return { success: true };
   }
 
   @Post(':id/personnel/transfer')
-  async transferPersonnel(@Param('id') id: string, @Body() data: any) {
-    const res = await this.projectService.transferMember(BigInt(id), data);
+  async transferPersonnel(@Param('id') id: string, @Body() data: any, @Req() req: any) {
+    const res = await this.projectService.transferMember(BigInt(id), data, req.user);
     return { success: true, data: res };
   }
 }

@@ -51,8 +51,10 @@ export default function EmployeeMonthlyReportPage() {
 
   const loadProjects = async () => {
     try {
-      const data = await apiClient.get('/api/projects')
-      if (data?.data) {
+      const data = await apiClient.get('/api/project/list')
+      if (data?.data?.list) {
+        setProjects(data.data.list)
+      } else if (Array.isArray(data?.data)) {
         setProjects(data.data)
       }
     } catch (e) {

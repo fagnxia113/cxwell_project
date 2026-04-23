@@ -18,8 +18,8 @@
     "drafts": "Drafts",
     "transfer": "Personnel Transfer",
     "attendance": "Attendance Board",
-    "rotationReport": "Monthly Rotation Report",
-    "attendanceOverview": "Attendance Overview",
+    "rotationReport": "Attendance Plan",
+    "attendanceOverview": "Expected Attendance",
     "ledger": "Asset Ledger",
     "history": "History Log",
     "warehouse": "Warehouse",
@@ -643,7 +643,9 @@
       "powerArchitecture": "Power Architecture",
       "hvacArchitecture": "HVAC Architecture",
       "fireArchitecture": "Fire Protection",
-      "weakElectricArchitecture": "Weak Current System"
+      "weakElectricArchitecture": "Weak Current System",
+      "leaveStartDate": "Leave Start Date",
+      "leaveEndDate": "Leave End Date"
     },
     "definition_not_found": "Workflow Definition Not Found",
     "load_failed": "Failed to load workflow form, please retry",

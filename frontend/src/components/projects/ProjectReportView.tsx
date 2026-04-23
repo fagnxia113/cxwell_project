@@ -22,8 +22,12 @@ export default function ProjectReportView({
   project, milestones, risks, personnel, expenses 
 }: ProjectReportViewProps) {
   const { t } = useTranslation()
-  const totalSpent = expenses.reduce((sum, e) => sum + Number(e.amount), 0)
-  
+  const totalSpentInYuan = expenses.reduce((sum, e) => sum + Number(e.amount), 0)
+  const totalSpentInWan = totalSpentInYuan / 10000
+  const budgetUtilization = project.budget > 0 ? Math.round((totalSpentInWan / project.budget) * 100) : 0
+
+  console.log('[ProjectReportView] project.budget:', project.budget, 'totalSpentInYuan:', totalSpentInYuan, 'totalSpentInWan:', totalSpentInWan, 'budgetUtilization:', budgetUtilization)
+
   return (
     <div className="bg-white p-12 max-w-[1000px] mx-auto shadow-2xl print:shadow-none print:p-0" id="project-report-content">
       {/* 头部：Logo与标题 */}
@@ -67,7 +71,7 @@ export default function ProjectReportView({
         <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 flex items-center justify-around gap-8">
           <div className="text-center space-y-2">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.expense.budget_utilization')}</p>
-            <p className="text-2xl font-black text-slate-900">{project.budget ? Math.round((totalSpent / project.budget) * 100) : 0}%</p>
+            <p className="text-2xl font-black text-slate-900">{budgetUtilization}%</p>
           </div>
           <div className="w-px h-12 bg-slate-200" />
           <div className="text-center space-y-2">

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -6,7 +6,54 @@ export class ProjectService {
   constructor(private prisma: PrismaService) {}
 
   /**
+   * 检查用户在项目中的角色
+   * 返回: 'manager' | 'member' | null (null表示不是项目成员)
+   */
+  async getUserProjectRole(projectId: string, user: any): Promise<'manager' | 'member' | null> {
+    const userId = user?.sub || user?.userId;
+    if (!userId) return null;
+
+    // 超级管理员
+    if (userId === '1' || userId === 1) return 'manager';
+
+    // 检查是否是项目经理
+    const project = await this.prisma.project.findUnique({
+      where: { projectId: BigInt(projectId) },
+      select: { managerId: true }
+    });
+
+    if (project?.managerId && project.managerId.toString() === userId.toString()) {
+      return 'manager';
+    }
+
+    // 检查是否是项目成员
+    const employee = await this.prisma.sysEmployee.findFirst({
+      where: { userId: BigInt(userId) },
+      select: { employeeId: true }
+    });
+
+    if (employee) {
+      const membership = await this.prisma.projectMember.findFirst({
+        where: {
+          projectId: BigInt(projectId),
+          employeeId: employee.employeeId
+        }
+      });
+
+      if (membership) return 'member';
+    }
+
+    return null;
+  }
+
+  /**
    * 获取项目列表 (带分页和搜索)
+   * 逻辑：
+   * 1. 超级管理员可见所有项目
+   * 2. 其他用户可见：
+   *    - 自己创建的项目
+   *    - 自己担任项目经理的项目
+   *    - 自己作为项目成员的项目
    */
   async getProjectList(query: {
     pageNum?: number;
@@ -18,18 +65,41 @@ export class ProjectService {
     const skip = (pageNum - 1) * pageSize;
 
     console.log('getProjectList called, user:', JSON.stringify(user));
-    const dataScopeWhere = await this.applyDataScope(user);
-    console.log('dataScopeWhere:', JSON.stringify(dataScopeWhere));
+    const userId = user?.sub || user?.userId;
+    const loginName = user?.loginName;
 
-    const where: any = {
-      ...dataScopeWhere,
-    };
+    let where: any = {};
+
+    // 超级管理员可见所有项目
+    if (userId !== '1' && userId !== 1) {
+      // 获取用户的员工记录（用于查找项目成员关系）
+      let employeeId: BigInt | null = null;
+      const sysEmployee = await this.prisma.sysEmployee.findFirst({
+        where: { userId: BigInt(userId) },
+        select: { employeeId: true }
+      });
+      if (sysEmployee?.employeeId) {
+        employeeId = sysEmployee.employeeId;
+      }
+
+      // 构建权限条件
+      where = {
+        OR: [
+          { createBy: loginName },
+          { managerId: BigInt(userId) },
+          ...(employeeId ? [{ members: { some: { employeeId: employeeId } } }] : [])
+        ]
+      };
+    }
+
     if (projectName) {
       where.projectName = { contains: projectName };
     }
     if (status) {
       where.status = status;
     }
+
+    console.log('getProjectList where:', JSON.stringify(where));
 
     const [total, list] = await Promise.all([
       this.prisma.project.count({ where }),
@@ -172,7 +242,12 @@ export class ProjectService {
   /**
    * 添加项目成员
    */
-  async addMember(projectId: bigint, data: any) {
+  async addMember(projectId: bigint, data: any, user: any) {
+    const role = await this.getUserProjectRole(projectId.toString(), user);
+    if (role !== 'manager') {
+      throw new ForbiddenException('只有项目经理可以添加项目成员');
+    }
+
     return this.prisma.projectMember.create({
       data: {
         projectId,
@@ -187,7 +262,12 @@ export class ProjectService {
   /**
    * 移除项目成员
    */
-  async removeMember(projectId: bigint, employeeId: bigint) {
+  async removeMember(projectId: bigint, employeeId: bigint, user: any) {
+    const role = await this.getUserProjectRole(projectId.toString(), user);
+    if (role !== 'manager') {
+      throw new ForbiddenException('只有项目经理可以移除项目成员');
+    }
+
     return this.prisma.projectMember.delete({
       where: {
         projectId_employeeId: {
@@ -201,7 +281,12 @@ export class ProjectService {
   /**
    * 转移项目成员
    */
-  async transferMember(projectId: bigint, data: any) {
+  async transferMember(projectId: bigint, data: any, user: any) {
+    const role = await this.getUserProjectRole(projectId.toString(), user);
+    if (role !== 'manager') {
+      throw new ForbiddenException('只有项目经理可以转移项目成员');
+    }
+
     const employeeId = BigInt(data.employeeId);
     const targetProjectId = BigInt(data.targetProjectId);
     const transferDate = new Date(data.transferDate);

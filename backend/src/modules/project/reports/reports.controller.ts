@@ -1,6 +1,6 @@
-import { 
-  Controller, Get, Post, Put, Delete, Body, Query, Param, 
-  UseInterceptors, UploadedFile
+import {
+  Controller, Get, Post, Put, Delete, Body, Query, Param,
+  UseInterceptors, UploadedFile, Req, ForbiddenException
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ReportsService } from './reports.service';
@@ -22,7 +22,7 @@ export class ReportsController {
   }
 
   @Post()
-  async create(@Body() body: any) {
+  async create(@Body() body: any, @Req() req: any) {
     const data = await this.reportsService.create({
       projectId: BigInt(body.project_id),
       milestoneId: BigInt(body.milestone_id),
@@ -30,37 +30,38 @@ export class ReportsController {
       copies: Number(body.copies),
       remarks: body.remarks,
       status: body.status || 'pending',
-    });
+    }, req.user);
     return { success: true, data };
   }
 
   @Put(':id')
-  async update(@Param('id') id: string, @Body() body: any) {
+  async update(@Param('id') id: string, @Body() body: any, @Req() req: any) {
     const data = await this.reportsService.update(BigInt(id), {
       name: body.name,
       copies: Number(body.copies),
       remarks: body.remarks,
       milestoneId: body.milestone_id ? BigInt(body.milestone_id) : undefined,
-    });
+    }, req.user);
     return { success: true, data };
   }
 
   @Put(':id/progress')
-  async updateProgress(@Param('id') id: string, @Body() body: any) {
+  async updateProgress(@Param('id') id: string, @Body() body: any, @Req() req: any) {
     const data = await this.reportsService.updateProgress(
       BigInt(id),
       {
         submittedCount: body.submitted_count ?? 0,
         verifiedCount: body.verified_count ?? 0,
         rejectedCount: body.rejected_count ?? 0,
-      }
+      },
+      req.user
     );
     return { success: true, data };
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return await this.reportsService.remove(BigInt(id));
+  async remove(@Param('id') id: string, @Req() req: any) {
+    return await this.reportsService.remove(BigInt(id), req.user);
   }
 
   @Post('upload')

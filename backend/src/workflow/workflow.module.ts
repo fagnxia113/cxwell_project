@@ -11,6 +11,12 @@ import { WorkflowFormTemplateController } from './definition/workflow-form-templ
 import { FormModule } from '../modules/form/form.module';
 import { NotificationModule } from '../modules/notification/notification.module';
 import { DingtalkModule } from '../modules/dingtalk/dingtalk.module';
+import { EmployeeOnboardingHandler } from './handlers/employee-onboarding.handler';
+import { ProjectApprovalHandler } from './handlers/project-approval.handler';
+import { ProjectCompletionHandler } from './handlers/project-completion.handler';
+import { ExpenseSyncHandler } from './handlers/expense-sync.handler';
+import { EmployeeResignationHandler } from './handlers/employee-resignation.handler';
+import { LeaveApprovalHandler } from './handlers/leave-approval.handler';
 
 @Module({
   imports: [MonitorModule, FormModule, NotificationModule, DingtalkModule],
@@ -24,6 +30,12 @@ import { DingtalkModule } from '../modules/dingtalk/dingtalk.module';
     WorkflowEngineService,
     DefinitionService,
     TaskQueryService,
+    EmployeeOnboardingHandler,
+    ProjectApprovalHandler,
+    ProjectCompletionHandler,
+    ExpenseSyncHandler,
+    EmployeeResignationHandler,
+    LeaveApprovalHandler,
   ],
   exports: [
     WorkflowEngineService,

@@ -6,7 +6,6 @@ const prisma = new PrismaClient();
 async function main() {
   const password = await bcrypt.hash('123456', 10);
 
-  // 1. 预置部门
   const dept = await prisma.sysDept.upsert({
     where: { deptId: 100n },
     update: {},
@@ -20,7 +19,6 @@ async function main() {
     },
   });
 
-  // 2. 预置管理员用户
   await prisma.sysUser.upsert({
     where: { userId: 1n },
     update: {},
@@ -36,7 +34,6 @@ async function main() {
     },
   });
 
-  // 3. 预置核心角色
   await prisma.sysRole.upsert({
     where: { roleId: 1n },
     update: {},
@@ -51,19 +48,12 @@ async function main() {
     },
   });
 
-  // 3.1 预置用户角色关联
   await prisma.sysUserRole.upsert({
-    where: { 
-      userId_roleId: { userId: 1n, roleId: 1n } 
-    },
+    where: { userId_roleId: { userId: 1n, roleId: 1n } },
     update: {},
-    create: {
-      userId: 1n,
-      roleId: 1n
-    }
+    create: { userId: 1n, roleId: 1n }
   });
 
-  // 4. 预置权限策略 (Casbin)
   const policies = [
     { ptype: 'p', v0: 'role:admin', v1: '*', v2: '*' },
     { ptype: 'p', v0: 'role:general_manager', v1: 'workflow:create', v2: 'allow' },
@@ -82,35 +72,26 @@ async function main() {
     { ptype: 'p', v0: 'role:hr', v1: 'personnel:update', v2: 'allow' },
     { ptype: 'p', v0: 'role:hr', v1: 'personnel:delete', v2: 'allow' },
     { ptype: 'p', v0: 'role:hr', v1: 'personnel:export', v2: 'allow' },
+    { ptype: 'p', v0: 'role:hr', v1: 'personnel:rotation:view', v2: 'allow' },
+    { ptype: 'p', v0: 'role:hr', v1: 'personnel:attendance:view', v2: 'allow' },
+    { ptype: 'p', v0: 'role:hr', v1: 'personnel:attendance-overview:view', v2: 'allow' },
     { ptype: 'p', v0: 'role:epy', v1: 'workflow:create', v2: 'allow' },
     { ptype: 'p', v0: 'role:epy', v1: 'workflow:withdraw', v2: 'allow' },
     { ptype: 'p', v0: 'role:epy', v1: 'project:view', v2: 'allow' },
   ];
 
   for (const p of policies) {
-    const existing = await prisma.casbinRule.findFirst({
-      where: { ptype: p.ptype, v0: p.v0, v1: p.v1, v2: p.v2 }
-    });
+    const existing = await prisma.casbinRule.findFirst({ where: { ptype: p.ptype, v0: p.v0, v1: p.v1, v2: p.v2 } });
     if (!existing) {
       await prisma.casbinRule.create({ data: p });
     }
   }
 
-  // 5. 清理已废弃的设备管理菜单和旧Casbin策略
   await prisma.sysMenu.deleteMany({
-    where: {
-      OR: [
-        { menuId: 5n },
-        { menuId: { in: [400n, 401n, 402n, 403n] } },
-        { perms: { startsWith: 'equipment:' } },
-      ]
-    }
+    where: { OR: [{ menuId: 5n }, { menuId: { in: [400n, 401n, 402n, 403n] } }, { perms: { startsWith: 'equipment:' } }] }
   });
-  await prisma.casbinRule.deleteMany({
-    where: { v1: { startsWith: 'equipment:' } }
-  });
+  await prisma.casbinRule.deleteMany({ where: { v1: { startsWith: 'equipment:' } } });
 
-  // 6. 预置核心功能菜单 (含按钮级权限)
   const menus = [
     { id: 1n, name: '工作台', url: '/dashboard', type: 'C', icon: 'DashboardOutlined', parentId: 0n, perms: '' },
     { id: 2n, name: '项目管理', url: '/projects', type: 'C', icon: 'ProjectOutlined', parentId: 0n, perms: '' },
@@ -118,7 +99,7 @@ async function main() {
     { id: 4n, name: '人员管理', url: '/personnel', type: 'C', icon: 'TeamOutlined', parentId: 0n, perms: '' },
     { id: 6n, name: '系统管理', url: '/admin', type: 'M', icon: 'SettingOutlined', parentId: 0n, perms: '' },
     { id: 7n, name: '知识库', url: '/knowledge', type: 'C', icon: 'BookOutlined', parentId: 0n, perms: '' },
-
+    { id: 8n, name: '组织架构', url: '/organization', type: 'C', icon: 'ClusterOutlined', parentId: 0n, perms: '' },
     { id: 100n, name: '发起流程', url: '', type: 'F', icon: '', parentId: 3n, perms: 'workflow:create' },
     { id: 101n, name: '审批通过', url: '', type: 'F', icon: '', parentId: 3n, perms: 'workflow:approve' },
     { id: 102n, name: '审批驳回', url: '', type: 'F', icon: '', parentId: 3n, perms: 'workflow:reject' },
@@ -126,146 +107,74 @@ async function main() {
     { id: 104n, name: '退回', url: '', type: 'F', icon: '', parentId: 3n, perms: 'workflow:return' },
     { id: 105n, name: '移交', url: '', type: 'F', icon: '', parentId: 3n, perms: 'workflow:transfer' },
     { id: 106n, name: '抄送', url: '', type: 'F', icon: '', parentId: 3n, perms: 'workflow:cc' },
-
     { id: 200n, name: '添加人员', url: '', type: 'F', icon: '', parentId: 4n, perms: 'personnel:create' },
     { id: 201n, name: '编辑人员', url: '', type: 'F', icon: '', parentId: 4n, perms: 'personnel:update' },
     { id: 202n, name: '删除人员', url: '', type: 'F', icon: '', parentId: 4n, perms: 'personnel:delete' },
     { id: 203n, name: '导出人员', url: '', type: 'F', icon: '', parentId: 4n, perms: 'personnel:export' },
-
+    { id: 204n, name: '查看考勤', url: '/personnel/attendance', type: 'C', icon: '', parentId: 4n, perms: 'personnel:attendance:view' },
+    { id: 205n, name: '出勤计划', url: '/personnel/rotation-report', type: 'C', icon: '', parentId: 4n, perms: 'personnel:rotation:view' },
+    { id: 206n, name: '查看考勤概览', url: '/personnel/attendance-overview', type: 'C', icon: '', parentId: 4n, perms: 'personnel:attendance-overview:view' },
     { id: 300n, name: '创建项目', url: '', type: 'F', icon: '', parentId: 2n, perms: 'project:create' },
     { id: 301n, name: '编辑项目', url: '', type: 'F', icon: '', parentId: 2n, perms: 'project:update' },
     { id: 302n, name: '删除项目', url: '', type: 'F', icon: '', parentId: 2n, perms: 'project:delete' },
     { id: 303n, name: '项目审批', url: '', type: 'F', icon: '', parentId: 2n, perms: 'project:approve' },
-
+    { id: 400n, name: '部门管理', url: '/organization/departments', type: 'C', icon: '', parentId: 8n, perms: 'menu:organization' },
+    { id: 401n, name: '岗位管理', url: '/organization/positions', type: 'C', icon: '', parentId: 8n, perms: 'menu:organization' },
+    { id: 402n, name: '客户管理', url: '/customers', type: 'C', icon: '', parentId: 8n, perms: 'menu:organization' },
     { id: 500n, name: '用户管理', url: '/admin/users', type: 'C', icon: '', parentId: 6n, perms: '' },
     { id: 501n, name: '角色管理', url: '/admin/roles', type: 'C', icon: '', parentId: 6n, perms: '' },
     { id: 502n, name: '菜单管理', url: '/admin/menus', type: 'C', icon: '', parentId: 6n, perms: '' },
-
     { id: 600n, name: '创建用户', url: '', type: 'F', icon: '', parentId: 500n, perms: 'system:user:create' },
     { id: 601n, name: '编辑用户', url: '', type: 'F', icon: '', parentId: 500n, perms: 'system:user:update' },
     { id: 602n, name: '删除用户', url: '', type: 'F', icon: '', parentId: 500n, perms: 'system:user:delete' },
     { id: 603n, name: '重置密码', url: '', type: 'F', icon: '', parentId: 500n, perms: 'system:user:resetPwd' },
-
     { id: 700n, name: '知识库管理', url: '', type: 'F', icon: '', parentId: 7n, perms: 'knowledge:manage' },
   ];
 
   for (const m of menus) {
     await prisma.sysMenu.upsert({
       where: { menuId: m.id },
-      update: {
-        menuName: m.name,
-        parentId: m.parentId,
-        url: m.url || '#',
-        menuType: m.type,
-        perms: m.perms || null,
-        icon: m.icon || '#',
-      },
-      create: {
-        menuId: m.id,
-        menuName: m.name,
-        parentId: m.parentId,
-        orderNum: Number(m.id) % 1000,
-        url: m.url || '#',
-        menuType: m.type,
-        perms: m.perms || null,
-        icon: m.icon || '#',
-        createBy: 'system',
-      },
+      update: { menuName: m.name, parentId: m.parentId, url: m.url || '#', menuType: m.type, perms: m.perms || null, icon: m.icon || '#' },
+      create: { menuId: m.id, menuName: m.name, parentId: m.parentId, orderNum: Number(m.id) % 1000, url: m.url || '#', menuType: m.type, perms: m.perms || null, icon: m.icon || '#', createBy: 'system' }
     });
   }
 
-  // 6. 预置业务人员
   const employee = await prisma.sysEmployee.upsert({
     where: { employeeId: 1n },
     update: {},
-    create: {
-      employeeId: 1n,
-      userId: 1n,
-      employeeNo: 'EMP001',
-      name: '超级管理员',
-      phone: '13800000000',
-      status: '0'
-    }
+    create: { employeeId: 1n, userId: 1n, employeeNo: 'EMP001', name: '超级管理员', phone: '13800000000', status: '0' }
   });
 
-  // 7. 预置示例客户
   const customer = await prisma.customer.upsert({
     where: { id: 1n },
     update: {},
-    create: {
-      id: 1n,
-      customerNo: 'CUST-2024-001',
-      name: '汇升智慧科技有限公司',
-      contact: '张经理',
-      phone: '13911112222',
-      status: '0'
-    }
+    create: { id: 1n, customerNo: 'CUST-2024-001', name: '汇升智慧科技有限公司', contact: '张经理', phone: '13911112222', status: '0' }
   });
 
-  // 8. 预置示例项目
   await prisma.project.upsert({
     where: { projectId: 1n },
     update: {},
-    create: {
-      projectId: 1n,
-      projectCode: 'PROJ-V4-001',
-      projectName: '企业级工作流底座升级项目',
-      projectType: 'domestic',
-      customerId: customer.id,
-      managerId: employee.employeeId,
-      status: '2', // 立项
-      progress: 35,
-      startDate: new Date('2024-01-01'),
-      budget: 150000.00,
-      description: '将原有 V3 系统迁移至 NestJS + Prisma 的现代化底座',
-      createBy: 'admin'
-    }
+    create: { projectId: 1n, projectCode: 'PROJ-V4-001', projectName: '企业级工作流底座升级项目', projectType: 'domestic', customerId: customer.id, managerId: employee.employeeId, status: '2', progress: 35, startDate: new Date('2024-01-01'), budget: 150000.00, description: '将原有 V3 系统迁移至 NestJS + Prisma 的现代化底座', createBy: 'admin' }
   });
 
-  // 9. 预置业务角色 (总经理、HR)
   const roleGm = await prisma.sysRole.upsert({
     where: { roleId: 2n },
     update: {},
-    create: {
-      roleId: 2n,
-      roleName: '总经理',
-      roleKey: 'general_manager',
-      roleSort: 2,
-      dataScope: '1',
-      status: '0',
-      createBy: 'system',
-    },
+    create: { roleId: 2n, roleName: '总经理', roleKey: 'general_manager', roleSort: 2, dataScope: '1', status: '0', createBy: 'system' },
   });
 
   const roleHr = await prisma.sysRole.upsert({
     where: { roleId: 3n },
     update: {},
-    create: {
-      roleId: 3n,
-      roleName: '人事主管',
-      roleKey: 'hr',
-      roleSort: 3,
-      dataScope: '1',
-      status: '0',
-      createBy: 'system',
-    },
+    create: { roleId: 3n, roleName: '人事主管', roleKey: 'hr', roleSort: 3, dataScope: '1', status: '0', createBy: 'system' },
   });
 
   const roleEmployee = await prisma.sysRole.upsert({
     where: { roleId: 4n },
     update: {},
-    create: {
-      roleId: 4n,
-      roleName: '员工',
-      roleKey: 'epy',
-      roleSort: 4,
-      dataScope: '5',
-      status: '0',
-      createBy: 'system',
-    },
+    create: { roleId: 4n, roleName: '员工', roleKey: 'epy', roleSort: 4, dataScope: '5', status: '0', createBy: 'system' },
   });
 
-  // 预置岗位数据
   const posts = [
     { id: 1n, code: 'POST001', name: '总经理', level: 1, sort: 1 },
     { id: 2n, code: 'POST002', name: '部门经理', level: 2, sort: 2 },
@@ -308,9 +217,7 @@ async function main() {
 
   await prisma.flowDefinition.upsert({
     where: { id: flowDefId },
-    update: {
-      ext: JSON.stringify({ form_schema: employeeFormSchema }),
-    },
+    update: { ext: JSON.stringify({ form_schema: employeeFormSchema }) },
     create: {
       id: flowDefId,
       flowCode: 'employee_onboarding',
@@ -334,24 +241,8 @@ async function main() {
   for (const node of nodes) {
     await prisma.flowNode.upsert({
       where: { id: node.id },
-      update: {
-        coordinate: JSON.stringify(node.coord),
-        handlerType: node.handlerType || null,
-        handlerPath: node.handlerPath || null,
-      },
-      create: {
-        id: node.id,
-        definitionId: flowDefId,
-        nodeType: node.type,
-        nodeCode: node.code,
-        nodeName: node.name,
-        permissionFlag: node.flag,
-        coordinate: JSON.stringify(node.coord),
-        version: '1.0',
-        createTime: new Date(),
-        handlerType: node.handlerType || null,
-        handlerPath: node.handlerPath || null,
-      }
+      update: { coordinate: JSON.stringify(node.coord), handlerType: node.handlerType || null, handlerPath: node.handlerPath || null },
+      create: { id: node.id, definitionId: flowDefId, nodeType: node.type, nodeCode: node.code, nodeName: node.name, permissionFlag: node.flag, coordinate: JSON.stringify(node.coord), version: '1.0', createTime: new Date(), handlerType: node.handlerType || null, handlerPath: node.handlerPath || null }
     });
   }
 
@@ -367,15 +258,7 @@ async function main() {
     await prisma.flowSkip.upsert({
       where: { id: skip.id },
       update: {},
-      create: {
-        id: skip.id,
-        definitionId: flowDefId,
-        nowNodeCode: skip.now,
-        nextNodeCode: skip.next,
-        skipName: skip.name,
-        skipType: skip.type,
-        createTime: new Date(),
-      }
+      create: { id: skip.id, definitionId: flowDefId, nowNodeCode: skip.now, nextNodeCode: skip.next, skipName: skip.name, skipType: skip.type, createTime: new Date() }
     });
   }
 
@@ -384,14 +267,7 @@ async function main() {
   const projectFormSchema = [
     { name: 'projectName', label: '项目名称', type: 'text', required: true, placeholder: '请输入项目名称', group: '基本信息' },
     { name: 'projectCode', label: '项目编号', type: 'text', required: false, placeholder: '系统自动生成', disabled: true, group: '基本信息' },
-    { name: 'country', label: '所属国家', type: 'select', required: true, placeholder: '请选择所属国家', options: [
-      { label: '中国 / China', value: 'CN' }, { label: '美国 / America', value: 'US' }, { label: '日本 / Japan', value: 'JP' },
-      { label: '新加坡 / Singapore', value: 'SG' }, { label: '马来西亚 / Malaysia', value: 'MY' },
-      { label: '泰国 / Thailand', value: 'TH' }, { label: '越南 / Vietnam', value: 'VN' },
-      { label: '印度尼西亚 / Indonesia', value: 'ID' }, { label: '菲律宾 / Philippines', value: 'PH' },
-      { label: '缅甸 / Myanmar', value: 'MM' }, { label: '柬埔寨 / Cambodia', value: 'KH' },
-      { label: '老挝 / Laos', value: 'LA' }, { label: '文莱 / Brunei', value: 'BN' },
-    ], group: '基本信息' },
+    { name: 'country', label: '所属国家', type: 'select', required: true, placeholder: '请选择所属国家', options: [{ label: '中国 / China', value: 'CN' }, { label: '美国 / America', value: 'US' }, { label: '日本 / Japan', value: 'JP' }, { label: '新加坡 / Singapore', value: 'SG' }, { label: '马来西亚 / Malaysia', value: 'MY' }, { label: '泰国 / Thailand', value: 'TH' }, { label: '越南 / Vietnam', value: 'VN' }, { label: '印度尼西亚 / Indonesia', value: 'ID' }, { label: '菲律宾 / Philippines', value: 'PH' }, { label: '缅甸 / Myanmar', value: 'MM' }, { label: '柬埔寨 / Cambodia', value: 'KH' }, { label: '老挝 / Laos', value: 'LA' }, { label: '文莱 / Brunei', value: 'BN' }], group: '基本信息' },
     { name: 'address', label: '详细地址', type: 'text', required: false, placeholder: '请输入详细地址', group: '基本信息' },
     { name: 'managerId', label: '项目经理', type: 'select', required: true, placeholder: '请选择项目经理', group: '基本信息', dynamicOptions: 'employee' },
     { name: 'customerId', label: '客户', type: 'select', required: false, placeholder: '请选择客户', group: '基本信息', dynamicOptions: 'customer' },
@@ -412,20 +288,8 @@ async function main() {
 
   await prisma.flowDefinition.upsert({
     where: { id: projectFlowDefId },
-    update: {
-      ext: JSON.stringify({ form_schema: projectFormSchema }),
-    },
-    create: {
-      id: projectFlowDefId,
-      flowCode: 'project_approval',
-      flowName: '项目立项审批流',
-      version: '1.0',
-      isPublish: 1,
-      category: 'project',
-      createBy: 'system',
-      createTime: new Date(),
-      ext: JSON.stringify({ form_schema: projectFormSchema }),
-    }
+    update: { ext: JSON.stringify({ form_schema: projectFormSchema }) },
+    create: { id: projectFlowDefId, flowCode: 'project_approval', flowName: '项目立项审批流', version: '1.0', isPublish: 1, category: 'project', createBy: 'system', createTime: new Date(), ext: JSON.stringify({ form_schema: projectFormSchema }) }
   });
 
   const projectNodes = [
@@ -439,24 +303,8 @@ async function main() {
   for (const node of projectNodes) {
     await prisma.flowNode.upsert({
       where: { id: node.id },
-      update: {
-        coordinate: JSON.stringify(node.coord),
-        handlerType: node.handlerType || null,
-        handlerPath: node.handlerPath || null,
-      },
-      create: {
-        id: node.id,
-        definitionId: projectFlowDefId,
-        nodeType: node.type,
-        nodeCode: node.code,
-        nodeName: node.name,
-        permissionFlag: node.flag,
-        coordinate: JSON.stringify(node.coord),
-        version: '1.0',
-        createTime: new Date(),
-        handlerType: node.handlerType || null,
-        handlerPath: node.handlerPath || null,
-      }
+      update: { coordinate: JSON.stringify(node.coord), handlerType: node.handlerType || null, handlerPath: node.handlerPath || null },
+      create: { id: node.id, definitionId: projectFlowDefId, nodeType: node.type, nodeCode: node.code, nodeName: node.name, permissionFlag: node.flag, coordinate: JSON.stringify(node.coord), version: '1.0', createTime: new Date(), handlerType: node.handlerType || null, handlerPath: node.handlerPath || null }
     });
   }
 
@@ -474,19 +322,115 @@ async function main() {
     await prisma.flowSkip.upsert({
       where: { id: skip.id },
       update: {},
-      create: {
-        id: skip.id,
-        definitionId: projectFlowDefId,
-        nowNodeCode: skip.now,
-        nextNodeCode: skip.next,
-        skipName: skip.name,
-        skipType: skip.type,
-        createTime: new Date(),
-      }
+      create: { id: skip.id, definitionId: projectFlowDefId, nowNodeCode: skip.now, nextNodeCode: skip.next, skipName: skip.name, skipType: skip.type, createTime: new Date() }
     });
   }
 
-  // 12. 修复已有流程记录的 createTime 为 null 的问题
+  // 12. 预置员工离职审批流程定义
+  const resignationFlowDefId = 20240419003n;
+  const resignationFormSchema = [
+    { name: 'employeeName', label: '员工姓名', type: 'text', required: true, placeholder: '请输入离职员工姓名', group: '离职信息' },
+    { name: 'employeeNo', label: '工号', type: 'text', required: false, placeholder: '请输入工号', group: '离职信息' },
+    { name: 'department', label: '所属部门', type: 'select', required: true, placeholder: '请选择所属部门', group: '离职信息', dynamicOptions: 'department' },
+    { name: 'position', label: '岗位', type: 'text', required: false, placeholder: '请输入岗位', group: '离职信息' },
+    { name: 'lastWorkingDay', label: '最后工作日', type: 'date', required: true, group: '离职信息' },
+    { name: 'resignationType', label: '离职类型', type: 'select', required: true, options: [{ label: '主动离职', value: 'voluntary' }, { label: '被动离职', value: 'involuntary' }, { label: '合同到期', value: 'contract_expired' }, { label: '退休', value: 'retirement' }], group: '离职信息' },
+    { name: 'reason', label: '离职原因', type: 'textarea', required: true, placeholder: '请输入离职原因', rows: 3, group: '离职信息' },
+    { name: 'description', label: '备注', type: 'textarea', required: false, placeholder: '其他补充说明', rows: 2, group: '补充说明' },
+  ];
+
+  await prisma.flowDefinition.upsert({
+    where: { id: resignationFlowDefId },
+    update: { ext: JSON.stringify({ form_schema: resignationFormSchema }) },
+    create: { id: resignationFlowDefId, flowCode: 'employee_resignation', flowName: '员工离职审批流', version: '1.0', isPublish: 1, category: 'personnel', createBy: 'system', createTime: new Date(), ext: JSON.stringify({ form_schema: resignationFormSchema }) }
+  });
+
+  const resignationNodes = [
+    { id: 5001n, type: 0, code: 'start', name: '发起申请', flag: '', coord: { x: 250, y: 50 } },
+    { id: 5002n, type: 1, code: 'dept_manager_approve', name: '直属上级审批', flag: 'role:admin', coord: { x: 250, y: 150 } },
+    { id: 5003n, type: 1, code: 'hr_approve', name: '人事审批', flag: 'role:admin', coord: { x: 250, y: 250 } },
+    { id: 5004n, type: 1, code: 'process_resignation', name: '离职办理', handlerType: 'service', handlerPath: 'employee-resignation', coord: { x: 250, y: 350 } },
+    { id: 5005n, type: 2, code: 'end', name: '结束', flag: '', coord: { x: 250, y: 450 } },
+  ];
+
+  for (const node of resignationNodes) {
+    await prisma.flowNode.upsert({
+      where: { id: node.id },
+      update: { coordinate: JSON.stringify(node.coord), handlerType: node.handlerType || null, handlerPath: node.handlerPath || null },
+      create: { id: node.id, definitionId: resignationFlowDefId, nodeType: node.type, nodeCode: node.code, nodeName: node.name, permissionFlag: node.flag, coordinate: JSON.stringify(node.coord), version: '1.0', createTime: new Date(), handlerType: node.handlerType || null, handlerPath: node.handlerPath || null }
+    });
+  }
+
+  const resignationSkips = [
+    { id: 6001n, now: 'start', next: 'dept_manager_approve', name: '提交申请', type: 'pass' },
+    { id: 6002n, now: 'dept_manager_approve', next: 'hr_approve', name: '同意', type: 'pass' },
+    { id: 6003n, now: 'dept_manager_approve', next: 'start', name: '驳回', type: 'reject' },
+    { id: 6004n, now: 'hr_approve', next: 'process_resignation', name: '同意', type: 'pass' },
+    { id: 6005n, now: 'hr_approve', next: 'dept_manager_approve', name: '退回重审', type: 'reject' },
+    { id: 6006n, now: 'process_resignation', next: 'end', name: '完成', type: 'pass' },
+  ];
+
+  for (const skip of resignationSkips) {
+    await prisma.flowSkip.upsert({
+      where: { id: skip.id },
+      update: {},
+      create: { id: skip.id, definitionId: resignationFlowDefId, nowNodeCode: skip.now, nextNodeCode: skip.next, skipName: skip.name, skipType: skip.type, createTime: new Date() }
+    });
+  }
+
+  // 13. 预置请假审批流程定义
+  const leaveFlowDefId = 20240419004n;
+  const leaveFormSchema = [
+    { name: 'employeeName', label: '申请人姓名', type: 'text', required: true, placeholder: '请输入申请人姓名', group: '请假信息' },
+    { name: 'employeeNo', label: '工号', type: 'text', required: false, placeholder: '请输入工号', group: '请假信息' },
+    { name: 'department', label: '所属部门', type: 'select', required: true, placeholder: '请选择部门', group: '请假信息', dynamicOptions: 'department' },
+    { name: 'leaveType', label: '请假类型', type: 'select', required: true, options: [{ label: '年假', value: 'annual' }, { label: '病假', value: 'sick' }, { label: '事假', value: 'personal' }, { label: '婚假', value: 'marriage' }, { label: '产假', value: 'maternity' }, { label: '陪产假', value: 'paternity' }, { label: '丧假', value: 'bereavement' }, { label: '调休', value: 'time_off_in_lieu' }], group: '请假信息' },
+    { name: 'leaveStartDate', label: '开始日期', type: 'date', required: true, group: '请假信息' },
+    { name: 'leaveEndDate', label: '结束日期', type: 'date', required: true, group: '请假信息' },
+    { name: 'days', label: '请假天数', type: 'number', required: true, placeholder: '请输入天数', min: 0.5, step: 0.5, group: '请假信息' },
+    { name: 'reason', label: '请假事由', type: 'textarea', required: true, placeholder: '请详细说明请假事由', rows: 3, group: '请假信息' },
+  ];
+
+  await prisma.flowDefinition.upsert({
+    where: { id: leaveFlowDefId },
+    update: { ext: JSON.stringify({ form_schema: leaveFormSchema }) },
+    create: { id: leaveFlowDefId, flowCode: 'leave_approval', flowName: '请假审批流', version: '1.0', isPublish: 1, category: 'leave', createBy: 'system', createTime: new Date(), ext: JSON.stringify({ form_schema: leaveFormSchema }) }
+  });
+
+  const leaveNodes = [
+    { id: 7001n, type: 0, code: 'start', name: '发起申请', flag: '', coord: { x: 250, y: 50 } },
+    { id: 7002n, type: 1, code: 'dept_manager_approve', name: '直属上级审批', flag: 'role:admin', coord: { x: 250, y: 150 } },
+    { id: 7003n, type: 1, code: 'hr_approve', name: '人事备案', flag: 'role:admin', coord: { x: 250, y: 250 } },
+    { id: 7004n, type: 1, code: 'record_leave', name: '请假记录', handlerType: 'service', handlerPath: 'leave-approval', coord: { x: 250, y: 350 } },
+    { id: 7005n, type: 2, code: 'end', name: '结束', flag: '', coord: { x: 250, y: 450 } },
+  ];
+
+  for (const node of leaveNodes) {
+    await prisma.flowNode.upsert({
+      where: { id: node.id },
+      update: { coordinate: JSON.stringify(node.coord), handlerType: node.handlerType || null, handlerPath: node.handlerPath || null },
+      create: { id: node.id, definitionId: leaveFlowDefId, nodeType: node.type, nodeCode: node.code, nodeName: node.name, permissionFlag: node.flag, coordinate: JSON.stringify(node.coord), version: '1.0', createTime: new Date(), handlerType: node.handlerType || null, handlerPath: node.handlerPath || null }
+    });
+  }
+
+  const leaveSkips = [
+    { id: 8001n, now: 'start', next: 'dept_manager_approve', name: '提交申请', type: 'pass' },
+    { id: 8002n, now: 'dept_manager_approve', next: 'hr_approve', name: '同意', type: 'pass' },
+    { id: 8003n, now: 'dept_manager_approve', next: 'start', name: '驳回', type: 'reject' },
+    { id: 8004n, now: 'hr_approve', next: 'record_leave', name: '同意', type: 'pass' },
+    { id: 8005n, now: 'hr_approve', next: 'dept_manager_approve', name: '退回重审', type: 'reject' },
+    { id: 8006n, now: 'record_leave', next: 'end', name: '完成', type: 'pass' },
+  ];
+
+  for (const skip of leaveSkips) {
+    await prisma.flowSkip.upsert({
+      where: { id: skip.id },
+      update: {},
+      create: { id: skip.id, definitionId: leaveFlowDefId, nowNodeCode: skip.now, nextNodeCode: skip.next, skipName: skip.name, skipType: skip.type, createTime: new Date() }
+    });
+  }
+
+  // 14. 修复已有流程记录的 createTime 为 null 的问题
   const instances = await prisma.flowInstance.findMany({ where: { createTime: null } });
   for (const inst of instances) {
     const ts = Number(inst.id.toString().slice(0, -6));
@@ -508,7 +452,7 @@ async function main() {
     await prisma.flowHisTask.update({ where: { id: ht.id }, data: { createTime, updateTime: createTime } });
   }
 
-  console.log('✅ 系统权限策略、业务角色与入职流程预置成功！');
+  console.log('✅ 系统权限策略、业务角色与流程预置成功！共4个流程：入职/项目立项/离职/请假');
 }
 
 main()

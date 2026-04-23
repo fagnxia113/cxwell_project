@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DollarSign, Plus, Trash2, PieChart, ArrowUpRight, Zap, Briefcase } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { DollarSign, Plus, Trash2 } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import type { ProjectExpense, Project } from '../../types/project'
 
@@ -11,21 +10,26 @@ interface ExpensesTabProps {
   onAddExpense: (data: any) => void
   onDeleteExpense: (id: string) => void
   isAdmin: boolean
+  isProjectManager?: boolean
 }
 
-export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteExpense, isAdmin }: ExpensesTabProps) {
+export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteExpense, isAdmin, isProjectManager }: ExpensesTabProps) {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const [showAddForm, setShowAddForm] = useState(false)
   const [newExpense, setNewExpense] = useState({ category: 'equipment', amount: 0, date: new Date().toISOString().split('T')[0], notes: '' })
 
-  const totalSpent = expenses.reduce((sum, item) => sum + Number(item.amount), 0)
-  const budget = project?.budget || 0
-  const utilization = budget > 0 ? Math.round((totalSpent / budget) * 100) : 0
+  // 预算单位是万元，费用单位是元
+  const budgetInWan = project?.budget || 0
+  const budgetInYuan = Number(budgetInWan) * 10000
+  const totalSpentInYuan = expenses.reduce((sum, item) => sum + Number(item.amount), 0)
+  const totalSpentInWan = totalSpentInYuan / 10000
+  const utilization = budgetInYuan > 0 ? Math.round((totalSpentInYuan / budgetInYuan) * 100) : 0
+
+  console.log('[ExpensesTab] budgetInWan:', budgetInWan, 'budgetInYuan:', budgetInYuan, 'totalSpentInYuan:', totalSpentInYuan, 'utilization:', utilization)
 
   const handleAdd = () => {
     if (newExpense.amount <= 0) return
-    onAddExpense(newExpense)
+    onAddExpense({ ...newExpense, amount: newExpense.amount })
     setNewExpense({ category: 'equipment', amount: 0, date: new Date().toISOString().split('T')[0], notes: '' })
     setShowAddForm(false)
   }
@@ -34,106 +38,77 @@ export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteE
     return t(`project.expense.categories.${cat}`) || cat
   }
 
+  const getCategoryColor = (cat: string) => {
+    const colors: Record<string, string> = {
+      equipment: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+      labor: 'bg-blue-50 text-blue-600 border-blue-100',
+      travel: 'bg-amber-50 text-amber-600 border-amber-100',
+      material: 'bg-purple-50 text-purple-600 border-purple-100',
+      other: 'bg-slate-50 text-slate-600 border-slate-100',
+    }
+    return colors[cat] || colors.other
+  }
+
   return (
-    <div className="space-y-6">
-      {/* 预算概览卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="md:col-span-2 bg-slate-900 p-6 rounded-xl shadow-xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-6 text-emerald-500/10 opacity-50 group-hover:scale-125 transition-transform duration-700">
-            <PieChart size={100} />
+    <div className="space-y-4">
+      {/* 顶部操作栏 */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">预算使用</span>
+            <span className={cn(
+              "text-sm font-black tabular-nums",
+              utilization > 90 ? "text-rose-500" : utilization > 70 ? "text-amber-500" : "text-emerald-600"
+            )}>
+              {utilization}%
+            </span>
           </div>
-          <div className="relative z-10 space-y-4">
-            <div className="space-y-0.5">
-              <span className="text-[9px] font-black text-emerald-400 uppercase tracking-[0.2em]">{t('project.expense.budget_utilization')}</span>
-              <div className="text-3xl font-black text-white flex items-baseline gap-2">
-                {utilization}%
-                <span className="text-[10px] font-bold text-emerald-500/60 uppercase tracking-widest">{t('common.total')}</span>
-              </div>
-            </div>
-            <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden p-0.5 border border-white/5">
-              <div 
-                className={cn(
-                  "h-full rounded-full transition-all duration-1000 ease-out",
-                  utilization > 90 ? "bg-rose-500" : utilization > 70 ? "bg-amber-500" : "bg-emerald-500"
-                )}
-                style={{ width: `${Math.min(100, utilization)}%` }}
-              />
-            </div>
-            <div className="flex items-center gap-6 pt-1">
-              <div>
-                <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest mb-0.5">{t('project.expense.total_spent')}</p>
-                <p className="text-base font-black text-white tabular-nums">
-                  {t('common.currency_symbol')}{totalSpent.toLocaleString()}
-                  <span className="text-[9px] ml-1 opacity-40">{t('common.unit_ten_thousand')}</span>
-                </p>
-              </div>
-              <div className="w-px h-6 bg-white/10" />
-              <div>
-                <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest mb-0.5">{t('project.expense.remaining_budget')}</p>
-                <p className="text-base font-black text-emerald-400 tabular-nums">
-                  {t('common.currency_symbol')}{(budget - totalSpent).toLocaleString()}
-                  <span className="text-[9px] ml-1 opacity-40">{t('common.unit_ten_thousand')}</span>
-                </p>
-              </div>
-            </div>
+          <div className="w-px h-4 bg-slate-200" />
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">已支出</span>
+            <span className="text-sm font-black text-slate-900 tabular-nums">
+              {totalSpentInWan.toFixed(2)}
+              <span className="text-[9px] ml-0.5 text-slate-400">万元</span>
+            </span>
+          </div>
+          <div className="w-px h-4 bg-slate-200" />
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">预算余额</span>
+            <span className="text-sm font-black text-emerald-600 tabular-nums">
+              {(budgetInWan - totalSpentInWan).toFixed(2)}
+              <span className="text-[9px] ml-0.5 text-slate-400">万元</span>
+            </span>
           </div>
         </div>
-
-        <button 
+        <button
           onClick={() => setShowAddForm(true)}
-          className="bg-white border border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center gap-2 group hover:border-slate-900 hover:bg-slate-50 transition-all duration-300"
+          className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg text-xs font-bold hover:bg-emerald-600 transition-colors shadow-sm"
         >
-          <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-slate-900 group-hover:text-white transition-all">
-            <Plus size={20} />
-          </div>
-          <span className="text-[11px] font-black text-slate-400 group-hover:text-slate-900 uppercase tracking-widest">{t('project.expense.add_item')}</span>
+          <Plus size={14} />
+          {t('project.expense.add_item')}
         </button>
       </div>
 
-      {/* 快速流程入口 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <button 
-          onClick={() => navigate(`/approvals/workflow/expense_reimbursement?project_id=${project?.id}`)}
-          className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-xl hover:border-emerald-500 hover:shadow-lg transition-all group"
-        >
-          <div className="flex items-center gap-3">
-             <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-               <Zap size={20} />
-             </div>
-             <div className="text-left">
-               <h4 className="text-sm font-black text-slate-800">发起费用报销</h4>
-               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">流程结束后自动同步至本项目</p>
-             </div>
-          </div>
-          <ArrowUpRight size={18} className="text-slate-300 group-hover:text-emerald-500 transition-colors" />
-        </button>
-
-        <button 
-          onClick={() => navigate(`/approvals/workflow/flight_booking?project_id=${project?.id}`)}
-          className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-xl hover:border-indigo-500 hover:shadow-lg transition-all group"
-        >
-          <div className="flex items-center gap-3">
-             <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg group-hover:bg-indigo-500 group-hover:text-white transition-colors">
-               <Briefcase size={20} />
-             </div>
-             <div className="text-left">
-               <h4 className="text-sm font-black text-slate-800">发起机票预定</h4>
-               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">支持预定员执行并记录最终票价</p>
-             </div>
-          </div>
-          <ArrowUpRight size={18} className="text-slate-300 group-hover:text-indigo-500 transition-colors" />
-        </button>
+      {/* 进度条 */}
+      <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+        <div
+          className={cn(
+            "h-full rounded-full transition-all duration-500",
+            utilization > 90 ? "bg-rose-500" : utilization > 70 ? "bg-amber-500" : "bg-emerald-500"
+          )}
+          style={{ width: `${Math.min(100, utilization)}%` }}
+        />
       </div>
 
       {showAddForm && (
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-2xl space-y-5 animate-in zoom-in-95 duration-300">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-lg space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-1.5">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('project.expense.category')}</label>
-              <select 
+              <select
                 value={newExpense.category}
                 onChange={e => setNewExpense({...newExpense, category: e.target.value})}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold focus:ring-2 focus:ring-blue-600 outline-none transition-all"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
               >
                 <option value="equipment">{getCategoryLabel('equipment')}</option>
                 <option value="labor">{getCategoryLabel('labor')}</option>
@@ -143,89 +118,89 @@ export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteE
               </select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('project.expense.amount')} (万元)</label>
-              <input 
-                type="number" 
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('project.expense.amount')} (元)</label>
+              <input
+                type="number"
                 value={newExpense.amount}
                 onChange={e => setNewExpense({...newExpense, amount: Number(e.target.value)})}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold focus:ring-2 focus:ring-blue-600 outline-none transition-all"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
               />
             </div>
             <div className="space-y-1.5">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('project.expense.date')}</label>
-              <input 
-                type="date" 
+              <input
+                type="date"
                 value={newExpense.date}
                 onChange={e => setNewExpense({...newExpense, date: e.target.value})}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-bold focus:ring-2 focus:ring-blue-600 outline-none transition-all"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-bold focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('project.expense.notes')}</label>
+              <input
+                type="text"
+                value={newExpense.notes}
+                onChange={e => setNewExpense({...newExpense, notes: e.target.value})}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                placeholder="用途说明..."
               />
             </div>
           </div>
-          <div className="space-y-1.5">
-            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('project.expense.notes')}</label>
-            <input 
-              type="text" 
-              value={newExpense.notes}
-              onChange={e => setNewExpense({...newExpense, notes: e.target.value})}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold focus:ring-2 focus:ring-blue-600 outline-none transition-all"
-              placeholder="请输入用途说明..."
-            />
-          </div>
-          <div className="flex justify-end gap-3">
-            <button onClick={() => setShowAddForm(false)} className="px-5 py-2 text-[11px] font-black text-slate-400 hover:text-slate-600">{t('common.cancel')}</button>
-            <button onClick={handleAdd} className="px-7 py-2 bg-slate-900 text-white rounded-lg text-[11px] font-black shadow-lg hover:shadow-slate-900/20 transition-all">{t('common.submit')}</button>
+          <div className="flex justify-end gap-3 pt-2">
+            <button onClick={() => setShowAddForm(false)} className="px-4 py-2 text-[11px] font-bold text-slate-400 hover:text-slate-600">{t('common.cancel')}</button>
+            <button onClick={handleAdd} className="px-5 py-2 bg-emerald-500 text-white rounded-lg text-[11px] font-bold hover:bg-emerald-600 transition-colors">{t('common.submit')}</button>
           </div>
         </div>
       )}
 
-      {/* 支出列表表格 */}
+      {/* 费用列表 */}
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
         <table className="min-w-full divide-y divide-slate-50">
-          <thead className="bg-slate-50/50">
+          <thead className="bg-slate-50/80">
             <tr>
-              <th className="px-5 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('project.expense.category')}</th>
-              <th className="px-5 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('project.expense.date')}</th>
-              <th className="px-5 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('project.expense.notes')}</th>
-              <th className="px-5 py-3 text-right text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('project.expense.amount')}</th>
-              <th className="px-5 py-3 text-right"></th>
+              <th className="px-4 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">类别</th>
+              <th className="px-4 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">日期</th>
+              <th className="px-4 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">用途</th>
+              <th className="px-4 py-3 text-right text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">金额</th>
+              <th className="px-4 py-3 w-10"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {expenses.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-5 py-16 text-center">
-                  <p className="text-slate-300 font-bold uppercase tracking-widest text-[9px]">No expenses recorded yet</p>
+                <td colSpan={5} className="px-4 py-12 text-center">
+                  <p className="text-slate-300 font-bold text-[10px] uppercase tracking-widest">暂无费用记录</p>
                 </td>
               </tr>
             ) : (
               expenses.map(item => (
-                <tr key={item.id} className="group hover:bg-slate-50/50 transition-colors cursor-default">
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
-                        <DollarSign size={12} />
-                      </div>
-                      <span className="text-[11px] font-black text-slate-800 uppercase tracking-tight">{getCategoryLabel(item.category)}</span>
+                <tr key={item.id} className="group hover:bg-slate-50/50 transition-colors">
+                  <td className="px-4 py-3">
+                    <div className={cn(
+                      "w-fit px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-tight border",
+                      getCategoryColor(item.category)
+                    )}>
+                      {getCategoryLabel(item.category)}
                     </div>
                   </td>
-                  <td className="px-5 py-3.5 text-[10px] font-bold text-slate-400 tabular-nums">
-                    {new Date(item.date).toLocaleDateString()}
+                  <td className="px-4 py-3 text-[10px] font-medium text-slate-400 tabular-nums">
+                    {new Date(item.date).toLocaleDateString('zh-CN')}
                   </td>
-                  <td className="px-5 py-3.5 text-[11px] font-bold text-slate-600">
+                  <td className="px-4 py-3 text-[11px] font-medium text-slate-600">
                     {item.notes || '--'}
                   </td>
-                  <td className="px-5 py-3.5 text-right">
+                  <td className="px-4 py-3 text-right">
                     <span className="text-xs font-black text-slate-900 tabular-nums">
-                      {t('common.currency_symbol')}{Number(item.amount).toLocaleString()}
+                      ¥{Number(item.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 text-right">
-                    {isAdmin && (
-                      <button 
+                  <td className="px-4 py-3 text-right">
+                    {(isAdmin || isProjectManager) && (
+                      <button
                         onClick={() => onDeleteExpense(item.id)}
-                        className="p-1.5 text-slate-200 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
+                        className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-md transition-all opacity-0 group-hover:opacity-100"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={13} />
                       </button>
                     )}
                   </td>

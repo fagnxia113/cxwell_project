@@ -27,6 +27,7 @@ interface ReportRecord {
 interface ReportsTabProps {
   projectId: string
   milestones: Milestone[]
+  isProjectManager?: boolean
 }
 
 const statusConfig = {
@@ -37,7 +38,7 @@ const statusConfig = {
   partial: { label: '部分提交', color: 'text-blue-500', bgColor: 'bg-blue-50', icon: AlertCircle },
 }
 
-export default function ReportsTab({ projectId, milestones }: ReportsTabProps) {
+export default function ReportsTab({ projectId, milestones, isProjectManager }: ReportsTabProps) {
   const { t } = useTranslation()
   const [reports, setReports] = useState<ReportRecord[]>([])
   const [loading, setLoading] = useState(false)
@@ -262,6 +263,7 @@ export default function ReportsTab({ projectId, milestones }: ReportsTabProps) {
           <button
             onClick={() => handleOpenModal()}
             className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg text-xs font-bold hover:bg-emerald-600 transition-colors"
+            style={{ display: isProjectManager ? 'flex' : 'none' }}
           >
             <Plus size={14} />
             {t('project.reports.add') || '新建报告'}
@@ -435,6 +437,7 @@ export default function ReportsTab({ projectId, milestones }: ReportsTabProps) {
                                   onClick={(e) => { e.stopPropagation(); handleOpenModal(record); }}
                                   className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
                                   title="编辑"
+                                  style={{ display: isProjectManager ? '' : 'none' }}
                                 >
                                   <Pencil size={14} />
                                 </button>
@@ -442,6 +445,7 @@ export default function ReportsTab({ projectId, milestones }: ReportsTabProps) {
                                   onClick={(e) => handleDelete(e, record.id)}
                                   className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
                                   title="删除"
+                                  style={{ display: isProjectManager ? '' : 'none' }}
                                 >
                                   <Trash2 size={14} />
                                 </button>

@@ -13,10 +13,10 @@ async function main() {
       category: 'finance',
       fields: JSON.stringify([
         { label: '报销总金额', name: 'amount', type: 'number', required: true, readonly: true, placeholder: '自动计算' },
-        { 
-          label: '报销明细', 
-          name: 'items', 
-          type: 'subform', 
+        {
+          label: '报销明细',
+          name: 'items',
+          type: 'subform',
           columns: [
             { label: '类别', name: 'category', type: 'select', options: [
               { label: '餐饮', value: 'meal' },
@@ -48,6 +48,27 @@ async function main() {
         { label: '出差事由', name: 'reason', type: 'textarea', required: true },
         { label: '最终票价', name: 'final_amount', type: 'number', required: false, readonly: true, description: '由预定员填写' },
         { label: '机票照片', name: 'ticket_photo', type: 'file', required: false, readonly: true, description: '由预定员上传' }
+      ]),
+      layout: JSON.stringify({}),
+      version: 1,
+      status: '0'
+    },
+    {
+      templateKey: 'project_completion',
+      name: '项目结项申请单',
+      category: 'project',
+      fields: JSON.stringify([
+        { label: '选择项目', name: 'project_id', type: 'project', required: true },
+        { label: '项目名称', name: 'project_name', type: 'text', required: true, readonly: true },
+        { label: '项目编号', name: 'project_code', type: 'text', required: true, readonly: true },
+        { label: '项目经理', name: 'manager_name', type: 'text', required: true, readonly: true },
+        { label: '开始日期', name: 'start_date', type: 'date', required: true, readonly: true },
+        { label: '项目预算(万元)', name: 'budget', type: 'number', required: true, readonly: true },
+        { label: '实际结束日期', name: 'actual_end_date', type: 'date', required: true },
+        { label: '实际支出(元)', name: 'actual_expense', type: 'number', required: true, readonly: true, description: '系统自动汇总' },
+        { label: '项目完成度(%)', name: 'completion_rate', type: 'number', required: true },
+        { label: '结项总结', name: 'summary', type: 'textarea', required: true, placeholder: '请填写项目成果、交付物、经验教训等' },
+        { label: '相关附件', name: 'attachments', type: 'file', required: false },
       ]),
       layout: JSON.stringify({}),
       version: 1,
@@ -144,6 +165,46 @@ async function main() {
       { id: BigInt(100211), definitionId: flightDefId, nowNodeCode: 'START', nowNodeType: 0, nextNodeCode: 'MANAGER_APPROVE', nextNodeType: 1 },
       { id: BigInt(100212), definitionId: flightDefId, nowNodeCode: 'MANAGER_APPROVE', nowNodeType: 1, nextNodeCode: 'BOOKER_EXECUTE', nextNodeType: 1, skipName: '通过' },
       { id: BigInt(100213), definitionId: flightDefId, nowNodeCode: 'BOOKER_EXECUTE', nowNodeType: 1, nextNodeCode: 'END', nextNodeType: 2, skipName: '预定成功' },
+    ]
+  });
+
+  // 项目结项流程
+  const completionDefId = BigInt(1003);
+  const completionFields = templates.find(t => t.templateKey === 'project_completion')?.fields;
+  await prisma.flowDefinition.upsert({
+    where: { id: completionDefId },
+    update: {
+      ext: JSON.stringify({ form_schema: completionFields ? JSON.parse(completionFields) : [] })
+    },
+    create: {
+      id: completionDefId,
+      flowCode: 'project_completion',
+      flowName: '项目结项审批',
+      category: 'project',
+      version: 'v1.0',
+      isPublish: 1,
+      createBy: 'admin',
+      createTime: new Date(),
+      ext: JSON.stringify({ form_schema: completionFields ? JSON.parse(completionFields) : [] })
+    }
+  });
+
+  // 项目结项节点
+  await prisma.flowNode.deleteMany({ where: { definitionId: completionDefId } });
+  await prisma.flowNode.createMany({
+    data: [
+      { id: BigInt(10031), definitionId: completionDefId, nodeCode: 'START', nodeName: '开始', nodeType: 0, version: 'v1.0' },
+      { id: BigInt(10032), definitionId: completionDefId, nodeCode: 'GM_APPROVE', nodeName: '总经理审批', nodeType: 1, permissionFlag: 'role:general_manager', version: 'v1.0' },
+      { id: BigInt(10033), definitionId: completionDefId, nodeCode: 'END', nodeName: '结束', nodeType: 2, version: 'v1.0', handlerType: 'service', handlerPath: 'project_completion' },
+    ]
+  });
+
+  // 项目结项跳转
+  await prisma.flowSkip.deleteMany({ where: { definitionId: completionDefId } });
+  await prisma.flowSkip.createMany({
+    data: [
+      { id: BigInt(100311), definitionId: completionDefId, nowNodeCode: 'START', nowNodeType: 0, nextNodeCode: 'PM_APPROVE', nextNodeType: 1 },
+      { id: BigInt(100312), definitionId: completionDefId, nowNodeCode: 'PM_APPROVE', nowNodeType: 1, nextNodeCode: 'END', nextNodeType: 2, skipName: '通过' },
     ]
   });
 

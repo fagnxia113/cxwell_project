@@ -26,6 +26,7 @@ interface TagRecord {
 interface TagsTabProps {
   projectId: string
   milestones: Milestone[]
+  isProjectManager?: boolean
 }
 
 const tagTypeConfig = {
@@ -45,7 +46,7 @@ const statusConfig = {
 
 // 移除 systemTypeOptions，改为手输
 
-export default function TagsTab({ projectId, milestones }: TagsTabProps) {
+export default function TagsTab({ projectId, milestones, isProjectManager }: TagsTabProps) {
   console.log('[TagsTab] Mounted, projectId:', projectId)
   const { t } = useTranslation()
   const [tags, setTags] = useState<TagRecord[]>([])
@@ -276,6 +277,7 @@ export default function TagsTab({ projectId, milestones }: TagsTabProps) {
           <button
             onClick={() => handleOpenModal()}
             className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg text-xs font-bold hover:bg-emerald-600 transition-colors"
+            style={{ display: isProjectManager ? 'flex' : 'none' }}
           >
             <Plus size={14} />
             新建记录
@@ -450,6 +452,7 @@ export default function TagsTab({ projectId, milestones }: TagsTabProps) {
                                   onClick={(e) => { e.stopPropagation(); handleOpenModal(record); }}
                                   className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
                                   title="编辑"
+                                  style={{ display: isProjectManager ? '' : 'none' }}
                                 >
                                   <Pencil size={14} />
                                 </button>
@@ -457,6 +460,7 @@ export default function TagsTab({ projectId, milestones }: TagsTabProps) {
                                   onClick={(e) => handleDelete(e, record.id)}
                                   className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
                                   title="删除"
+                                  style={{ display: isProjectManager ? '' : 'none' }}
                                 >
                                   <Trash2 size={14} />
                                 </button>

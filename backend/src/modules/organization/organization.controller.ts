@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Param, Post, Put, Delete, Body, Request } from '@nestjs/common';
+import { Controller, Get, Query, Param, Post, Put, Delete, Body, Req } from '@nestjs/common';
 import { OrganizationService } from './organization.service';
 
 @Controller('organization')
@@ -75,7 +75,7 @@ export class OrganizationController {
   }
 
   @Post('departments')
-  async createDept(@Body() data: any, @Request() req: any) {
+  async createDept(@Body() data: any, @Req() req: any) {
     const creator = req.user?.loginName || 'admin';
     const result = await this.organizationService.createDept(data, creator);
     return {
@@ -85,7 +85,7 @@ export class OrganizationController {
   }
 
   @Put('departments/:id')
-  async updateDept(@Param('id') id: string, @Body() data: any, @Request() req: any) {
+  async updateDept(@Param('id') id: string, @Body() data: any, @Req() req: any) {
     const updater = req.user?.loginName || 'admin';
     const result = await this.organizationService.updateDept(id, data, updater);
     return {
@@ -103,7 +103,7 @@ export class OrganizationController {
   }
 
   @Post('positions')
-  async createPosition(@Body() data: any, @Request() req: any) {
+  async createPosition(@Body() data: any, @Req() req: any) {
     const creator = req.user?.loginName || 'admin';
     const result = await this.organizationService.createPosition(data, creator);
     return {
@@ -113,7 +113,7 @@ export class OrganizationController {
   }
 
   @Put('positions/:id')
-  async updatePosition(@Param('id') id: string, @Body() data: any, @Request() req: any) {
+  async updatePosition(@Param('id') id: string, @Body() data: any, @Req() req: any) {
     const updater = req.user?.loginName || 'admin';
     const result = await this.organizationService.updatePosition(id, data, updater);
     return {
@@ -140,7 +140,7 @@ export class OrganizationController {
   }
 
   @Put('employee/:id')
-  async updateEmployee(@Param('id') id: string, @Body() data: any, @Request() req: any) {
+  async updateEmployee(@Param('id') id: string, @Body() data: any, @Req() req: any) {
     const updater = req.user?.loginName || 'admin';
     const result = await this.organizationService.updateEmployee(id, data, updater);
     return {
@@ -163,8 +163,8 @@ export class PersonnelController {
   constructor(private readonly organizationService: OrganizationService) {}
 
   @Get('employees')
-  async getEmployees(@Query() query: any) {
-    const data = await this.organizationService.getEmployeeList(query);
+  async getEmployees(@Query() query: any, @Req() req: any) {
+    const data = await this.organizationService.getEmployeeList(query, req.user);
     return {
       success: true,
       data: data.list,
@@ -178,6 +178,31 @@ export class PersonnelController {
     @Param('month') month: string,
   ) {
     const data = await this.organizationService.getProjectRotationReport(projectId, month);
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  @Get('rotation/plan/:employeeId/:yearMonth')
+  async getRotationPlan(
+    @Param('employeeId') employeeId: string,
+    @Param('yearMonth') yearMonth: string,
+  ) {
+    const data = await this.organizationService.getRotationPlan(employeeId, yearMonth);
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  @Post('rotation/plan/:employeeId/:yearMonth')
+  async saveRotationPlan(
+    @Param('employeeId') employeeId: string,
+    @Param('yearMonth') yearMonth: string,
+    @Body() body: { segments: any[] },
+  ) {
+    const data = await this.organizationService.saveRotationPlan(employeeId, yearMonth, body.segments);
     return {
       success: true,
       data,
