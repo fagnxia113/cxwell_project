@@ -24,7 +24,7 @@ export class EmployeeResignationHandler implements IWorkflowHandler {
       formData = ext?.formData || ext?.variables || ext;
     } catch { return; }
 
-    const employeeNo = formData.employeeNo || formData.employee_no;
+    const employeeNo = formData.employeeNo || formData.employee_no || formData.employeeId || formData.employee_id;
     const employeeName = formData.employeeName || formData.employee_name || formData.name;
 
     if (!employeeNo && !employeeName) {
@@ -34,10 +34,15 @@ export class EmployeeResignationHandler implements IWorkflowHandler {
 
     let employee: any = null;
     if (employeeNo) {
-      employee = await tx.SysEmployee.findFirst({ where: { employeeNo } });
+      // 尝试按工号找
+      employee = await tx.sysEmployee.findFirst({ where: { employeeNo: String(employeeNo) } });
+      // 如果没找到且是纯数字，尝试按ID找
+      if (!employee && /^\d+$/.test(String(employeeNo))) {
+        employee = await tx.sysEmployee.findUnique({ where: { employeeId: BigInt(employeeNo) } });
+      }
     }
     if (!employee && employeeName) {
-      employee = await tx.SysEmployee.findFirst({ where: { name: employeeName } });
+      employee = await tx.sysEmployee.findFirst({ where: { name: employeeName } });
     }
 
     if (!employee) {
@@ -48,7 +53,7 @@ export class EmployeeResignationHandler implements IWorkflowHandler {
     const leaveDateStr = formData.lastWorkingDay || formData.leaveDate || formData.last_working_day;
     const leaveDate = leaveDateStr ? new Date(leaveDateStr) : new Date();
 
-    await tx.SysEmployee.update({
+    await tx.sysEmployee.update({
       where: { employeeId: employee.employeeId },
       data: {
         status: '1',
@@ -60,7 +65,7 @@ export class EmployeeResignationHandler implements IWorkflowHandler {
 
     if (employee.userId) {
       try {
-        await tx.SysUser.update({
+        await tx.sysUser.update({
           where: { userId: employee.userId },
           data: { status: '1', updateTime: new Date() }
         });

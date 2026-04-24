@@ -121,7 +121,8 @@ export class OrganizationService {
         deptId: item.deptId?.toString(),
         userId: item.userId?.toString(),
         dingtalkUserId: (item as any).dingtalkUserId?.toString(),
-        dingtalkDeptId: (item as any).dingtalkDeptId?.toString()
+        dingtalkDeptId: (item as any).dingtalkDeptId?.toString(),
+        status: item.status === '0' ? 'active' : item.status === '1' ? 'resigned' : 'probation',
       }))
     };
   }

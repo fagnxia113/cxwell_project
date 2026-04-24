@@ -8,6 +8,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../../utils/cn'
 import { useTranslation } from 'react-i18next'
 import { useDynamicOptions } from '../../hooks/useDynamicOptions'
+import { projectApi } from '../../api/projectApi'
+import { orgApi } from '../../api/orgApi'
 import SearchableDropdown from './SearchableDropdown'
 import FileUploadField from './FileUploadField'
 import SubformField from './SubformField'
@@ -35,6 +37,7 @@ interface FormTemplateRendererProps {
   data?: Record<string, any>
   onFieldChange: (name: string, value: any) => void
   mode?: 'create' | 'edit' | 'view'
+  editableFields?: string[]
 }
 
 const baseInputClass = "w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 text-sm font-medium transition-all duration-300 focus:ring-4 focus:ring-primary/10 focus:border-primary hover:border-slate-300 placeholder:text-slate-300 shadow-sm"
@@ -45,7 +48,8 @@ const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
   fields,
   data = {},
   onFieldChange,
-  mode = 'create'
+  mode = 'create',
+  editableFields = []
 }) => {
   const { t } = useTranslation()
   const isReadonly = mode === 'view'
@@ -57,7 +61,7 @@ const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
       const fetchKey = f.dataSource || f.dynamicOptions
       if (fetchKey) {
         fetchOptions(fetchKey)
-      } else if (['user', 'department', 'project', 'customer', 'position'].includes(f.type)) {
+      } else if (['user', 'employee', 'department', 'project', 'customer', 'position'].includes(f.type)) {
         fetchOptions(f.type)
       }
       // 如果是子表单，也要预加载子表单字段的选项
@@ -89,7 +93,9 @@ const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
       ? (field.placeholder.includes('.') ? t(field.placeholder) : field.placeholder)
       : (['select', 'user', 'department', 'position', 'customer', 'project'].includes(field.type) ? t('common.select') : t('common.inputPlaceholder'))
 
-    if ((isReadonly || field.readonly || field.disabled) && field.type !== 'subform') {
+    const isForceEditable = editableFields.includes(field.name)
+
+    if (!isForceEditable && (isReadonly || field.readonly || field.disabled) && field.type !== 'subform' && field.type !== 'file') {
       const getDisplayValue = () => {
         if (field.options) {
           const opt = field.options.find(o => o.value === val)
@@ -105,7 +111,7 @@ const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
         }
         
         if (typeof val === 'object' && val !== null) return JSON.stringify(val)
-        return val || '-'
+        return (val === 0 || val) ? val : '-'
       }
       return <div className={readonlyInputClass}>{getDisplayValue()}</div>
     }
@@ -123,6 +129,7 @@ const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
         )
       case 'select':
       case 'user':
+      case 'employee':
       case 'department':
       case 'project':
       case 'customer':
@@ -133,7 +140,66 @@ const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
             label={fieldLabel}
             value={val}
             options={currentOptions}
-            onChange={(v) => onFieldChange(field.name, v)}
+            onChange={async (v) => {
+              onFieldChange(field.name, v)
+              
+              // Auto-population logic for projects
+              if (field.type === 'project' && v) {
+                try {
+                  const res = await projectApi.getProjectDetail(v)
+                  if (res?.success && res?.data) {
+                    const p = res.data
+                    const mappings: Record<string, any> = {
+                      'project_name': p.projectName || p.name,
+                      'project_code': p.projectCode || p.code,
+                      'manager_name': p.manager || p.manager_name || p._managerName,
+                      'start_date': (p.startDate || p.start_date)?.split('T')[0],
+                      'budget': p.budget,
+                      'actual_expense': p.actual_expense
+                    }
+                    Object.entries(mappings).forEach(([targetName, targetValue]) => {
+                      if (targetValue !== undefined && targetValue !== null) {
+                        // Check if field exists in form schema
+                        if (fields.some(f => f.name === targetName)) {
+                          onFieldChange(targetName, targetValue)
+                        }
+                      }
+                    })
+                  }
+                } catch (e) {
+                  console.error('Failed to auto-populate project data:', e)
+                }
+              }
+
+              // Auto-population logic for employees
+              if ((field.type === 'employee' || field.dynamicOptions === 'employee') && v) {
+                try {
+                  const res = await orgApi.getEmployeeById(v)
+                  if (res?.success && res?.data) {
+                    const emp = res.data
+                    const mappings: Record<string, any> = {
+                      'employeeName': emp.name,
+                      'name': emp.name,
+                      'employeeNo': emp.employeeNo,
+                      'employee_no': emp.employeeNo,
+                      'deptId': emp.deptId,
+                      'department': emp.deptId,
+                      'position': emp.position,
+                      'post': emp.position
+                    }
+                    Object.entries(mappings).forEach(([targetName, targetValue]) => {
+                      if (targetValue !== undefined && targetValue !== null) {
+                        if (fields.some(f => f.name === targetName)) {
+                          onFieldChange(targetName, targetValue)
+                        }
+                      }
+                    })
+                  }
+                } catch (e) {
+                  console.error('Failed to auto-populate employee data:', e)
+                }
+              }
+            }}
             placeholder={fieldPlaceholder}
           />
         )
@@ -151,7 +217,7 @@ const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
           <FileUploadField
             value={val}
             onChange={(v) => onFieldChange(field.name, v)}
-            readonly={isReadonly || field.readonly || field.disabled}
+            readonly={!isForceEditable && (isReadonly || field.readonly || field.disabled)}
           />
         )
       case 'subform':
@@ -160,7 +226,7 @@ const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
             value={val || []}
             onChange={(v) => onFieldChange(field.name, v)}
             columns={(field as any).columns || []}
-            readonly={isReadonly || field.readonly || field.disabled}
+            readonly={!isForceEditable && (isReadonly || field.readonly || field.disabled)}
             optionsMap={optionsMap}
           />
         )
@@ -182,7 +248,7 @@ const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
       user: User, date: Calendar, number: Hash, 
       text: Type, email: Mail, phone: Phone, textarea: FileText,
       select: Layers, department: Package, project: Archive, customer: User,
-      position: Briefcase, file: Upload
+      employee: User, position: Briefcase, file: Upload
     }
     const Icon = iconMap[field.type] || Info
     const isFullWidth = field.layout?.width === 'full' || field.type === 'textarea' || field.type === 'file' || field.type === 'subform'

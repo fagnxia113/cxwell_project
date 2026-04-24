@@ -17,6 +17,8 @@ interface FlowDetailViewProps {
   formTemplate?: any
   formData?: any
   readOnly?: boolean
+  editableFields?: string[]
+  onFormDataChange?: (name: string, value: any) => void
   timeline?: any[]
   showTimeline?: boolean
   children?: React.ReactNode
@@ -28,9 +30,9 @@ const TimelineItem: React.FC<{ item: any; isLast?: boolean }> = ({ item, isLast 
     <div className="relative z-10 pl-10">
       <div className={cn(
         "absolute left-0 top-1 w-5 h-5 rounded-full border-2 border-white shadow-sm flex items-center justify-center",
-        item.skip_type === 'pass' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'
+        (item.skip_type === 'pass' || item.skip_type === 'service' || item.skip_type === 'auto_skip') ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'
       )}>
-        {item.skip_type === 'pass' ? <CheckCircle2 size={8} /> : <AlertCircle size={8} />}
+        {(item.skip_type === 'pass' || item.skip_type === 'service' || item.skip_type === 'auto_skip') ? <CheckCircle2 size={8} /> : <AlertCircle size={8} />}
       </div>
       <div>
         <div className="flex items-center justify-between mb-1">
@@ -62,6 +64,8 @@ export default function FlowDetailView({
   formTemplate,
   formData = {},
   readOnly = false,
+  editableFields = [],
+  onFormDataChange,
   timeline = [],
   showTimeline = true,
   children
@@ -143,10 +147,15 @@ export default function FlowDetailView({
 
           {formTemplate ? (
             <FormTemplateRenderer
-              template={formTemplate}
-              initialData={formData}
-              readOnly={readOnly}
-              onDataChange={() => {}}
+              fields={formTemplate.fields || formTemplate}
+              data={formData}
+              mode={readOnly ? 'view' : 'edit'}
+              editableFields={editableFields}
+              onFieldChange={(name, value) => {
+                if (onFormDataChange) {
+                  onFormDataChange(name, value)
+                }
+              }}
             />
           ) : (
             <div className="p-10 text-center text-slate-400 border border-dashed border-slate-200 rounded-lg text-sm">

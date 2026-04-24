@@ -290,12 +290,13 @@ const ApprovalCenterPage: React.FC = () => {
                             </div>
 
                             <div className="flex items-center gap-3">
-                              {item.result && (
-                                 <span className={cn("px-3 py-1 rounded-lg text-[10px] font-semibold uppercase",
-                                   item.result === 'pass' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
-                                 )}>
-                                   {item.result === 'pass' ? '已通过' : '已驳回'}
-                                 </span>
+                              {(item.result === 'pass' || item.result === 'reject') && (
+                                <span className={cn(
+                                  "px-2 py-0.5 rounded text-[10px] font-semibold uppercase",
+                                  item.result === 'pass' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'
+                                )}>
+                                  {item.result === 'pass' ? '已通过' : '已驳回'}
+                                </span>
                               )}
                               <div className="w-9 h-9 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
                                 <ChevronRight size={16} />

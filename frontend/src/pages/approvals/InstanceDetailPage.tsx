@@ -101,7 +101,7 @@ export default function InstanceDetailPage() {
 
     try {
       setSubmitting(true)
-      await workflowApi.submitTask(task.id.toString(), action, {}, opinion, targetNodeCode)
+      await workflowApi.submitTask(task.id.toString(), action, { formData }, opinion, targetNodeCode)
       message.success(action === 'pass' ? '审批通过，流程已推进' : '已成功驳回至指定环节')
       navigate('/approvals/center')
     } catch (err: any) {
@@ -112,7 +112,10 @@ export default function InstanceDetailPage() {
   }
 
   const isCurrentAssignee = currentTasks.some((t: any) => {
-    const assigneeId = t.assignee_id || t.approver || t.createBy || ''
+    if (t.assignees && Array.isArray(t.assignees)) {
+      return t.assignees.includes(currentUserId)
+    }
+    const assigneeId = t.assignee_id || t.approver || ''
     return assigneeId === currentUserId || t.assignee_name === currentUserId
   })
 
@@ -150,10 +153,10 @@ export default function InstanceDetailPage() {
           <span className={cn(
             "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border",
             instance.status === 'running' && 'bg-amber-50 text-amber-600 border-amber-100',
-            instance.status === 'completed' && 'bg-emerald-50 text-emerald-600 border-emerald-100',
-            instance.status === 'terminated' && 'bg-rose-50 text-rose-600 border-rose-100'
+            (instance.status === 'completed' || instance.status === 'finished') && 'bg-emerald-50 text-emerald-600 border-emerald-100',
+            (instance.status === 'terminated' || instance.status === 'rejected') && 'bg-rose-50 text-rose-600 border-rose-100'
           )}>
-            {instance.status === 'running' ? '进行中' : instance.status === 'completed' ? '已完成' : '已终止'}
+            {instance.status === 'running' ? '进行中' : (instance.status === 'completed' || instance.status === 'finished') ? '已完成' : '已终止'}
           </span>
         )}
         <button
@@ -179,6 +182,8 @@ export default function InstanceDetailPage() {
         timeline={timeline}
         showTimeline={true}
         currentNodeName={currentNodeName}
+        editableFields={['final_amount', 'ticket_photo']}
+        onFormDataChange={(name, value) => setFormData((prev: any) => ({ ...prev, [name]: value }))}
       >
         {isCurrentAssignee && instance?.status === 'running' && (
           <div className="bg-slate-900 rounded-xl p-6 text-white shadow-lg mt-6">

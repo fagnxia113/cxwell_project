@@ -33,7 +33,7 @@ export class EmployeeOnboardingHandler implements IWorkflowHandler {
     }
 
     const phone = formData.phone;
-    const existingEmployee = await tx.SysEmployee.findFirst({
+    const existingEmployee = await tx.sysEmployee.findFirst({
       where: { name, phone: phone || undefined }
     });
     if (existingEmployee) {
@@ -44,12 +44,12 @@ export class EmployeeOnboardingHandler implements IWorkflowHandler {
     const basePinyin = pinyin(name, { toneType: 'none', type: 'array' }).join('').toLowerCase();
     let username = basePinyin;
     let userCount = 0;
-    while (await tx.SysUser.findUnique({ where: { loginName: username } })) {
+    while (await tx.sysUser.findUnique({ where: { loginName: username } })) {
       userCount++;
       username = `${basePinyin}${userCount}`;
     }
 
-    const lastEmployee = await tx.SysEmployee.findFirst({
+    const lastEmployee = await tx.sysEmployee.findFirst({
       where: { employeeNo: { startsWith: 'Cxwell-' } },
       orderBy: { employeeNo: 'desc' }
     });
@@ -74,7 +74,7 @@ export class EmployeeOnboardingHandler implements IWorkflowHandler {
     const eduMap: Record<string, string> = { '高中': '1', '大专': '2', '本科': '3', '硕士': '4', '博士': '5', '其他': '0' };
     const education = eduMap[rawEducation] || rawEducation || null;
 
-    await tx.SysUser.create({
+    await tx.sysUser.create({
       data: {
         userId,
         loginName: username,
@@ -88,7 +88,7 @@ export class EmployeeOnboardingHandler implements IWorkflowHandler {
 
     const phoneCountryCode = formData.phoneCountryCode || formData.countryCode || '+86';
 
-    await tx.SysEmployee.create({
+    await tx.sysEmployee.create({
       data: {
         name,
         employeeNo,
@@ -108,9 +108,9 @@ export class EmployeeOnboardingHandler implements IWorkflowHandler {
       }
     });
 
-    const epyRole = await tx.SysRole.findFirst({ where: { roleKey: 'epy' } });
+    const epyRole = await tx.sysRole.findFirst({ where: { roleKey: 'epy' } });
     if (epyRole) {
-      await tx.SysUserRole.create({ data: { userId, roleId: epyRole.roleId } });
+      await tx.sysUserRole.create({ data: { userId, roleId: epyRole.roleId } });
     }
 
     this.logger.log(`服务节点执行完成：为 ${name} 创建了账号 ${username} 和工号 ${employeeNo}`);
@@ -162,7 +162,7 @@ export class EmployeeOnboardingHandler implements IWorkflowHandler {
       });
       if (dingtalkResult.success && dingtalkResult.userId) {
         this.logger.log(`入职流程：员工 ${name} 已同步到钉钉，userId: ${dingtalkResult.userId}`);
-        await tx.SysEmployee.update({
+        await tx.sysEmployee.update({
           where: { name, phone: phone || undefined },
           data: { dingtalkUserId: dingtalkResult.userId }
         });

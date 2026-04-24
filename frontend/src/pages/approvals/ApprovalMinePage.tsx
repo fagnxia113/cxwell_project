@@ -201,8 +201,8 @@ export default function ApprovalMinePageNew() {
         const mappedOrders = ordersData.map((item: any) => {
           let displayStatus = item.status;
           if (item.status === 'running') displayStatus = 'pending';
-          else if (item.status === 'completed') displayStatus = item.result || 'approved';
-          else if (item.status === 'terminated') displayStatus = 'rejected';
+          else if (item.status === 'completed' || item.status === 'finished') displayStatus = item.result || 'approved';
+          else if (item.status === 'terminated' || item.status === 'rejected') displayStatus = 'rejected';
           return {
             id: item.id,
             order_no: item.id.substring(0, 8).toUpperCase(),
