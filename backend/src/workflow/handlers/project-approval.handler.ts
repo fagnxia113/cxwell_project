@@ -23,10 +23,10 @@ export class ProjectApprovalHandler implements IWorkflowHandler {
     const projectName = formData.projectName || formData.name || '未命名项目';
     const projectCode = businessId;
 
-    const existing = await tx.Project.findFirst({ where: { projectCode } });
+    const existing = await tx.project.findFirst({ where: { projectCode } });
     if (existing) {
       this.logger.warn(`项目立项：项目 ${projectCode} 已存在，跳过重复创建`);
-      await tx.Project.update({
+      await tx.project.update({
         where: { projectId: existing.projectId },
         data: { status: '1', updateTime: new Date() }
       });
@@ -35,7 +35,7 @@ export class ProjectApprovalHandler implements IWorkflowHandler {
 
     const projectId = BigInt(Date.now()) + BigInt(Math.floor(Math.random() * 10000));
 
-    await tx.Project.create({
+    await tx.project.create({
       data: {
         projectId,
         projectName: formData.projectName || '未命名项目',
@@ -44,7 +44,7 @@ export class ProjectApprovalHandler implements IWorkflowHandler {
         country: formData.country || null,
         address: formData.address || null,
         attachments: formData.attachments || null,
-        status: '1',
+        status: '1', // 1: 立项中
         startDate: formData.startDate ? new Date(formData.startDate) : new Date(),
         endDate: formData.endDate ? new Date(formData.endDate) : null,
         managerId: formData.managerId ? BigInt(formData.managerId) : null,

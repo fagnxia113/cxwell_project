@@ -340,6 +340,18 @@ export class TaskQueryService {
       where: { instanceId: id, delFlag: '0' },
     });
 
+    const taskIds = currentTasks.map(t => t.id);
+    const flowUsers = taskIds.length > 0 ? await this.prisma.flowUser.findMany({
+      where: { associated: { in: taskIds }, type: '1' }
+    }) : [];
+    
+    const taskUserMap = new Map<string, string[]>();
+    flowUsers.forEach(u => {
+      const tid = u.associated.toString();
+      if (!taskUserMap.has(tid)) taskUserMap.set(tid, []);
+      if (u.processedBy) taskUserMap.get(tid)!.push(u.processedBy);
+    });
+
     let formData = {};
     try {
       formData = instance.ext ? JSON.parse(instance.ext) : {};
@@ -385,6 +397,7 @@ export class TaskQueryService {
         id: t.id.toString(),
         definitionId: t.definitionId.toString(),
         instanceId: t.instanceId.toString(),
+        assignees: taskUserMap.get(t.id.toString()) || [],
       })),
     };
   }

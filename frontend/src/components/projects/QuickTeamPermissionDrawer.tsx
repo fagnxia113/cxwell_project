@@ -40,7 +40,7 @@ export default function QuickTeamPermissionDrawer({
   const loadMembers = async () => {
     try {
       setLoading(true)
-      const res = await apiClient.get<any>(`/api/data/project_personnel?filter=${encodeURIComponent(JSON.stringify({ project_id: projectId }))}`)
+      const res = await apiClient.get<any>(`/api/project/extension/${projectId}/personnel`)
       const data = res?.data || res?.items || res || []
       setMembers(data)
     } catch (err: any) {

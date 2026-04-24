@@ -176,7 +176,7 @@ export default function DashboardPage() {
                   <p className="text-[10px] text-slate-400 mt-0.5">{t('dashboard.delivery_trend_desc')}</p>
                 </div>
               </div>
-              <div className="w-full h-[300px] relative">
+              <div className="w-full h-[300px] relative min-w-0">
                 {trend && trend.length > 0 && (
                   <ResponsiveContainer width="100%" height={300}>
                     <AreaChart data={trend}>
@@ -291,7 +291,7 @@ export default function DashboardPage() {
 
            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-lg shadow-slate-200/30">
               <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">{t('dashboard.business_distribution')}</h2>
-              <div className="h-[200px] w-full">
+              <div className="h-[200px] w-full relative min-w-0">
                 {distribution && distribution.length > 0 && (
                   <ResponsiveContainer width="100%" height={200}>
                     <PieChart>

@@ -50,7 +50,15 @@ export default function StatusBadge({ status, className }: StatusBadgeProps) {
     }
   }
 
-  const config = configs[status] || configs.proposal
+  const statusMap: Record<string, string> = {
+    '1': 'initiated',
+    '2': 'in_progress',
+    '3': 'completed',
+    '0': 'proposal'
+  }
+
+  const effectiveStatus = statusMap[status] || status
+  const config = configs[effectiveStatus] || configs.proposal
   const Icon = config.icon
 
   return (

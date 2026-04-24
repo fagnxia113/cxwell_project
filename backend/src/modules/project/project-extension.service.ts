@@ -271,4 +271,25 @@ export class ProjectExtensionService {
     });
     return { ...res, id: res.id.toString(), projectId: res.projectId.toString(), employeeId: res.employeeId.toString() };
   }
+
+  async getPersonnel(projectId: bigint, user: any) {
+    const role = await this.checkUserProjectRole(projectId, user);
+    if (!role) {
+      throw new ForbiddenException('您不是该项目成员');
+    }
+
+    const members = await this.prisma.projectMember.findMany({
+      where: { projectId },
+      include: {
+        employee: true
+      }
+    });
+
+    return members.map(m => ({
+      employee_id: m.employeeId.toString(),
+      name: m.employee?.name || '未知',
+      role: m.roleName || 'Member',
+      can_edit: m.canEdit || false
+    }));
+  }
 }

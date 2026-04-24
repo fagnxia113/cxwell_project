@@ -72,5 +72,12 @@ export const orgApi = {
    */
   deletePosition: (id: string) => {
     return apiClient.delete<any>(`/api/organization/positions/${id}`);
+  },
+
+  /**
+   * 获取职员详情
+   */
+  getEmployeeById: (id: string) => {
+    return apiClient.get<any>(`/api/organization/employee/${id}`);
   }
 };

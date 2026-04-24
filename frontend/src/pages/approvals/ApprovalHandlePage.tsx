@@ -30,6 +30,7 @@ export default function ApprovalHandlePage() {
   const [actionType, setActionType] = useState<'pass' | 'reject'>('pass')
   const [historyNodes, setHistoryNodes] = useState<any[]>([])
   const [targetNodeCode, setTargetNodeCode] = useState<string>('')
+  const [isAuthorized, setIsAuthorized] = useState(false)
 
   useEffect(() => {
     if (taskId) loadData()
@@ -57,6 +58,28 @@ export default function ApprovalHandlePage() {
       const historyRes = await workflowApi.getHistory(currentTask.instanceId)
       setHistoryNodes(historyRes.data || [])
 
+      // Check if current user is an assignee
+      const token = localStorage.getItem('token')
+      let currentUser = ''
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]))
+          currentUser = payload.loginName
+        } catch(e) {}
+      }
+      
+      // If we don't have currentTasks with assignees, we can check backend, 
+      // but let's do a simple check. If they loaded it from pending, they should be authorized.
+      // A more robust way is to check the `getTimeline` currentTasks if it matches the current user.
+      const activeTasks = timelineRes.data.currentTasks || []
+      const activeTask = activeTasks.find((t: any) => t.id === taskId)
+      if (activeTask && activeTask.assignees && Array.isArray(activeTask.assignees)) {
+        setIsAuthorized(activeTask.assignees.includes(currentUser))
+      } else {
+        // Fallback or assume true if accessed directly and valid
+        setIsAuthorized(true)
+      }
+
     } catch (error: any) {
       console.error(error)
       message.error('加载任务详情失败')
@@ -76,7 +99,7 @@ export default function ApprovalHandlePage() {
 
     try {
       setSubmitting(true)
-      await workflowApi.submitTask(taskId!, action, {}, opinion, targetNodeCode)
+      await workflowApi.submitTask(taskId!, action, { formData }, opinion, targetNodeCode)
       message.success(action === 'pass' ? '审批通过，流程已推进' : '已成功驳回至指定环节')
       navigate('/approvals/pending')
     } catch (err: any) {
@@ -97,7 +120,7 @@ export default function ApprovalHandlePage() {
     <div className="max-w-6xl mx-auto space-y-8 animate-fade-in pb-20">
       <div className="flex items-center justify-end gap-3">
         <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-100">
-          当前环节: {task.node_name}
+          当前环节: {task.nodeName || task.node_name}
         </span>
         <button
           onClick={() => navigate(-1)}
@@ -113,16 +136,19 @@ export default function ApprovalHandlePage() {
         processTitle={task.process_title}
         initiatorName={task.initiator_name}
         createdAt={task.created_at}
-        nodeName={task.node_name}
+        nodeName={task.nodeName || task.node_name}
         orderType={task.process_type}
         handlerName={task.assignee_name || task.current_assignee_name}
         formTemplate={formTemplate}
         formData={formData}
         readOnly={true}
+        editableFields={['final_amount', 'ticket_photo']}
+        onFormDataChange={(name, value) => setFormData((prev: any) => ({ ...prev, [name]: value }))}
         timeline={timeline}
         showTimeline={true}
-        currentNodeName={task.node_name}
+        currentNodeName={task.nodeName || task.node_name}
       >
+        {isAuthorized && (
         <div className="bg-slate-900 rounded-3xl p-8 text-white shadow-2xl shadow-indigo-600/20 mt-8">
            <div className="flex items-center gap-3 mb-6">
               <MessageSquare className="text-indigo-400" size={24} />
@@ -191,6 +217,7 @@ export default function ApprovalHandlePage() {
               </div>
            </div>
         </div>
+        )}
       </FlowDetailView>
     </div>
   )

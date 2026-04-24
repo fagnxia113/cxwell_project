@@ -111,6 +111,9 @@ export function useWorkflowInstanceData() {
       if (typeof formData === 'string') {
         try { formData = JSON.parse(formData) } catch { formData = {} }
       }
+      if (formData && formData.formData && typeof formData.formData === 'object') {
+        formData = { ...formData, ...formData.formData }
+      }
 
       const mappedInstance: WorkflowInstance = {
         id: rawInstance.id || '',
@@ -288,7 +291,7 @@ export function useWorkflowInstanceData() {
 
   return {
     loading, instance, definition, tasks, logs, currentTask, currentUserId,
-    formFields, activeFormData, masterData, transferOrder, repairOrder,
+    formFields, activeFormData, setActiveFormData, masterData, transferOrder, repairOrder,
     loadInstanceData, getNodeActions, submitAction, handleWithdraw, confirm,
     success, error, warning, t
   }

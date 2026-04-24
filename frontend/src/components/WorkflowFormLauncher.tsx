@@ -6,7 +6,9 @@ import { useMessage } from '../hooks/useMessage'
 import { useConfirm } from '../hooks/useConfirm'
 import FormTemplateRenderer from './workflow/FormTemplateRenderer'
 import { motion } from 'framer-motion'
-import { Send, Save, ArrowLeft, Loader2, FileText, Hash, Calendar, User } from 'lucide-react'
+import { Send, Save, ArrowLeft, Loader2, FileText, Hash, Calendar, User as UserIcon } from 'lucide-react'
+import { useUser } from '../contexts/UserContext'
+import { orgApi } from '../api/orgApi'
 
 interface WorkflowFormLauncherProps {
   definitionKey: string
@@ -29,6 +31,7 @@ const WorkflowFormLauncher: React.FC<WorkflowFormLauncherProps> = ({
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [savingDraft, setSavingDraft] = useState(false)
+  const { user } = useUser()
 
   const [definition, setDefinition] = useState<any>(null)
   const [formFields, setFormFields] = useState<any[]>([])
@@ -43,7 +46,7 @@ const WorkflowFormLauncher: React.FC<WorkflowFormLauncherProps> = ({
     if (urlProjectId) {
       setFormData(prev => ({ ...prev, project_id: urlProjectId }))
     }
-  }, [definitionKey, draftId])
+  }, [definitionKey, draftId, user?.employee_id])
 
   const loadData = async () => {
     try {
@@ -74,6 +77,25 @@ const WorkflowFormLauncher: React.FC<WorkflowFormLauncherProps> = ({
               }
             } catch (e) {
               console.warn('Failed to load definition detail for form fields')
+            }
+          }
+
+          // 员工离职审批流特殊逻辑：默认填入当前用户信息
+          if (definitionKey === 'employee_resignation' && user?.employee_id && !draftId) {
+            try {
+              const empRes = await orgApi.getEmployeeById(user.employee_id)
+              if (empRes.success && empRes.data) {
+                const emp = empRes.data
+                setFormData(prev => ({
+                  ...prev,
+                  employeeName: emp.employeeId,
+                  employeeNo: emp.employeeNo,
+                  department: emp.deptId,
+                  position: emp.position
+                }))
+              }
+            } catch (err) {
+              console.warn('Failed to auto-fill employee resignation form', err)
             }
           }
         }
@@ -126,7 +148,11 @@ const WorkflowFormLauncher: React.FC<WorkflowFormLauncherProps> = ({
       return message.warning(t('workflow.please_fill_title') || '请填写申请标题')
     }
 
-    const missingFields = formFields.filter(f => f.required && !formData[f.name])
+    const missingFields = formFields.filter(f => {
+      if (!f.required) return false
+      const val = formData[f.name]
+      return val === undefined || val === null || val === ''
+    })
     if (missingFields.length > 0) {
       return message.warning(t('workflow.please_fill_required'))
     }
@@ -146,9 +172,13 @@ const WorkflowFormLauncher: React.FC<WorkflowFormLauncherProps> = ({
       if (draftId) {
         res = await workflowApi.submitWorkflowDraft(draftId)
       } else {
+        // 尝试从表单数据中提取业务 ID (如 project_id) 作为流程的 businessId
+        const businessId = formData.project_id || formData.id || formData.employee_id;
+        
         res = await workflowApi.startProcess({
           flowCode: definitionKey,
           title: title,
+          businessId: businessId ? String(businessId) : undefined,
           variables: { ...formData, _title: title }
         })
       }
@@ -259,7 +289,7 @@ const WorkflowFormLauncher: React.FC<WorkflowFormLauncherProps> = ({
             </div>
             <div>
               <label className="flex items-center gap-1 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                <User className="w-3 h-3" />
+                <UserIcon className="w-3 h-3" />
                 {t('workflow.fields.applicant') || '申请人'}
               </label>
               <input

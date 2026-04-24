@@ -32,7 +32,7 @@ export default function WorkflowDetailPage() {
   const { hasButton } = usePermission()
   const {
     loading, instance, definition, tasks, logs, currentTask, currentUserId,
-    formFields, activeFormData, masterData, transferOrder,
+    formFields, activeFormData, setActiveFormData, masterData, transferOrder,
     submitAction, handleWithdraw, confirm,
     warning
   } = useWorkflowInstanceData()
@@ -86,6 +86,7 @@ export default function WorkflowDetailPage() {
     let params: any = { comment }
 
     if (type === 'approve') {
+      params.variables = { formData: activeFormData }
       const isEqTransfer = instance?.definition_key?.includes('equipment_transfer')
       if (isEqTransfer) {
         const isSource = currentTask?.node_id?.includes('from')
@@ -164,6 +165,9 @@ export default function WorkflowDetailPage() {
 
   const enabledActions = primaryActions.filter(a => hasButton(a.perm))
 
+  const isBookerExecute = instance?.definition_key === 'flight_booking' && (currentTask?.node_id === 'BOOKER_EXECUTE' || currentTask?.name === '预定员处理')
+  const editableFields = isBookerExecute ? ['final_amount', 'ticket_photo'] : []
+
   const renderFormTab = () => (
     <div className="bg-white/80 rounded-xl shadow-sm border border-white overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
@@ -185,8 +189,9 @@ export default function WorkflowDetailPage() {
           <FormTemplateRenderer
             fields={formFields}
             data={activeFormData}
-            onFieldChange={() => {}}
+            onFieldChange={(name, value) => setActiveFormData((prev: any) => ({ ...prev, [name]: value }))}
             mode="view"
+            editableFields={editableFields}
           />
         ) : activeFormData && Object.keys(activeFormData).length > 0 ? (
           <ApprovalFormPayloadView formData={activeFormData} orderType={instance.definition_key || ''} />

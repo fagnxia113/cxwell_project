@@ -237,13 +237,22 @@ export class MilestoneService {
     }
 
     // 确定项目状态
-    const allCompleted = rootMilestones.every(m => m.status === '1');
-    const anyInProgress = rootMilestones.some(m => m.status === '2');
-    let projectStatus = '2'; // 默认进行中
-    if (allCompleted) {
-      projectStatus = '3'; // 已完成
-    } else if (projectProgress === 0) {
-      projectStatus = '0'; // 未开始
+    const project = await this.prisma.project.findUnique({
+      where: { projectId },
+      select: { status: true }
+    });
+
+    let projectStatus = project?.status || '1';
+
+    // 如果项目已经是 "已结项" (3)，则不再通过里程碑自动更新状态
+    if (projectStatus === '3') {
+      console.log(`[Sync] Project is already closed (status=3), skipping status update`);
+    } else {
+      // 只要有进度，就进入 "进行中" (2)
+      // 如果没有进度，保持原状（如 "立项中" (1)）
+      if (projectProgress > 0) {
+        projectStatus = '2';
+      }
     }
 
     console.log(`[Sync] Updating project progress to ${projectProgress}, status to ${projectStatus}`);

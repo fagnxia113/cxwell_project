@@ -9,15 +9,15 @@ export class ProjectCompletionHandler implements IWorkflowHandler {
   constructor(private prisma: PrismaService) {}
 
   async handle(tx: any, businessId: string, instance: any, variables: any): Promise<void> {
-    if (!businessId) {
-      this.logger.warn('项目结项处理器：businessId 为空，跳过');
+    if (!businessId || !/^\d+$/.test(businessId)) {
+      this.logger.warn(`项目结项处理器：businessId "${businessId}" 非纯数字，无法识别为 projectId，跳过`);
       return;
     }
 
     const projectId = BigInt(businessId);
     this.logger.log(`项目结项处理器开始执行：projectId=${projectId}`);
 
-    const project = await tx.Project.findUnique({ where: { projectId } });
+    const project = await tx.project.findUnique({ where: { projectId } });
     if (!project) {
       this.logger.warn(`项目结项处理器：项目 ${projectId} 不存在，跳过`);
       return;
@@ -28,7 +28,7 @@ export class ProjectCompletionHandler implements IWorkflowHandler {
       return;
     }
 
-    await tx.Project.update({
+    await tx.project.update({
       where: { projectId },
       data: {
         status: '3',

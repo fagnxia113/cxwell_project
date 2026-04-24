@@ -147,7 +147,9 @@ export class WorkflowEngineService {
     const skip = await this.prisma.flowSkip.findFirst({ where: { definitionId: def.id, nowNodeCode: startNode?.nodeCode ?? 'START' } });
     const nextNode = nodes.find(n => n.nodeCode === skip?.nextNodeCode);
 
-    if (!nextNode) throw new BadRequestException('流程配置异常：未找到首个执行节点');
+    this.logger.log(`startInstance: definitionId=${definitionId}, nodesCount=${nodes.length}, startNode=${startNode?.nodeCode}, skipTo=${skip?.nextNodeCode}, foundNextNode=${!!nextNode}`);
+
+    if (!nextNode) throw new BadRequestException(`流程配置异常：未找到首个执行节点 (${skip?.nextNodeCode || '无流向'})`);
 
     return this.prisma.$transaction(async (tx) => {
       const instanceId = BigInt(Date.now()) + BigInt(Math.floor(Math.random() * 1000000));
@@ -249,7 +251,7 @@ export class WorkflowEngineService {
     }
 
     const instance = await tx.flowInstance.findUnique({ where: { id: instanceId } });
-    const approvers = node.permissionFlag ? await resolveApprovers(this.prisma, node.permissionFlag, instance?.createBy) : [];
+    const approvers = node.permissionFlag ? await resolveApprovers(this.prisma, node.permissionFlag, instance?.createBy, variables) : [];
 
     if (approvers.length === 0) {
       this.logger.warn(`节点 [${node.nodeName}] 无有效审批人，执行自动跳过`);
@@ -646,7 +648,7 @@ export class WorkflowEngineService {
     const nextNode = nodes.find(n => n.nodeCode === nextSkip.nextNodeCode);
     if (!nextNode) return [];
 
-    const approvers = nextNode.permissionFlag ? await resolveApprovers(this.prisma, nextNode.permissionFlag) : [];
+    const approvers = nextNode.permissionFlag ? await resolveApprovers(this.prisma, nextNode.permissionFlag, undefined, variables) : [];
 
     path.push({
       nodeCode: nextNode.nodeCode,

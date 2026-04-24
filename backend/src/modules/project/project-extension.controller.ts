@@ -79,4 +79,10 @@ export class ProjectExtensionController {
     const res = await this.extensionService.updatePersonnelPermission(BigInt(projectId), BigInt(employeeId), canEdit, req.user);
     return { success: true, data: res };
   }
+
+  @Get(':projectId/personnel')
+  async getPersonnel(@Param('projectId') projectId: string, @Req() req: any) {
+    const data = await this.extensionService.getPersonnel(BigInt(projectId), req.user);
+    return { success: true, data };
+  }
 }

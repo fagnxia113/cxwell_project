@@ -130,55 +130,80 @@ export class WorkflowController {
 
   @Post('start')
   async startInstance(@Body() body: { definitionId?: string; flowCode?: string; businessId?: string; title?: string; variables?: any }, @Req() req) {
-    const starter = req.user.loginName;
-
-    let targetDefId: bigint;
-    let flowCode = body.flowCode || '';
-    let flowName = '';
-    if (body.definitionId) {
-      targetDefId = BigInt(body.definitionId);
-      const def = await this.prisma.flowDefinition.findUnique({ where: { id: targetDefId } });
-      if (def) { flowCode = def.flowCode; flowName = def.flowName; }
-    } else if (body.flowCode) {
-      const def = await this.prisma.flowDefinition.findFirst({
-        where: { flowCode: body.flowCode, isPublish: 1 },
-        orderBy: { version: 'desc' }
-      });
-      if (!def) throw new Error('未找到已发布的流程定义');
-      targetDefId = def.id;
-      flowName = def.flowName;
-    } else {
-      throw new Error('缺失流程定义标识');
-    }
-
-    const now = new Date();
-    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-    const seqNo = String(Math.floor(Math.random() * 9000) + 1000);
-    const prefix = flowCode ? flowCode.substring(0, 3).toUpperCase() : 'WF';
-    const documentNo = `${prefix}-${dateStr}-${seqNo}`;
-    const businessId = body.businessId || documentNo;
-    const title = body.title || `${flowName || '流程申请'}-${dateStr}-${seqNo}`;
-
-    const variables = {
-      ...(body.variables || {}),
-      _title: title,
-      _documentNo: documentNo,
-      _applyDate: now.toISOString(),
-      _applicant: starter,
-    };
-
-    const instance = await this.engineService.startInstance(targetDefId, businessId, starter, variables);
-    const fullInstance = await this.prisma.flowInstance.findUnique({ where: { id: instance.id } });
-
-    return {
-      success: true,
-      data: {
-        instanceId: instance.id.toString(),
-        flowStatus: fullInstance?.flowStatus || 'running',
-        documentNo,
-        title,
+    try {
+      const starter = req?.user?.loginName;
+      if (!starter) {
+        throw new BadRequestException('未获取到当前用户信息');
       }
-    };
+
+      let targetDefId: bigint;
+      let flowCode = body.flowCode || '';
+      let flowName = '';
+      
+      if (body.definitionId) {
+        try {
+          targetDefId = BigInt(body.definitionId);
+        } catch (e) {
+          throw new BadRequestException('无效的流程定义 ID');
+        }
+        const def = await this.prisma.flowDefinition.findUnique({ where: { id: targetDefId } });
+        if (def) {
+          flowCode = def.flowCode;
+          flowName = def.flowName;
+        } else {
+          throw new BadRequestException('指定的流程定义不存在');
+        }
+      } else if (body.flowCode) {
+        const def = await this.prisma.flowDefinition.findFirst({
+          where: { flowCode: body.flowCode, isPublish: 1 },
+          orderBy: { version: 'desc' }
+        });
+        if (!def) {
+          throw new BadRequestException(`未找到已发布的流程定义: ${body.flowCode}`);
+        }
+        targetDefId = def.id;
+        flowName = def.flowName;
+      } else {
+        throw new BadRequestException('缺失流程定义标识 (definitionId 或 flowCode)');
+      }
+
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+      const seqNo = String(Math.floor(Math.random() * 9000) + 1000);
+      const prefix = flowCode ? flowCode.substring(0, 3).toUpperCase() : 'WF';
+      const documentNo = `${prefix}-${dateStr}-${seqNo}`;
+      const businessId = body.businessId || documentNo;
+      const title = body.title || `${flowName || '流程申请'}-${dateStr}-${seqNo}`;
+
+      this.logger.log(`[START_INSTANCE] starter=${starter}, flowCode=${flowCode}, businessId=${businessId}`);
+
+      const variables = {
+        ...(body.variables || {}),
+        _title: title,
+        _documentNo: documentNo,
+        _applyDate: now.toISOString(),
+        _applicant: starter,
+      };
+
+      const instance = await this.engineService.startInstance(targetDefId, businessId, starter, variables);
+      const fullInstance = await this.prisma.flowInstance.findUnique({ where: { id: instance.id } });
+
+      return {
+        success: true,
+        data: {
+          instanceId: instance.id.toString(),
+          flowStatus: fullInstance?.flowStatus || 'running',
+          documentNo,
+          title,
+        }
+      };
+    } catch (error: any) {
+      this.logger.error(`Failed to start instance: ${error.message}`, error.stack);
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException(error.message || '启动流程失败');
+    }
   }
 
   @Post('complete')

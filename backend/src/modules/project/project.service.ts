@@ -154,6 +154,13 @@ export class ProjectService {
 
     if (!project) return null;
 
+    // 获取实际支出汇总
+    const expenses = await this.prisma.projectExpense.aggregate({
+      where: { projectId: id },
+      _sum: { amount: true }
+    });
+    const actualExpense = Number(expenses._sum.amount || 0) / 10000;
+
     // 获取项目经理信息
     let managerName: string | null = null;
     if (project.managerId) {
@@ -163,7 +170,7 @@ export class ProjectService {
       managerName = manager?.name ?? null;
     }
 
-    return this.mapProject({ ...project, _managerName: managerName });
+    return this.mapProject({ ...project, _managerName: managerName, _actualExpense: actualExpense });
   }
 
   /**
@@ -374,6 +381,7 @@ export class ProjectService {
       hvac_architecture: project.hvacArchitecture,
       fire_architecture: project.fireArchitecture,
       weak_electric_architecture: project.weakElectricArchitecture,
+      actual_expense: project._actualExpense ?? 0,
       // 前端需要的 manager 和 tech_manager
       manager: project._managerName || null,
       tech_manager: project._managerName || null,

@@ -3,7 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 const logger = new Logger('WorkflowUtil');
 
-export async function resolveApprovers(prisma: PrismaService, flag: string, initiatorUserId?: string): Promise<any[]> {
+export async function resolveApprovers(prisma: PrismaService, flag: string, initiatorUserId?: string, variables?: any): Promise<any[]> {
   if (!flag) return [];
   const parts = flag.split(',').filter(Boolean).map(p => p.trim());
   const users: any[] = [];
@@ -36,19 +36,33 @@ export async function resolveApprovers(prisma: PrismaService, flag: string, init
         where: { deptId, delFlag: '0', status: '0' }
       });
       users.push(...deptUsers);
-    } else if (part.startsWith('reportTo:') || part.startsWith('initiator:')) {
-      if (!initiatorUserId) {
+    } else if (part.startsWith('reportTo:') || part.startsWith('initiator:') || part.startsWith('project:')) {
+      if (!initiatorUserId && !part.startsWith('project:')) {
         logger.warn(`动态审批人标识 ${part} 需要发起人信息，但未提供 initiatorUserId`);
         continue;
       }
-      const dynamicUsers = await resolveDynamicApprovers(prisma, part, initiatorUserId);
+      const dynamicUsers = await resolveDynamicApprovers(prisma, part, initiatorUserId || '', variables);
       users.push(...dynamicUsers);
     } else {
+      let foundUserId: bigint | null = null;
+      const parsedId = !isNaN(Number(part)) ? BigInt(part) : undefined;
+      
+      if (parsedId) {
+        // 先尝试当做 employeeId 查找
+        const emp = await prisma.sysEmployee.findUnique({
+          where: { employeeId: parsedId }
+        });
+        if (emp && emp.userId) {
+          foundUserId = emp.userId;
+        }
+      }
+      
       const user = await prisma.sysUser.findFirst({
         where: {
           OR: [
             { loginName: part },
-            { userId: isNaN(Number(part)) ? undefined : BigInt(part) }
+            ...(foundUserId ? [{ userId: foundUserId }] : []),
+            ...(parsedId && !foundUserId ? [{ userId: parsedId }] : [])
           ],
           delFlag: '0'
         }
@@ -62,14 +76,70 @@ export async function resolveApprovers(prisma: PrismaService, flag: string, init
   return Array.from(uniqueMap.values());
 }
 
-async function resolveDynamicApprovers(prisma: PrismaService, flag: string, initiatorUserId: string): Promise<any[]> {
-  const flagType = flag.startsWith('reportTo:') ? flag.replace('reportTo:', '') : flag.replace('initiator:', '');
+async function resolveDynamicApprovers(prisma: PrismaService, flag: string, initiatorUserId: string, variables?: any): Promise<any[]> {
+  let flagType = flag;
+  if (flag.startsWith('reportTo:')) flagType = flag.replace('reportTo:', '');
+  else if (flag.startsWith('initiator:')) flagType = flag.replace('initiator:', '');
+  else if (flag.startsWith('project:')) flagType = flag;
 
-  const initiatorEmployee = await prisma.sysEmployee.findFirst({
-    where: { userId: BigInt(initiatorUserId), status: '0' },
+  if (flagType === 'project:manager') {
+    const projectIdStr = variables?.projectId || variables?.project_id || variables?.formData?.projectId || variables?.formData?.project_id;
+    if (!projectIdStr) {
+      logger.warn(`无法解析项目经理：未提供 projectId 变量`);
+      return [];
+    }
+    const project = await prisma.project.findUnique({
+      where: { projectId: BigInt(projectIdStr) }
+    });
+    if (!project?.managerId) {
+      logger.warn(`项目 ${projectIdStr} 未设置项目经理`);
+      return [];
+    }
+    const managerEmployee = await prisma.sysEmployee.findUnique({
+      where: { employeeId: project.managerId }
+    });
+    if (!managerEmployee?.userId) return [];
+    const managerUser = await prisma.sysUser.findUnique({
+      where: { userId: managerEmployee.userId, delFlag: '0', status: '0' }
+    });
+    return managerUser ? [managerUser] : [];
+  }
+
+  let initiatorEmployee: any = null;
+  let initiatorUser: any = null;
+  const parsedId = !isNaN(Number(initiatorUserId)) ? BigInt(initiatorUserId) : undefined;
+
+  initiatorUser = await prisma.sysUser.findFirst({
+    where: {
+      OR: [
+        { loginName: initiatorUserId },
+        ...(parsedId ? [{ userId: parsedId }] : [])
+      ],
+      delFlag: '0'
+    }
   });
+
+  if (initiatorUser) {
+    initiatorEmployee = await prisma.sysEmployee.findFirst({
+      where: { userId: initiatorUser.userId, status: '0' }
+    });
+  } else if (parsedId) {
+    initiatorEmployee = await prisma.sysEmployee.findFirst({
+      where: { employeeId: parsedId, status: '0' }
+    });
+  }
+
+  if (flagType === 'self') {
+    if (initiatorUser) return [initiatorUser];
+    if (initiatorEmployee?.userId) {
+      const u = await prisma.sysUser.findUnique({ where: { userId: initiatorEmployee.userId } });
+      return u ? [u] : [];
+    }
+    return [];
+  }
+
   if (!initiatorEmployee) {
-    logger.warn(`未找到发起人对应的员工记录, userId: ${initiatorUserId}`);
+    logger.warn(`未找到发起人对应的员工记录, initiator: ${initiatorUserId}`);
     return [];
   }
 
@@ -87,7 +157,7 @@ async function resolveDynamicApprovers(prisma: PrismaService, flag: string, init
         return [];
       }
       const managerUser = await prisma.sysUser.findUnique({
-        where: { userId: manager.userId }
+        where: { userId: manager.userId, delFlag: '0', status: '0' }
       });
       return managerUser ? [managerUser] : [];
     }
@@ -112,7 +182,7 @@ async function resolveDynamicApprovers(prisma: PrismaService, flag: string, init
         return [];
       }
       const leaderUser = await prisma.sysUser.findUnique({
-        where: { userId: leader.userId }
+        where: { userId: leader.userId, delFlag: '0', status: '0' }
       });
       return leaderUser ? [leaderUser] : [];
     }
@@ -121,9 +191,9 @@ async function resolveDynamicApprovers(prisma: PrismaService, flag: string, init
       const levelMatch = flagType.match(/^n(\d+)$/);
       if (levelMatch) {
         const level = parseInt(levelMatch[1]);
-        let currentEmp = initiatorEmployee;
+        let currentEmp: any = initiatorEmployee;
         for (let i = 0; i < level; i++) {
-          if (!currentEmp.reportToId) {
+          if (!currentEmp || !currentEmp.reportToId) {
             logger.warn(`发起人 ${initiatorEmployee.name} 的第 ${i + 1} 级上级不存在`);
             return [];
           }
@@ -141,7 +211,7 @@ async function resolveDynamicApprovers(prisma: PrismaService, flag: string, init
           return [];
         }
         const user = await prisma.sysUser.findUnique({
-          where: { userId: currentEmp.userId }
+          where: { userId: currentEmp.userId, delFlag: '0', status: '0' }
         });
         return user ? [user] : [];
       }

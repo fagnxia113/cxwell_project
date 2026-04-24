@@ -85,6 +85,12 @@ export default function WorkflowDesignerNewPage() {
         const parsePermissionFlag = (flag: string) => {
           if (!flag) return { type: 'role', value: '' }
           if (flag.startsWith('role:')) return { type: 'role', value: flag.replace('role:', '') }
+          if (flag.startsWith('project:')) {
+             if (flag === 'project:manager') return { type: 'project_manager', value: '' }
+          }
+          if (flag.startsWith('initiator:')) {
+             if (flag === 'initiator:self') return { type: 'initiator', value: '' }
+          }
           if (flag.startsWith('reportTo:')) {
             const subType = flag.replace('reportTo:', '')
             if (subType === 'manager') return { type: 'reportTo_manager', value: flag }
@@ -187,7 +193,8 @@ export default function WorkflowDesignerNewPage() {
             if (source.type === 'reportTo_deptLeader') return 'reportTo:deptLeader'
             if (source.type === 'reportTo_n2') return 'reportTo:n2'
             if (source.type === 'department_manager') return 'reportTo:deptLeader'
-            if (source.type === 'initiator') return 'reportTo:manager'
+            if (source.type === 'project_manager') return 'project:manager'
+            if (source.type === 'initiator') return 'initiator:self'
             return source.value || ''
           })() 
         })),

@@ -23,7 +23,7 @@ export default function ApprovalFormPayloadView({
   const enumLabels = getEnumLabels(t);
 
   // Helper to get nested value or key conversion
-  const getDisplayValue = (key: string, value: any) => {
+  const getDisplayValue = (key: string, value: any): React.ReactNode => {
     if (value === null || value === undefined || value === '') return '--';
 
     let display = String(value);
@@ -43,6 +43,31 @@ export default function ApprovalFormPayloadView({
     const posMap = formData._posMap || {};
     if (key === 'department_id') display = deptMap[String(value)] || display;
     else if (key === 'position_id') display = posMap[String(value)] || display;
+
+    // Check if it's a file array (JSON string starting with [)
+    if (typeof value === 'string' && value.startsWith('[') && value.endsWith(']')) {
+      try {
+        const files = JSON.parse(value);
+        if (Array.isArray(files) && files.length > 0 && files[0].url) {
+          return (
+            <div className="flex flex-wrap gap-2">
+              {files.map((file: any, i: number) => (
+                <a
+                  key={i}
+                  href={file.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-black hover:bg-indigo-100 transition-all border border-indigo-100"
+                >
+                  <Database size={12} />
+                  <span className="truncate max-w-[120px]">{file.name || '查看文件'}</span>
+                </a>
+              ))}
+            </div>
+          );
+        }
+      } catch (e) { /* ignore */ }
+    }
 
     return display;
   };
