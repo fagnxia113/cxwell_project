@@ -64,6 +64,7 @@ export class EmployeeOnboardingHandler implements IWorkflowHandler {
     const userId = BigInt(Date.now()) + BigInt(Math.floor(Math.random() * 1000));
     const deptId = formData.department_id || formData.departmentId || formData.deptId;
     const positionId = formData.position_id || formData.positionId || formData.position;
+    const reportToId = formData.report_to_id || formData.reportToId || formData.reportTo;
 
     const rawGender = formData.gender || '';
     const genderMap: Record<string, string> = { '男': '0', '女': '1', 'male': '0', 'female': '1', '0': '0', '1': '1' };
@@ -97,6 +98,8 @@ export class EmployeeOnboardingHandler implements IWorkflowHandler {
         phoneCountryCode,
         deptId: deptId ? BigInt(deptId) : null,
         position: positionId || null,
+        postId: positionId ? BigInt(positionId) : null,
+        reportToId: reportToId ? BigInt(reportToId) : null,
         gender,
         email: formData.email || null,
         education,
@@ -112,13 +115,13 @@ export class EmployeeOnboardingHandler implements IWorkflowHandler {
 
     this.logger.log(`服务节点执行完成：为 ${name} 创建了账号 ${username} 和工号 ${employeeNo}`);
 
-    await this.syncToDingtalk(tx, name, phone, phoneCountryCode, deptId, positionId, formData, employeeNo);
+    await this.syncToDingtalk(tx, name, phone, phoneCountryCode, deptId, positionId, formData, employeeNo, reportToId);
   }
 
   private async syncToDingtalk(
     tx: any, name: string, phone: string, phoneCountryCode: string,
     deptId: string | undefined, positionId: string | undefined,
-    formData: any, employeeNo: string
+    formData: any, employeeNo: string, reportToId: string | undefined
   ) {
     if (!phone) return;
     try {
@@ -136,6 +139,16 @@ export class EmployeeOnboardingHandler implements IWorkflowHandler {
           jobTitleName = post.postName;
         }
       }
+
+      let leaderDingtalkUserId: string | undefined;
+      if (reportToId) {
+        const leader = await tx.sysEmployee.findUnique({
+          where: { employeeId: BigInt(reportToId) },
+          select: { dingtalkUserId: true }
+        });
+        leaderDingtalkUserId = leader?.dingtalkUserId || undefined;
+      }
+
       const dingtalkResult = await this.dingtalkService.createUser({
         name,
         mobile: phone,
@@ -145,6 +158,7 @@ export class EmployeeOnboardingHandler implements IWorkflowHandler {
         email: formData.email,
         jobNumber: employeeNo,
         hiredDate: formData.start_date || formData.startDate,
+        leader: leaderDingtalkUserId,
       });
       if (dingtalkResult.success && dingtalkResult.userId) {
         this.logger.log(`入职流程：员工 ${name} 已同步到钉钉，userId: ${dingtalkResult.userId}`);

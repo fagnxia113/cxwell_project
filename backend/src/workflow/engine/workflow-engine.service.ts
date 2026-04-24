@@ -248,7 +248,8 @@ export class WorkflowEngineService {
       return { finished: true };
     }
 
-    const approvers = node.permissionFlag ? await resolveApprovers(this.prisma, node.permissionFlag) : [];
+    const instance = await tx.flowInstance.findUnique({ where: { id: instanceId } });
+    const approvers = node.permissionFlag ? await resolveApprovers(this.prisma, node.permissionFlag, instance?.createBy) : [];
 
     if (approvers.length === 0) {
       this.logger.warn(`节点 [${node.nodeName}] 无有效审批人，执行自动跳过`);
@@ -285,13 +286,13 @@ export class WorkflowEngineService {
       data: { nodeType: node.nodeType, nodeCode: node.nodeCode, nodeName: node.nodeName, updateTime: new Date() }
     });
 
-    const instance = await tx.flowInstance.findUnique({ where: { id: instanceId } });
+    const updatedInstance = await tx.flowInstance.findUnique({ where: { id: instanceId } });
     const def = await tx.flowDefinition.findUnique({ where: { id: node.definitionId } });
 
     this.notify({
       userIds: approvers.map(a => a.loginName),
       title: `【待审批】${def?.flowName || '流程'}`,
-      content: `您有一个新的审批任务，请尽快处理。业务编号: ${instance?.businessId || instanceId}`,
+      content: `您有一个新的审批任务，请尽快处理。业务编号: ${updatedInstance?.businessId || instanceId}`,
       type: this.NOTIFY.TASK_ASSIGN,
       priority: 'normal',
       actionUrl: `/approvals/handle/${newTaskId}`,

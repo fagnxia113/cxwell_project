@@ -15,6 +15,7 @@ model SysDept {
   deptNameEn     String?  @map("dept_name_en") @db.VarChar(100)
   orderNum       Int      @default(0) @map("order_num")
   leader         String?  @db.VarChar(20)
+  leaderId       BigInt?  @map("leader_id")
   phone          String?  @db.VarChar(11)
   email          String?  @db.VarChar(50)
   status         String   @default("0") @db.Char(1)
@@ -24,6 +25,8 @@ model SysDept {
   createTime     DateTime @default(now()) @map("create_time")
   updateBy       String   @default("") @map("update_by") @db.VarChar(64)
   updateTime     DateTime @updatedAt @map("update_time")
+
+  leaderEmployee SysEmployee? @relation("DeptLeader", fields: [leaderId], references: [employeeId])
 
   @@map("sys_dept")
 }
@@ -114,10 +117,12 @@ model SysEmployee {
   phone            String          @db.VarChar(20)
   phoneCountryCode String?         @map("phone_country_code") @db.VarChar(10)
   email            String?         @db.VarChar(100)
-  deptId           BigInt?        @map("dept_id")
+  deptId           BigInt?         @map("dept_id")
   position         String?         @db.VarChar(100)
-  userId           BigInt?        @unique @map("user_id")
-  dingtalkUserId   String?        @unique @map("dingtalk_user_id") @db.VarChar(100)
+  postId           BigInt?         @map("post_id")
+  userId           BigInt?         @unique @map("user_id")
+  dingtalkUserId   String?         @unique @map("dingtalk_user_id") @db.VarChar(100)
+  reportToId       BigInt?         @map("report_to_id")
   status           String          @default("0") @db.Char(1)
   hireDate         DateTime?       @map("hire_date")
   leaveDate        DateTime?       @map("leave_date")
@@ -127,6 +132,12 @@ model SysEmployee {
   education        String?         @db.VarChar(100)
   university       String?         @db.VarChar(200)
   projects         ProjectMember[]
+  attendances      ProjectAttendance[]
+
+  reportTo         SysEmployee?    @relation("EmployeeReportTo", fields: [reportToId], references: [employeeId])
+  subordinates     SysEmployee[]   @relation("EmployeeReportTo")
+  post             SysPost?        @relation(fields: [postId], references: [postId])
+  leadingDepts     SysDept[]       @relation("DeptLeader")
 
   @@map("sys_employee")
 }
@@ -142,6 +153,8 @@ model SysPost {
   createBy   String?  @map("create_by") @db.VarChar(64)
   createTime DateTime @default(now()) @map("create_time")
   updateTime DateTime @updatedAt @map("update_time")
+
+  employees  SysEmployee[]
 
   @@map("sys_post")
 }
@@ -198,6 +211,8 @@ model Project {
   staffingPlans            ProjectStaffingPlan[]
   tags                     ProjectTag[]
   tasks                    BizTask[]
+  attendanceConfigs        ProjectAttendanceConfig[]
+  attendances              ProjectAttendance[]
 
   @@index([customerId], map: "biz_project_customer_id_fkey")
   @@map("biz_project")
@@ -388,6 +403,44 @@ model BizFormDraft {
   updateTime  DateTime @updatedAt @map("update_time")
 
   @@map("biz_form_draft")
+}
+
+// 项目考勤配置（项目 ↔ 钉钉考勤组 关联）
+model ProjectAttendanceConfig {
+  id                  BigInt     @id @default(autoincrement()) @map("id")
+  projectId           BigInt     @unique @map("project_id")
+  dingtalkGroupId     String?    @map("dingtalk_group_id") @db.VarChar(100)
+  dingtalkGroupName   String?    @map("dingtalk_group_name") @db.VarChar(200)
+  isEnabled           Boolean    @default(true) @map("is_enabled")
+  createTime          DateTime   @default(now()) @map("create_time")
+  updateTime          DateTime   @updatedAt @map("update_time")
+
+  project             Project    @relation(fields: [projectId], references: [projectId], onDelete: Cascade)
+
+  @@map("biz_project_attendance_config")
+}
+
+// 项目考勤记录
+model ProjectAttendance {
+  id              BigInt     @id @default(autoincrement()) @map("id")
+  projectId       BigInt     @map("project_id")
+  employeeId     BigInt     @map("employee_id")
+  workDate        DateTime   @map("work_date") @db.Date
+  checkInTime     DateTime?  @map("check_in_time")
+  checkOutTime    DateTime?  @map("check_out_time")
+  locationName    String?    @map("location_name") @db.VarChar(500)
+  checkType      String?    @map("check_type") @db.VarChar(50)
+  sourceType     String     @default("dingtalk") @map("source_type") @db.VarChar(50)
+  dingtalkUserId String?    @map("dingtalk_user_id") @db.VarChar(100)
+  createTime      DateTime   @default(now()) @map("create_time")
+
+  project         Project    @relation(fields: [projectId], references: [projectId], onDelete: Cascade)
+  employee       SysEmployee @relation(fields: [employeeId], references: [employeeId], onDelete: Cascade)
+
+  @@unique([projectId, employeeId, workDate])
+  @@index([projectId, workDate])
+  @@index([employeeId, workDate])
+  @@map("biz_project_attendance")
 }
 
 model CasbinRule {

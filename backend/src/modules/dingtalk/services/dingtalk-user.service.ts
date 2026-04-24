@@ -17,6 +17,7 @@ export class DingtalkUserService {
     email?: string;
     jobNumber?: string;
     hiredDate?: Date;
+    leader?: string;
   }): Promise<{ success: boolean; userId?: string; error?: string }> {
     try {
       const token = await this.authService.getAccessToken();
@@ -30,18 +31,28 @@ export class DingtalkUserService {
 
       const deptIdList = userData.deptIds ? userData.deptIds.join(',') : undefined;
 
+      const requestBody: any = {
+        name: userData.name,
+        mobile: mobileToUse,
+        dept_id_list: deptIdList,
+        title: userData.jobTitle || '',
+        email: userData.email || '',
+        job_number: userData.jobNumber || '',
+        hired_date: userData.hiredDate ? new Date(userData.hiredDate).getTime() : undefined,
+      };
+
+      if (userData.leader) {
+        requestBody.leader = userData.leader;
+      }
+
+      this.logger.log('[createUser] Request body:', JSON.stringify(requestBody));
+
       const response = await axios.post(
         `https://oapi.dingtalk.com/topapi/v2/user/create?access_token=${token}`,
-        {
-          name: userData.name,
-          mobile: mobileToUse,
-          dept_id_list: deptIdList,
-          title: userData.jobTitle || '',
-          email: userData.email || '',
-          job_number: userData.jobNumber || '',
-          hired_date: userData.hiredDate ? new Date(userData.hiredDate).getTime() : undefined,
-        }
+        requestBody
       );
+
+      this.logger.log('[createUser] Response:', JSON.stringify(response.data));
 
       if (response.data.errcode === 0) {
         return { success: true, userId: response.data.result?.userid };
@@ -49,7 +60,7 @@ export class DingtalkUserService {
 
       return { success: false, error: response.data.errmsg || 'Unknown error' };
     } catch (error) {
-      console.error('[DingtalkUser] Failed to create user:', error?.response?.data || error.message);
+      this.logger.error('[DingtalkUser] Failed to create user:', error?.response?.data || error.message);
       return {
         success: false,
         error: error?.response?.data?.errmsg || error?.response?.data?.message || error.message,
@@ -62,20 +73,31 @@ export class DingtalkUserService {
     deptIds?: number[];
     jobTitle?: string;
     email?: string;
+    leader?: string;
   }): Promise<{ success: boolean; error?: string }> {
     try {
       const token = await this.authService.getAccessToken();
 
+      const requestBody: any = {
+        userid: userId,
+        name: userData.name,
+        department: userData.deptIds,
+        title: userData.jobTitle,
+        email: userData.email,
+      };
+
+      if (userData.leader !== undefined) {
+        requestBody.leader = userData.leader;
+      }
+
+      this.logger.log('[updateUser] Request body:', JSON.stringify(requestBody));
+
       const response = await axios.post(
         `https://oapi.dingtalk.com/topapi/user/update?access_token=${token}`,
-        {
-          userid: userId,
-          name: userData.name,
-          department: userData.deptIds,
-          title: userData.jobTitle,
-          email: userData.email,
-        }
+        requestBody
       );
+
+      this.logger.log('[updateUser] Response:', JSON.stringify(response.data));
 
       if (response.data.errcode === 0) {
         return { success: true };
@@ -83,7 +105,7 @@ export class DingtalkUserService {
 
       return { success: false, error: response.data.errmsg || 'Unknown error' };
     } catch (error) {
-      console.error('[DingtalkUser] Failed to update user:', error?.response?.data || error.message);
+      this.logger.error('[DingtalkUser] Failed to update user:', error?.response?.data || error.message);
       return {
         success: false,
         error: error?.response?.data?.errmsg || error.message,

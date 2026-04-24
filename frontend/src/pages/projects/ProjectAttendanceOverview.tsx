@@ -54,8 +54,8 @@ export default function ProjectAttendanceOverview() {
 
   const loadProjects = async () => {
     try {
-      const res = await apiClient.get<any>('/api/projects', { params: { pageSize: 1000 } })
-      const projs = res.data || res.items || []
+      const res = await apiClient.get<any>('/api/project/list', { params: { pageSize: 1000 } })
+      const projs = res?.data?.list || res?.data || []
       setProjects(projs)
       if (projs.length > 0) setSelectedProjectId(projs[0].id)
     } catch (e) {}
@@ -65,8 +65,8 @@ export default function ProjectAttendanceOverview() {
     try {
       setLoading(true)
       const res = await apiClient.get<any>(`/api/personnel/rotation/project-report/${selectedProjectId}/${currentMonth}`)
-      if (res.success) {
-        setData(res.data)
+      if (res && res.success) {
+        setData(res.data || [])
       }
     } catch (e) {
     } finally {
@@ -77,8 +77,18 @@ export default function ProjectAttendanceOverview() {
   const getStatusForDay = (employee: PersonnelSchedule, date: dayjs.Dayjs) => {
     const dateStr = date.format('YYYY-MM-DD')
     const segment = employee.segments.find(s => dateStr >= s.startDate && dateStr <= s.endDate)
-    if (!segment) return 'none'
-    return segment.type
+    if (!segment) return { type: 'none' }
+    
+    // 如果是工作中，判断是否为当前选中的项目
+    if (segment.type === 'work') {
+      if (segment.projectId === selectedProjectId) {
+        return { type: 'work_current' }
+      } else {
+        return { type: 'work_other' }
+      }
+    }
+    
+    return { type: segment.type }
   }
 
   const changeMonth = (delta: number) => {
@@ -127,7 +137,8 @@ export default function ProjectAttendanceOverview() {
 
       {/* 状态图例 */}
       <div className="flex flex-wrap gap-6 px-6 py-4 bg-white/60 backdrop-blur-xl rounded-[24px] border border-white shadow-sm items-center">
-        <LegendItem icon={<Briefcase size={14} />} label={t('personnel.rotation.on_duty')} color="bg-blue-500" />
+        <LegendItem icon={<Briefcase size={14} />} label={t('personnel.rotation.on_duty_current') || '本项目工作中'} color="bg-blue-500" />
+        <LegendItem icon={<Briefcase size={14} />} label={t('personnel.rotation.on_duty_other') || '其他项目工作中'} color="bg-indigo-400" />
         <LegendItem icon={<Plane size={14} />} label={t('personnel.rotation.home_rest')} color="bg-emerald-500" />
         <LegendItem icon={<Home size={14} />} label={t('personnel.rotation.local_rest')} color="bg-amber-500" />
         <LegendItem icon={<span className="text-[10px]">?</span>} label={t('personnel.rotation.not_reported')} color="bg-slate-100" />
@@ -200,12 +211,13 @@ export default function ProjectAttendanceOverview() {
                       </div>
                     </td>
                     {days.map(day => {
-                      const status = getStatusForDay(person, day)
+                      const { type: status } = getStatusForDay(person, day)
                       return (
                         <td key={day.format('D')} className="p-1 border-r border-slate-100/30">
                           <div className={cn(
                             "w-full h-8 rounded-md transition-all",
-                            status === 'work' ? "bg-blue-500 shadow-lg shadow-blue-500/20" :
+                            status === 'work_current' ? "bg-blue-500 shadow-lg shadow-blue-500/20" :
+                            status === 'work_other' ? "bg-indigo-400/70 shadow-lg shadow-indigo-400/10 border border-indigo-200" :
                             status === 'home_rest' ? "bg-emerald-500 shadow-lg shadow-emerald-500/20" :
                             status === 'rest' ? "bg-amber-500 shadow-lg shadow-amber-500/20" :
                             "bg-slate-50"

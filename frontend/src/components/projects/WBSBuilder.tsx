@@ -47,7 +47,7 @@ export function WBSBuilder({ projectId, isAdmin, onUpdate }: WBSBuilderProps) {
   const loadTasks = async () => {
     try {
       setLoading(true);
-      const res = await apiClient.get<any>(`/api/projects/${projectId}/tasks`);
+      const res = await apiClient.get<any>(`/api/project/${projectId}/tasks`);
       if (res && res.success) {
         setTasks(res.data || []);
       } else {
@@ -63,7 +63,7 @@ export function WBSBuilder({ projectId, isAdmin, onUpdate }: WBSBuilderProps) {
   const handleAddTask = async () => {
     if (!addForm.name) return;
     try {
-      await apiClient.post(`/api/projects/${projectId}/tasks`, {
+      await apiClient.post(`/api/project/${projectId}/tasks`, {
         name: addForm.name,
         parentId: addForm.parent_id,
         plannedStartDate: addForm.planned_start_date || new Date().toISOString(),

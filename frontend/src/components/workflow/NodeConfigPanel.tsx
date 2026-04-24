@@ -191,7 +191,10 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onUpdate, onDel
           >
             <option value="role">角色</option>
             <option value="user">指定人员</option>
-            <option value="department_manager">部门负责人</option>
+            <option value="reportTo_manager">直属上级</option>
+            <option value="reportTo_deptLeader">部门负责人</option>
+            <option value="reportTo_n2">上2级上级</option>
+            <option value="department_manager">部门负责人(旧)</option>
             <option value="project_manager">项目经理</option>
             <option value="initiator">发起人</option>
             <option value="form_field">表单字段</option>

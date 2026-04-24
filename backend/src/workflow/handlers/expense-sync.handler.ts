@@ -41,7 +41,7 @@ export class ExpenseSyncHandler implements IWorkflowHandler {
                 projectId: BigInt(itemProjectId),
                 category: String(item.category || 'travel'),
                 amount: itemAmount,
-                date: item.date ? new Date(item.date) : new Date(),
+                date: item.expense_date || item.date || item.travel_date ? new Date(item.expense_date || item.date || item.travel_date) : new Date(),
                 notes: String(item.item_reason || formData.reason || `明细同步: ${businessId}`),
                 sourceType: 'workflow',
                 sourceId: inst.id
@@ -79,7 +79,7 @@ export class ExpenseSyncHandler implements IWorkflowHandler {
           projectId: BigInt(projectIdStr),
           category: String(category),
           amount: amount,
-          date: formData.date ? new Date(formData.date) : new Date(),
+          date: formData.expense_date || formData.date || formData.travel_date ? new Date(formData.expense_date || formData.date || formData.travel_date) : new Date(),
           notes: String(notes),
           sourceType: 'workflow',
           sourceId: inst.id

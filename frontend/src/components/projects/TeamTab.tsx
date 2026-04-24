@@ -6,10 +6,10 @@
 import React, { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import dayjs from 'dayjs'
-import { 
-  Users, Loader2, UserPlus, 
+import {
+  Users, Loader2, UserPlus,
   ArrowRightLeft, Trash2, Search,
-  ChevronLeft, ChevronRight, Briefcase
+  ChevronLeft, ChevronRight, Briefcase, Settings
 } from 'lucide-react'
 import { useMessage } from '../../hooks/useMessage'
 import { apiClient } from '../../utils/apiClient'
@@ -41,12 +41,23 @@ export default function TeamTab({
   const { t } = useTranslation()
   const { success, error: showError } = useMessage()
   const [syncing, setSyncing] = useState(false)
-  const [activeView, setActiveView] = useState<'list' | 'schedule'>('list')
-  
+  const [activeView, setActiveView] = useState<'list' | 'schedule' | 'attendance'>('list')
+
+  // -- Attendance Config State --
+  const [showConfigModal, setShowConfigModal] = useState(false)
+  const [dingtalkGroupId, setDingtalkGroupId] = useState('')
+  const [dingtalkGroupName, setDingtalkGroupName] = useState('')
+  const [loadingConfig, setLoadingConfig] = useState(false)
+  const [savingConfig, setSavingConfig] = useState(false)
+
   // -- Schedule State --
   const [currentMonth, setCurrentMonth] = useState(dayjs().format('YYYY-MM'))
   const [scheduleData, setScheduleData] = useState<any[]>([])
   const [loadingSchedule, setLoadingSchedule] = useState(false)
+  
+  // -- Attendance State --
+  const [attendanceData, setAttendanceData] = useState<any[]>([])
+  const [loadingAttendance, setLoadingAttendance] = useState(false)
   
   // -- Add Member State --
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -64,9 +75,12 @@ export default function TeamTab({
   const handleSyncAttendance = async () => {
     try {
       setSyncing(true)
-      const res = await apiClient.post<any>('/api/attendance/sync/dingtalk')
+      const res = await apiClient.post<any>('/api/personnel/attendance/sync/dingtalk')
       if (res?.success) {
-        success(t('personnel.sync_success') || 'DingTalk attendance synced successfully')
+        success(res.message || t('personnel.sync_success') || 'DingTalk attendance synced successfully')
+        if (activeView === 'attendance') {
+          loadAttendance()
+        }
       }
     } catch (err: any) {
       showError(err.message || 'Sync failed')
@@ -79,7 +93,9 @@ export default function TeamTab({
     try {
       setLoadingEmployees(true)
       const res = await apiClient.get<any>('/api/personnel/employees?limit=200')
-      setEmployees(res?.data || res?.items || [])
+      if (res && res.success) {
+        setEmployees(res.data || [])
+      }
     } catch (err) {
       showError('Failed to load employees')
     } finally {
@@ -90,8 +106,10 @@ export default function TeamTab({
   const loadProjects = async () => {
     try {
       setLoadingProjects(true)
-      const res = await apiClient.get<any>('/api/projects?limit=200')
-      setProjects(res?.data || res?.items || [])
+      const res = await apiClient.get<any>('/api/project/list?pageSize=200')
+      if (res && res.success) {
+        setProjects(res.data?.list || res.data || [])
+      }
     } catch (err) {
       showError('Failed to load projects')
     } finally {
@@ -102,6 +120,8 @@ export default function TeamTab({
   useEffect(() => {
     if (activeView === 'schedule') {
       loadSchedule()
+    } else if (activeView === 'attendance') {
+      loadAttendance()
     }
   }, [activeView, currentMonth, projectId])
 
@@ -109,7 +129,7 @@ export default function TeamTab({
     try {
       setLoadingSchedule(true)
       const res = await apiClient.get<any>(`/api/personnel/rotation/project-report/${projectId}/${currentMonth}`)
-      if (res.success) {
+      if (res && res.success && res.data) {
         setScheduleData(res.data)
       }
     } catch (e) {
@@ -119,11 +139,82 @@ export default function TeamTab({
     }
   }
 
+  // -- Attendance Config Methods --
+  const loadAttendanceConfig = async () => {
+    try {
+      setLoadingConfig(true)
+      const res = await apiClient.get<any>(`/api/attendance/project/${projectId}/config`)
+      if (res && res.success && res.data) {
+        setDingtalkGroupId(res.data.dingtalkGroupId || '')
+        setDingtalkGroupName(res.data.dingtalkGroupName || '')
+      }
+    } catch (e) {
+      console.error('Failed to load attendance config', e)
+    } finally {
+      setLoadingConfig(false)
+    }
+  }
+
+  const saveAttendanceConfig = async () => {
+    try {
+      setSavingConfig(true)
+      const res = await apiClient.put<any>(`/api/attendance/project/${projectId}/config`, {
+        dingtalk_group_id: dingtalkGroupId,
+        dingtalk_group_name: dingtalkGroupName,
+        is_enabled: true
+      })
+      if (res && res.success) {
+        success('考勤配置保存成功')
+        setShowConfigModal(false)
+      }
+    } catch (e) {
+      showError('考勤配置保存失败')
+    } finally {
+      setSavingConfig(false)
+    }
+  }
+
+  const openConfigModal = async () => {
+    await loadAttendanceConfig()
+    setShowConfigModal(true)
+  }
+
+  const loadAttendance = async () => {
+    try {
+      setLoadingAttendance(true)
+      const startDate = dayjs(currentMonth + '-01').startOf('month').format('YYYY-MM-DD')
+      const endDate = dayjs(currentMonth + '-01').endOf('month').format('YYYY-MM-DD')
+      const res = await apiClient.get<any>(`/api/attendance/project/${projectId}/records?start_date=${startDate}&end_date=${endDate}`)
+      if (res && res.success) {
+        setAttendanceData(res.data || [])
+      }
+    } catch (e) {
+      showError('Failed to load attendance')
+    } finally {
+      setLoadingAttendance(false)
+    }
+  }
+
   const getStatusForDay = (employee: any, date: dayjs.Dayjs) => {
     const dateStr = date.format('YYYY-MM-DD')
     const segment = employee.segments.find((s: any) => dateStr >= s.startDate && dateStr <= s.endDate)
-    if (!segment) return 'none'
-    return segment.type
+    if (!segment) return { type: 'none' }
+
+    if (segment.type === 'work') {
+      if (String(segment.projectId) === String(projectId)) {
+        return { type: 'work_current' }
+      } else {
+        return { type: 'work_other' }
+      }
+    }
+
+    return { type: segment.type }
+  }
+
+  const getAttendanceStatusForDay = (record: any, date: dayjs.Dayjs) => {
+    const dateStr = date.format('YYYY-MM-DD')
+    const hasClockedIn = record.dates?.includes(dateStr)
+    return hasClockedIn ? 'clocked_in' : 'not_clocked_in'
   }
 
   const changeMonth = (delta: number) => {
@@ -169,69 +260,79 @@ export default function TeamTab({
 
       {/* 视图切换 */}
       <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-xl w-fit">
-        <button 
+        <button
           onClick={() => setActiveView('list')}
           className={cn(
             "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
             activeView === 'list' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
           )}
         >
-          {t('personnel.view_list')}
+          成员列表
         </button>
-        <button 
+        <button
           onClick={() => setActiveView('schedule')}
           className={cn(
             "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
             activeView === 'schedule' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
           )}
         >
-          {t('personnel.view_schedule')}
+          预计出勤
+        </button>
+        <button
+          onClick={() => setActiveView('attendance')}
+          className={cn(
+            "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+            activeView === 'attendance' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
+          )}
+        >
+          实际出勤
         </button>
       </div>
 
-      {activeView === 'list' ? (
-        <>
-          {/* 人员列表网格 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {personnel.map(p => (
-              <div key={p.employee_id} className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 -mr-12 -mt-12 rounded-full group-hover:scale-110 transition-transform opacity-50" />
-                <div className="flex items-start justify-between relative z-10">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-slate-900 flex items-center justify-center text-emerald-400 font-black text-xl shadow-lg group-hover:bg-emerald-600 group-hover:text-white transition-all">
-                      {p.employee_name?.charAt(0) || '?'}
-                    </div>
-                    <div>
-                      <div className="font-black text-base text-slate-900 group-hover:text-emerald-600 transition-colors uppercase tracking-tight">{p.employee_name}</div>
-                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{p.position}</div>
-                    </div>
+      {/* 成员列表 */}
+      {activeView === 'list' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {personnel.map(p => (
+            <div key={p.employee_id} className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 -mr-12 -mt-12 rounded-full group-hover:scale-110 transition-transform opacity-50" />
+              <div className="flex items-start justify-between relative z-10">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-slate-900 flex items-center justify-center text-emerald-400 font-black text-xl shadow-lg group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                    {p.employee_name?.charAt(0) || '?'}
                   </div>
-                  <div className="flex gap-1" style={{ display: isProjectManager ? 'flex' : 'none' }}>
-                    <button
-                      onClick={() => {
-                        setTargetPersonnel(p)
-                        setIsTransferModalOpen(true)
-                        loadProjects()
-                      }}
-                      title="Transfer"
-                      className="p-1.5 bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                    >
-                      <ArrowRightLeft size={14} />
-                    </button>
-                    <button
-                      onClick={() => onRemovePersonnel?.(p.employee_id)}
-                      title="Remove"
-                      className="p-1.5 bg-slate-50 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                  <div>
+                    <div className="font-black text-base text-slate-900 group-hover:text-emerald-600 transition-colors uppercase tracking-tight">{p.employee_name}</div>
+                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{p.position}</div>
                   </div>
                 </div>
+                <div className="flex gap-1" style={{ display: isProjectManager ? 'flex' : 'none' }}>
+                  <button
+                    onClick={() => {
+                      setTargetPersonnel(p)
+                      setIsTransferModalOpen(true)
+                      loadProjects()
+                    }}
+                    title="Transfer"
+                    className="p-1.5 bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                  >
+                    <ArrowRightLeft size={14} />
+                  </button>
+                  <button
+                    onClick={() => onRemovePersonnel?.(p.employee_id)}
+                    title="Remove"
+                    className="p-1.5 bg-slate-50 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
-            ))}
-          </div>
-        </>
-      ) : (
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 预计出勤 */}
+      {activeView === 'schedule' && (
         <div className="space-y-4 animate-in fade-in duration-500">
           {/* Schedule Controls */}
           <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
@@ -249,15 +350,19 @@ export default function TeamTab({
               <div className="hidden sm:flex gap-4 border-l border-slate-200 pl-4">
                 <div className="flex items-center gap-1.5">
                   <div className="w-3 h-3 rounded bg-blue-500"></div>
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('personnel.rotation.on_duty')}</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">本项目工作中</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded bg-indigo-400"></div>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">其他项目工作中</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-3 h-3 rounded bg-emerald-500"></div>
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('personnel.rotation.home_rest')}</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">回国休假</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-3 h-3 rounded bg-amber-500"></div>
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('personnel.rotation.local_rest')}</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">本地休息</span>
                 </div>
               </div>
             </div>
@@ -295,12 +400,13 @@ export default function TeamTab({
                             <span className="text-xs font-black text-slate-700 truncate block max-w-[100px]">{person.employeeName}</span>
                           </td>
                           {days.map(day => {
-                            const status = getStatusForDay(person, day)
+                            const { type: status } = getStatusForDay(person, day)
                             return (
                               <td key={`td-${person.employeeId}-${day.format('YYYY-MM-DD')}`} className="p-0.5 border-r border-slate-100/30">
                                 <div className={cn(
                                   "w-full h-6 rounded-sm transition-all",
-                                  status === 'work' ? "bg-blue-500 shadow-sm" :
+                                  status === 'work_current' ? "bg-blue-500 shadow-sm" :
+                                  status === 'work_other' ? "bg-indigo-400/60 shadow-sm border border-indigo-100" :
                                   status === 'home_rest' ? "bg-emerald-500 shadow-sm" :
                                   status === 'rest' ? "bg-amber-500 shadow-sm" :
                                   "bg-slate-50"
@@ -317,6 +423,145 @@ export default function TeamTab({
           </div>
         </div>
       )}
+
+      {activeView === 'attendance' && (
+        <div className="space-y-4">
+          {/* 月份选择器 */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <button onClick={() => setCurrentMonth(dayjs(currentMonth).subtract(1, 'month').format('YYYY-MM'))} className="p-1 hover:bg-slate-100 rounded-lg transition-colors">
+                <ChevronLeft size={18} className="text-slate-400" />
+              </button>
+              <span className="text-sm font-black text-slate-900 min-w-[80px] text-center">{dayjs(currentMonth + '-01').format('YYYY年M月')}</span>
+              <button onClick={() => setCurrentMonth(dayjs(currentMonth).add(1, 'month').format('YYYY-MM'))} className="p-1 hover:bg-slate-100 rounded-lg transition-colors">
+                <ChevronRight size={18} className="text-slate-400" />
+              </button>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 text-[10px]">
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-emerald-500"></span> 已打卡</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-slate-100"></span> 未打卡</span>
+              </div>
+              <button
+                onClick={openConfigModal}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors"
+              >
+                <Settings size={12} />
+                考勤配置
+              </button>
+            </div>
+          </div>
+
+          {/* 实际出勤日历表格 */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/50">
+                    <th className="sticky left-0 z-10 bg-slate-50/50 px-4 py-3 text-left border-r border-slate-100">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">成员</span>
+                    </th>
+                    {days.map(day => (
+                      <th key={`th-${day.format('YYYY-MM-DD')}`} className={cn(
+                        "px-1 py-3 text-center min-w-[30px] border-r border-slate-100/50",
+                        day.day() === 0 || day.day() === 6 ? "bg-amber-50/30" : ""
+                      )}>
+                        <div className="text-[8px] font-black text-slate-300 mb-0.5">{day.format('dd')}</div>
+                        <div className={cn("text-[10px] font-black", day.isSame(dayjs(), 'day') ? "text-emerald-500" : "text-slate-600")}>{day.format('D')}</div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {loadingAttendance ? (
+                    <tr><td colSpan={daysInMonth + 1} className="py-10 text-center text-[10px] font-bold text-slate-400 italic tracking-widest uppercase">加载中...</td></tr>
+                  ) : attendanceData.length === 0 ? (
+                    <tr><td colSpan={daysInMonth + 1} className="py-10 text-center text-[10px] font-bold text-slate-300 italic tracking-widest uppercase text-xs">暂无打卡记录</td></tr>
+                  ) : (
+                    attendanceData.map((record: any) => (
+                      <tr key={record.employeeId} className="hover:bg-slate-50/50 transition-colors group">
+                        <td className="sticky left-0 z-10 bg-white group-hover:bg-slate-50 px-4 py-3 border-r border-slate-100 shadow-[5px_0_10px_-5px_rgba(0,0,0,0.05)]">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] font-black">
+                              {record.employeeName?.charAt(0) || '?'}
+                            </div>
+                            <span className="text-[10px] font-black text-slate-700 truncate block max-w-[100px]">{record.employeeName}</span>
+                          </div>
+                        </td>
+                        {days.map(day => {
+                          const status = getAttendanceStatusForDay(record, day)
+                          return (
+                            <td key={`td-${record.employeeId}-${day.format('YYYY-MM-DD')}`} className={cn(
+                              "p-0.5 border-r border-slate-100/30",
+                              day.day() === 0 || day.day() === 6 ? "bg-amber-50/30" : ""
+                            )}>
+                              <div className={cn(
+                                "w-full h-6 rounded-sm transition-all",
+                                status === 'clocked_in' ? "bg-emerald-500 shadow-sm" : "bg-slate-100"
+                              )}></div>
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Attendance Config Modal */}
+      <ModalDialog
+        isOpen={showConfigModal}
+        onClose={() => setShowConfigModal(false)}
+        title="钉钉考勤组配置"
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-[10px] text-blue-600">
+            请先在钉钉管理后台创建考勤组，然后将考勤组 ID 填写到下方。
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">钉钉考勤组 ID</label>
+            <input
+              type="text"
+              value={dingtalkGroupId}
+              onChange={e => setDingtalkGroupId(e.target.value)}
+              placeholder="请输入钉钉考勤组 ID"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-medium focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">考勤组名称（选填）</label>
+            <input
+              type="text"
+              value={dingtalkGroupName}
+              onChange={e => setDingtalkGroupName(e.target.value)}
+              placeholder="如：A项目考勤组"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-medium focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              onClick={() => setShowConfigModal(false)}
+              className="px-4 py-2 text-[11px] font-bold text-slate-400 hover:text-slate-600"
+              disabled={savingConfig}
+            >
+              取消
+            </button>
+            <button
+              onClick={saveAttendanceConfig}
+              disabled={savingConfig || !dingtalkGroupId.trim()}
+              className="px-5 py-2 bg-emerald-500 text-white rounded-lg text-[11px] font-bold hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {savingConfig && <Loader2 size={12} className="animate-spin" />}
+              保存配置
+            </button>
+          </div>
+        </div>
+      </ModalDialog>
 
       {/* Add Member Modal */}
       <ModalDialog

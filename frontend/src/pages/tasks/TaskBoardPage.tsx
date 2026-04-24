@@ -26,13 +26,13 @@ export default function TaskBoardPage() {
 
   const { data: boardData, isLoading, refetch } = useFetch(
     ['task-board'],
-    '/api/projects/extensions/task-board'
+    '/api/project/extension/task-board'
   )
 
   const handleCloseTask = async (task: any) => {
     try {
       if (task.type === 'risk') {
-        await apiClient.put(`/api/projects/extensions/risks/${task.id}`, { status: 'closed' })
+        await apiClient.put(`/api/project/extension/risks/${task.id}`, { status: 'closed' })
       } else if (task.type === 'milestone') {
         await apiClient.put(`/api/milestones/${task.id}/progress`, {
           progress: 100,

@@ -12,31 +12,77 @@ export class DingtalkAttendanceService {
     try {
       const token = await this.authService.getAccessToken();
 
-      const response = await axios.post(
-        `https://oapi.dingtalk.com/topapi/attendance/list?access_token=${token}`,
+      const dateFrom = workDateFrom.replace(/(\d{4})(\d{2})(\d{2})\d{6}/, '$1-$2-$3 00:00:00');
+      const dateTo = workDateTo.replace(/(\d{4})(\d{2})(\d{2})\d{6}/, '$1-$2-$3 23:59:59');
+
+      this.logger.log(`[getAttendanceList] Calling DingTalk API with params:`, {
+        userIds,
+        dateFrom,
+        dateTo,
+      });
+
+      this.logger.log('[getAttendanceList] Trying API: attendance/list');
+      const responseOld = await axios.post(
+        `https://oapi.dingtalk.com/attendance/list?access_token=${token}`,
         {
-          userid_list: userIds.join(','),
-          work_date_from: workDateFrom,
-          work_date_to: workDateTo,
-          offset,
-          limit,
+          workDateFrom: dateFrom,
+          workDateTo: dateTo,
+          userIdList: userIds,
+          offset: offset,
+          limit: limit,
         }
       );
 
-      if (response.data.errcode === 0) {
+      this.logger.log('[getAttendanceList] Old API response errcode:', responseOld.data.errcode, 'errmsg:', responseOld.data.errmsg, 'recordresult count:', responseOld.data.recordresult?.length);
+
+      if (responseOld.data.errcode === 0) {
+        this.logger.log('[getAttendanceList] Old API success, records:', responseOld.data.recordresult?.length);
         return {
           success: true,
-          data: response.data.recordresult,
-          hasMore: response.data.has_more,
+          data: responseOld.data.recordresult || [],
+          hasMore: responseOld.data.hasMore || false,
         };
       }
 
-      return { success: false, error: response.data.errmsg || 'Unknown error' };
+      this.logger.warn('[getAttendanceList] Old API failed:', responseOld.data.errmsg, 'trying new API');
+
+      const startTime = new Date(dateFrom).getTime();
+      const endTime = new Date(dateTo).getTime();
+
+      const response = await axios.post(
+        `https://api.dingtalk.com/v1.0/attendance/checkin/records/query`,
+        {
+          userIdList: userIds,
+          startTime: startTime,
+          endTime: endTime,
+        },
+        {
+          headers: {
+            'x-acs-dingtalk-access-token': token,
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+
+      this.logger.log('[getAttendanceList] New API response:', JSON.stringify(response.data).substring(0, 500));
+
+      if (response.data.success || response.data.errcode === 0) {
+        return {
+          success: true,
+          data: response.data.result?.records || [],
+          hasMore: response.data.result?.hasMore || false,
+        };
+      }
+
+      return { success: false, error: response.data.errmsg || response.data.errorMsg || 'Unknown error' };
     } catch (error) {
-      console.error('[DingtalkAttendance] Failed to get attendance list:', error?.response?.data || error.message);
+      this.logger.error('[DingtalkAttendance] Failed to get attendance list:', {
+        message: error.message,
+        responseData: error?.response?.data,
+      });
       return {
         success: false,
-        error: error?.response?.data?.errmsg || error.message,
+        error: error?.response?.data?.errmsg || error?.response?.data?.errorMsg || error.message,
       };
     }
   }

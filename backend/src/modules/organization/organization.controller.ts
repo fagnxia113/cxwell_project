@@ -14,7 +14,6 @@ export class OrganizationController {
     };
   }
 
-  // Frontend Alias for Knowledge Page and others
   @Get('departments')
   async getDepartments() {
     const data = await this.organizationService.getDeptTree();
@@ -24,11 +23,9 @@ export class OrganizationController {
     };
   }
 
-  // Frontend Alias
   @Get('positions')
   async getPositions(@Query() query: any) {
     const data = await this.organizationService.getPositionList(query);
-    // Return flat list specifically for some frontend components that expect data.list or data directly
     return {
       success: true,
       data: data.list,
@@ -154,6 +151,79 @@ export class OrganizationController {
     await this.organizationService.deleteEmployee(id);
     return {
       success: true,
+    };
+  }
+
+  @Get('report-tree')
+  async getReportTree() {
+    const data = await this.organizationService.getReportTree();
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  @Put('report-to/:employeeId')
+  async updateReportTo(
+    @Param('employeeId') employeeId: string,
+    @Body() body: { reportToId: string | null },
+  ) {
+    const result = await this.organizationService.updateReportTo(employeeId, body.reportToId);
+    return {
+      success: true,
+      data: {
+        employeeId: result.employeeId.toString(),
+        reportToId: result.reportToId?.toString() || null,
+        reportToName: (result as any).reportTo?.name || null,
+      },
+    };
+  }
+
+  @Post('report-to/batch')
+  async batchUpdateReportTo(
+    @Body() body: { updates: { employeeId: string; reportToId: string | null }[] },
+  ) {
+    const results = await this.organizationService.batchUpdateReportTo(body.updates);
+    return {
+      success: true,
+      data: results,
+    };
+  }
+
+  @Get('superior-chain/:employeeId')
+  async getSuperiorChain(@Param('employeeId') employeeId: string) {
+    const data = await this.organizationService.getSuperiorChain(employeeId);
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  @Get('subordinates/:employeeId')
+  async getSubordinates(
+    @Param('employeeId') employeeId: string,
+    @Query('recursive') recursive: string,
+  ) {
+    const data = await this.organizationService.getSubordinates(employeeId, recursive === 'true');
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  @Put('dept-leader/:deptId')
+  async updateDeptLeader(
+    @Param('deptId') deptId: string,
+    @Body() body: { leaderId: string | null },
+  ) {
+    const result = await this.organizationService.updateDeptLeader(deptId, body.leaderId);
+    return {
+      success: true,
+      data: {
+        deptId: result.deptId.toString(),
+        leaderId: result.leaderId?.toString() || null,
+        leaderName: (result as any).leaderEmployee?.name || null,
+      },
     };
   }
 }

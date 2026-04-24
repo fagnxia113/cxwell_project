@@ -20,6 +20,7 @@ import { NotificationModule } from './modules/notification/notification.module';
 import { KnowledgeModule } from './modules/knowledge/knowledge.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { DingtalkModule } from './modules/dingtalk/dingtalk.module';
+import { AttendanceModule } from './modules/attendance/attendance.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
 
@@ -56,6 +57,7 @@ import { join } from 'path';
     KnowledgeModule,
     UploadModule,
     DingtalkModule,
+    AttendanceModule,
   ],
   controllers: [AppController],
   providers: [

@@ -30,6 +30,7 @@ export function useProjectDetail(id: string | undefined) {
   const [expenses, setExpenses] = useState<ProjectExpense[]>([])
   const [risks, setRisks] = useState<ProjectRisk[]>([])
   const [staffingPlans, setStaffingPlans] = useState<ProjectStaffingPlan[]>([])
+  const [usedManDays, setUsedManDays] = useState(0)
 
   // ---- 编辑状态 ----
   const [loading, setLoading] = useState(true)
@@ -139,10 +140,14 @@ export function useProjectDetail(id: string | undefined) {
   const loadExtensionData = useCallback(async () => {
     if (!id) return
     try {
-      const [expensesRes, risksRes, staffingRes] = await Promise.allSettled([
+      const now = new Date()
+      const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+
+      const [expensesRes, risksRes, staffingRes, manDaysRes] = await Promise.allSettled([
         apiClient.get<any>(`/api/project/extension/${id}/expenses`),
         apiClient.get<any>(`/api/project/extension/${id}/risks`),
-        apiClient.get<any>(`/api/project/extension/${id}/staffing-plans`)
+        apiClient.get<any>(`/api/project/extension/${id}/staffing-plans`),
+        apiClient.get<any>(`/api/attendance/project/${id}/man-days?year_month=${yearMonth}`)
       ])
 
       if (expensesRes.status === 'fulfilled') setExpenses(expensesRes.value?.data || [])
@@ -151,6 +156,9 @@ export function useProjectDetail(id: string | undefined) {
         setRisks(allRisks)
       }
       if (staffingRes.status === 'fulfilled') setStaffingPlans(staffingRes.value?.data || [])
+      if (manDaysRes.status === 'fulfilled') {
+        setUsedManDays(manDaysRes.value?.data?.usedManDays || 0)
+      }
     } catch (error: any) {
       console.error('Extension data loading error:', error)
     }
@@ -353,7 +361,7 @@ export function useProjectDetail(id: string | undefined) {
   return {
     // 数据
     project, phases, tasks, milestones, personnel, assets, knowledge,
-    currentUser, isAdmin, loading,
+    currentUser, isAdmin, loading, usedManDays,
     // 编辑
     isEditing, editForm, setEditForm,
     handleEdit, handleCancelEdit, handleSave, handleDelete,

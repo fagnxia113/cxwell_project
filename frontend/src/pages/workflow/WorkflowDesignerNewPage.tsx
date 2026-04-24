@@ -82,11 +82,35 @@ export default function WorkflowDesignerNewPage() {
           3: 'exclusiveGateway'
         };
 
+        const parsePermissionFlag = (flag: string) => {
+          if (!flag) return { type: 'role', value: '' }
+          if (flag.startsWith('role:')) return { type: 'role', value: flag.replace('role:', '') }
+          if (flag.startsWith('reportTo:')) {
+            const subType = flag.replace('reportTo:', '')
+            if (subType === 'manager') return { type: 'reportTo_manager', value: flag }
+            if (subType === 'deptLeader') return { type: 'reportTo_deptLeader', value: flag }
+            if (subType.match(/^n\d+$/)) return { type: `reportTo_${subType}`, value: flag }
+            return { type: 'reportTo_manager', value: flag }
+          }
+          if (flag.startsWith('dept:')) return { type: 'department_manager', value: flag }
+          return { type: 'user', value: flag }
+        }
+
         const adaptedNodes = rawNodes.map((n: any) => ({
           id: n.nodeCode,
           type: nodeTypeMap[n.nodeType] || 'userTask',
           position: n.coordinate ? JSON.parse(n.coordinate) : { x: 100, y: 100 },
-          data: { label: n.nodeName }
+          data: {
+            label: n.nodeName,
+            approvalConfig: n.permissionFlag ? {
+              approvalMode: 'or_sign',
+              approverSource: parsePermissionFlag(n.permissionFlag)
+            } : undefined,
+            serviceConfig: n.handlerType === 'service' && n.handlerPath ? {
+              handlerType: n.handlerType,
+              handlerPath: n.handlerPath
+            } : undefined,
+          }
         }));
 
         const adaptedEdges = rawSkips.map((s: any) => ({
@@ -154,7 +178,18 @@ export default function WorkflowDesignerNewPage() {
           nodeType: nodeTypeMap[node.type] || 1,
           coordinate: JSON.stringify(node.position),
           // 若依/Warm-Flow 风格的权限标识
-          permissionFlag: node.approvalConfig?.approverSource?.value || '' 
+          permissionFlag: (() => {
+            const source = node.approvalConfig?.approverSource
+            if (!source?.type) return ''
+            if (source.type === 'role') return source.value ? `role:${source.value}` : ''
+            if (source.type === 'user') return source.value || ''
+            if (source.type === 'reportTo_manager') return 'reportTo:manager'
+            if (source.type === 'reportTo_deptLeader') return 'reportTo:deptLeader'
+            if (source.type === 'reportTo_n2') return 'reportTo:n2'
+            if (source.type === 'department_manager') return 'reportTo:deptLeader'
+            if (source.type === 'initiator') return 'reportTo:manager'
+            return source.value || ''
+          })() 
         })),
         skips: workflowData.edges.map((edge: any) => ({
           nowNodeCode: edge.source,

@@ -379,17 +379,23 @@ export class OrganizationService {
       where: { employeeId: BigInt(id) }
     });
 
+    const updateData: any = {
+      name: data.name,
+      phone: data.phone,
+      email: data.email,
+      deptId: data.deptId ? BigInt(data.deptId) : undefined,
+      position: data.position,
+      postId: data.postId ? BigInt(data.postId) : undefined,
+      reportToId: data.reportToId ? BigInt(data.reportToId) : data.reportToId === null ? null : undefined,
+      status: data.status,
+      updateTime: new Date()
+    };
+
+    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+
     const updated = await this.prisma.sysEmployee.update({
       where: { employeeId: BigInt(id) },
-      data: {
-        name: data.name,
-        phone: data.phone,
-        email: data.email,
-        deptId: data.deptId ? BigInt(data.deptId) : undefined,
-        position: data.position,
-        status: data.status,
-        updateTime: new Date()
-      }
+      data: updateData
     }) as any;
 
     if (employee?.dingtalkUserId) {
@@ -401,11 +407,24 @@ export class OrganizationService {
             dingtalkDeptId = parseInt(dept.dingtalkDeptId);
           }
         }
+
+        let leaderDingtalkUserId: string | undefined;
+        if (data.reportToId) {
+          const leader = await this.prisma.sysEmployee.findUnique({
+            where: { employeeId: BigInt(data.reportToId) },
+            select: { dingtalkUserId: true }
+          });
+          leaderDingtalkUserId = leader?.dingtalkUserId || undefined;
+        } else if (data.reportToId === null) {
+          leaderDingtalkUserId = '';
+        }
+
         const dingtalkResult = await this.dingtalkService.updateUser(employee.dingtalkUserId, {
           name: data.name,
           deptIds: dingtalkDeptId ? [dingtalkDeptId] : undefined,
           jobTitle: data.position,
           email: data.email,
+          leader: leaderDingtalkUserId,
         });
         if (dingtalkResult.success) {
           console.log(`[Organization] 员工 ${data.name} 信息已同步更新到钉钉`);
@@ -513,7 +532,8 @@ export class OrganizationService {
         segments: empRotations.map(r => ({
           startDate: r.startDate.toISOString().split('T')[0],
           endDate: r.endDate.toISOString().split('T')[0],
-          type: r.type
+          type: r.type,
+          projectId: r.projectId?.toString()
         }))
       };
     });
@@ -583,5 +603,272 @@ export class OrganizationService {
       }
     }
     return nodes;
+  }
+
+  async getReportTree() {
+    const employees = await this.prisma.sysEmployee.findMany({
+      where: { status: '0' },
+      include: {
+        reportTo: {
+          select: { employeeId: true, name: true }
+        },
+        subordinates: {
+          select: { employeeId: true, name: true, position: true }
+        },
+        leadingDepts: {
+          select: { deptId: true, deptName: true }
+        }
+      },
+      orderBy: { name: 'asc' }
+    });
+
+    return employees.map(emp => ({
+      employeeId: emp.employeeId.toString(),
+      name: emp.name,
+      position: emp.position,
+      reportToId: emp.reportToId?.toString() || null,
+      reportToName: emp.reportTo?.name || null,
+      subordinates: emp.subordinates.map(s => ({
+        employeeId: s.employeeId.toString(),
+        name: s.name,
+        position: s.position,
+      })),
+      leadingDepts: emp.leadingDepts.map(d => ({
+        deptId: d.deptId.toString(),
+        deptName: d.deptName,
+      })),
+    }));
+  }
+
+  async updateReportTo(employeeId: string, reportToId: string | null) {
+    if (reportToId && reportToId === employeeId) {
+      throw new Error('不能将自己设置为直属上级');
+    }
+
+    if (reportToId) {
+      const visited = new Set<string>();
+      let currentId: string | null = reportToId;
+      while (currentId) {
+        if (visited.has(currentId)) {
+          throw new Error('汇报关系存在循环引用');
+        }
+        visited.add(currentId);
+        const emp = await this.prisma.sysEmployee.findUnique({
+          where: { employeeId: BigInt(currentId) },
+          select: { reportToId: true }
+        });
+        currentId = emp?.reportToId?.toString() ?? null;
+        if (currentId === employeeId) {
+          throw new Error('汇报关系存在循环引用');
+        }
+      }
+    }
+
+    const updated = await this.prisma.sysEmployee.update({
+      where: { employeeId: BigInt(employeeId) },
+      data: {
+        reportToId: reportToId ? BigInt(reportToId) : null,
+        updateTime: new Date()
+      },
+      include: {
+        reportTo: { select: { employeeId: true, name: true, dingtalkUserId: true } },
+        subordinates: { select: { employeeId: true, name: true } },
+      }
+    });
+
+    try {
+      const employee = await this.prisma.sysEmployee.findUnique({
+        where: { employeeId: BigInt(employeeId) },
+        select: { dingtalkUserId: true }
+      });
+
+      if (employee?.dingtalkUserId) {
+        let leaderDingtalkUserId: string | undefined;
+        if (reportToId) {
+          const leader = await this.prisma.sysEmployee.findUnique({
+            where: { employeeId: BigInt(reportToId) },
+            select: { dingtalkUserId: true }
+          });
+          leaderDingtalkUserId = leader?.dingtalkUserId || undefined;
+        }
+
+        const syncResult = await this.dingtalkService.updateUser(
+          employee.dingtalkUserId,
+          { leader: leaderDingtalkUserId || '' }
+        );
+
+        if (syncResult.success) {
+          console.log(`[ReportTo] Synced to DingTalk: employee ${employeeId} -> leader ${reportToId} (dingtalk: ${leaderDingtalkUserId})`);
+        } else {
+          console.warn(`[ReportTo] Failed to sync to DingTalk: ${syncResult.error}`);
+        }
+      }
+    } catch (error) {
+      console.warn('[ReportTo] DingTalk sync error:', error?.message || error);
+    }
+
+    return updated;
+  }
+
+  async batchUpdateReportTo(updates: { employeeId: string; reportToId: string | null }[]) {
+    const results: any[] = [];
+    for (const update of updates) {
+      try {
+        const result = await this.updateReportTo(update.employeeId, update.reportToId);
+        results.push({ employeeId: update.employeeId, success: true, data: result });
+      } catch (error: any) {
+        results.push({ employeeId: update.employeeId, success: false, error: error.message });
+      }
+    }
+    return results;
+  }
+
+  async getSuperiorChain(employeeId: string, maxDepth: number = 10) {
+    const chain: any[] = [];
+    let currentId: string | null = employeeId;
+    let depth = 0;
+
+    while (currentId && depth < maxDepth) {
+      const emp = await this.prisma.sysEmployee.findUnique({
+        where: { employeeId: BigInt(currentId) },
+        include: {
+          reportTo: { select: { employeeId: true, name: true, position: true } },
+        }
+      });
+      if (!emp) break;
+
+      chain.push({
+        employeeId: emp.employeeId.toString(),
+        name: emp.name,
+        position: emp.position,
+        reportToId: emp.reportToId?.toString() || null,
+        reportToName: emp.reportTo?.name || null,
+      });
+
+      currentId = emp.reportToId?.toString() || null;
+      depth++;
+    }
+
+    return chain;
+  }
+
+  async getSubordinates(employeeId: string, recursive: boolean = false) {
+    if (!recursive) {
+      const subs = await this.prisma.sysEmployee.findMany({
+        where: { reportToId: BigInt(employeeId), status: '0' },
+        select: { employeeId: true, name: true, position: true, deptId: true }
+      });
+      return subs.map(s => ({
+        ...s,
+        employeeId: s.employeeId.toString(),
+        deptId: s.deptId?.toString(),
+      }));
+    }
+
+    const allSubs: any[] = [];
+    const queue: string[] = [employeeId];
+    const visited = new Set<string>();
+
+    while (queue.length > 0) {
+      const currentId = queue.shift()!;
+      if (visited.has(currentId)) continue;
+      visited.add(currentId);
+
+      const subs = await this.prisma.sysEmployee.findMany({
+        where: { reportToId: BigInt(currentId), status: '0' },
+        select: { employeeId: true, name: true, position: true, deptId: true, reportToId: true }
+      });
+
+      for (const s of subs) {
+        const subData = {
+          employeeId: s.employeeId.toString(),
+          name: s.name,
+          position: s.position,
+          deptId: s.deptId?.toString(),
+          reportToId: s.reportToId?.toString(),
+        };
+        allSubs.push(subData);
+        queue.push(s.employeeId.toString());
+      }
+    }
+
+    return allSubs;
+  }
+
+  async updateDeptLeader(deptId: string, leaderId: string | null) {
+    return this.prisma.sysDept.update({
+      where: { deptId: BigInt(deptId) },
+      data: {
+        leaderId: leaderId ? BigInt(leaderId) : null,
+        updateTime: new Date()
+      },
+      include: {
+        leaderEmployee: { select: { employeeId: true, name: true } }
+      }
+    });
+  }
+
+  async resolveApproverByFlag(flag: string, initiatorUserId: string) {
+    if (!flag.startsWith('reportTo:') && !flag.startsWith('initiator:')) {
+      return null;
+    }
+
+    const initiatorEmployee = await this.prisma.sysEmployee.findFirst({
+      where: { userId: BigInt(initiatorUserId), status: '0' },
+    });
+    if (!initiatorEmployee) return [];
+
+    const flagType = flag.startsWith('reportTo:') ? flag.replace('reportTo:', '') : flag.replace('initiator:', '');
+
+    switch (flagType) {
+      case 'manager': {
+        if (!initiatorEmployee.reportToId) return [];
+        const manager = await this.prisma.sysEmployee.findUnique({
+          where: { employeeId: initiatorEmployee.reportToId },
+        });
+        if (!manager?.userId) return [];
+        const managerUser = await this.prisma.sysUser.findUnique({
+          where: { userId: manager.userId }
+        });
+        return managerUser ? [managerUser] : [];
+      }
+
+      case 'deptLeader': {
+        if (!initiatorEmployee.deptId) return [];
+        const dept = await this.prisma.sysDept.findUnique({
+          where: { deptId: initiatorEmployee.deptId },
+          include: { leaderEmployee: true }
+        });
+        if (!dept?.leaderId) return [];
+        const leader = dept.leaderEmployee;
+        if (!leader?.userId) return [];
+        const leaderUser = await this.prisma.sysUser.findUnique({
+          where: { userId: leader.userId }
+        });
+        return leaderUser ? [leaderUser] : [];
+      }
+
+      default: {
+        const levelMatch = flagType.match(/^n(\d+)$/);
+        if (levelMatch) {
+          const level = parseInt(levelMatch[1]);
+          let currentEmp = initiatorEmployee;
+          for (let i = 0; i < level; i++) {
+            if (!currentEmp.reportToId) return [];
+            const superior = await this.prisma.sysEmployee.findUnique({
+              where: { employeeId: currentEmp.reportToId }
+            });
+            if (!superior) return [];
+            currentEmp = superior;
+          }
+          if (!currentEmp.userId) return [];
+          const user = await this.prisma.sysUser.findUnique({
+            where: { userId: currentEmp.userId }
+          });
+          return user ? [user] : [];
+        }
+        return [];
+      }
+    }
   }
 }

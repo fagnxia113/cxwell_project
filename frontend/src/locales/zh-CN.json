@@ -1679,6 +1679,9 @@
         "equipment": "设备",
         "labor": "人工",
         "travel": "差旅",
+        "meal": "餐饮",
+        "transportation": "交通",
+        "accommodation": "住宿",
         "material": "材料",
         "other": "其他"
       }

@@ -43,6 +43,9 @@ export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteE
       equipment: 'bg-emerald-50 text-emerald-600 border-emerald-100',
       labor: 'bg-blue-50 text-blue-600 border-blue-100',
       travel: 'bg-amber-50 text-amber-600 border-amber-100',
+      meal: 'bg-orange-50 text-orange-600 border-orange-100',
+      transportation: 'bg-sky-50 text-sky-600 border-sky-100',
+      accommodation: 'bg-indigo-50 text-indigo-600 border-indigo-100',
       material: 'bg-purple-50 text-purple-600 border-purple-100',
       other: 'bg-slate-50 text-slate-600 border-slate-100',
     }
@@ -113,6 +116,9 @@ export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteE
                 <option value="equipment">{getCategoryLabel('equipment')}</option>
                 <option value="labor">{getCategoryLabel('labor')}</option>
                 <option value="travel">{getCategoryLabel('travel')}</option>
+                <option value="meal">{getCategoryLabel('meal')}</option>
+                <option value="transportation">{getCategoryLabel('transportation')}</option>
+                <option value="accommodation">{getCategoryLabel('accommodation')}</option>
                 <option value="material">{getCategoryLabel('material')}</option>
                 <option value="other">{getCategoryLabel('other')}</option>
               </select>

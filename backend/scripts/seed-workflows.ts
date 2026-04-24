@@ -18,6 +18,7 @@ async function main() {
           name: 'items',
           type: 'subform',
           columns: [
+            { label: '费用发生日期', name: 'expense_date', type: 'date' },
             { label: '类别', name: 'category', type: 'select', options: [
               { label: '餐饮', value: 'meal' },
               { label: '交通', value: 'transportation' },
@@ -77,10 +78,11 @@ async function main() {
   ];
 
   for (const t of templates) {
-    await prisma.bizFormTemplate.upsert({
-      where: { templateKey: t.templateKey },
-      update: t,
-      create: t,
+    await prisma.bizFormTemplate.deleteMany({
+      where: { templateKey: t.templateKey }
+    });
+    await prisma.bizFormTemplate.create({
+      data: t
     });
   }
   console.log('表单模板初始化完成。');
@@ -89,12 +91,12 @@ async function main() {
   // 报销流程
   const reimburseDefId = BigInt(1001);
   const reimburseFields = templates.find(t => t.templateKey === 'expense_reimbursement')?.fields;
-  await prisma.flowDefinition.upsert({
-    where: { id: reimburseDefId },
-    update: {
-      ext: JSON.stringify({ form_schema: reimburseFields ? JSON.parse(reimburseFields) : [] })
-    },
-    create: {
+
+  await prisma.flowDefinition.deleteMany({
+    where: { flowCode: 'expense_reimbursement' }
+  });
+  await prisma.flowDefinition.create({
+    data: {
       id: reimburseDefId,
       flowCode: 'expense_reimbursement',
       flowName: '费用报销流程',

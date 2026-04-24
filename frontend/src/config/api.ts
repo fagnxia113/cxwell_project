@@ -42,7 +42,7 @@ export const API_PATHS = {
   METADATA: '/api/metadata',
   HEALTH: '/health',
   WORKFLOW: '/api/workflow',
-  PROJECTS: '/api/projects',
+  PROJECTS: '/api/project',
   WORK_TIME: '/api/work-time',
   AUTH: '/api/auth'
 }

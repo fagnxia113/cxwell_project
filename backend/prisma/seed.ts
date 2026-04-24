@@ -294,8 +294,8 @@ async function main() {
 
   const projectNodes = [
     { id: 3001n, type: 0, code: 'start', name: '提交申请', flag: 'role:admin', coord: { x: 250, y: 50 } },
-    { id: 3002n, type: 1, code: 'dept_manager_approve', name: '部门经理审批', flag: 'role:general_manager', coord: { x: 250, y: 150 } },
-    { id: 3003n, type: 1, code: 'gm_approve', name: '总经理审批', flag: 'role:admin', coord: { x: 450, y: 250 } },
+    { id: 3002n, type: 1, code: 'dept_manager_approve', name: '部门负责人审批', flag: 'reportTo:deptLeader', coord: { x: 250, y: 150 } },
+    { id: 3003n, type: 1, code: 'gm_approve', name: '总经理审批', flag: 'role:general_manager', coord: { x: 450, y: 250 } },
     { id: 3004n, type: 1, code: 'create_project', name: '项目创建', handlerType: 'service', handlerPath: 'project-approval', coord: { x: 250, y: 320 } },
     { id: 3005n, type: 2, code: 'end', name: '审批通过', flag: '', coord: { x: 250, y: 400 } },
   ];
@@ -347,8 +347,8 @@ async function main() {
 
   const resignationNodes = [
     { id: 5001n, type: 0, code: 'start', name: '发起申请', flag: '', coord: { x: 250, y: 50 } },
-    { id: 5002n, type: 1, code: 'dept_manager_approve', name: '直属上级审批', flag: 'role:admin', coord: { x: 250, y: 150 } },
-    { id: 5003n, type: 1, code: 'hr_approve', name: '人事审批', flag: 'role:admin', coord: { x: 250, y: 250 } },
+    { id: 5002n, type: 1, code: 'dept_manager_approve', name: '直属上级审批', flag: 'reportTo:manager', coord: { x: 250, y: 150 } },
+    { id: 5003n, type: 1, code: 'hr_approve', name: '人事审批', flag: 'role:hr', coord: { x: 250, y: 250 } },
     { id: 5004n, type: 1, code: 'process_resignation', name: '离职办理', handlerType: 'service', handlerPath: 'employee-resignation', coord: { x: 250, y: 350 } },
     { id: 5005n, type: 2, code: 'end', name: '结束', flag: '', coord: { x: 250, y: 450 } },
   ];
@@ -399,8 +399,8 @@ async function main() {
 
   const leaveNodes = [
     { id: 7001n, type: 0, code: 'start', name: '发起申请', flag: '', coord: { x: 250, y: 50 } },
-    { id: 7002n, type: 1, code: 'dept_manager_approve', name: '直属上级审批', flag: 'role:admin', coord: { x: 250, y: 150 } },
-    { id: 7003n, type: 1, code: 'hr_approve', name: '人事备案', flag: 'role:admin', coord: { x: 250, y: 250 } },
+    { id: 7002n, type: 1, code: 'dept_manager_approve', name: '直属上级审批', flag: 'reportTo:manager', coord: { x: 250, y: 150 } },
+    { id: 7003n, type: 1, code: 'hr_approve', name: '人事备案', flag: 'role:hr', coord: { x: 250, y: 250 } },
     { id: 7004n, type: 1, code: 'record_leave', name: '请假记录', handlerType: 'service', handlerPath: 'leave-approval', coord: { x: 250, y: 350 } },
     { id: 7005n, type: 2, code: 'end', name: '结束', flag: '', coord: { x: 250, y: 450 } },
   ];

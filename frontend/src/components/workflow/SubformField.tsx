@@ -1,6 +1,7 @@
 import React from 'react'
 import { Plus, Trash2, Paperclip, DollarSign } from 'lucide-react'
 import { cn } from '../../utils/cn'
+import { useTranslation } from 'react-i18next'
 
 interface SubformFieldProps {
   value: any[]
@@ -11,6 +12,7 @@ interface SubformFieldProps {
 }
 
 const SubformField: React.FC<SubformFieldProps> = ({ value = [], onChange, columns, readonly, optionsMap = {} }) => {
+  const { t } = useTranslation()
   const addItem = () => {
     const newItem = columns.reduce((acc, col) => ({ ...acc, [col.name]: col.defaultValue || '' }), { _key: Math.random().toString(36).substr(2, 9) })
     onChange([...value, newItem])
@@ -74,7 +76,7 @@ const SubformField: React.FC<SubformFieldProps> = ({ value = [], onChange, colum
                         >
                           <option value="">{readonly ? '-' : '请选择'}</option>
                           {(col.options || optionsMap[col.dataSource || col.dynamicOptions || col.type] || []).map((opt: any) => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            <option key={opt.value} value={opt.value}>{t(opt.label, { defaultValue: opt.label })}</option>
                           ))}
                         </select>
                       ) : col.type === 'number' ? (
@@ -89,6 +91,14 @@ const SubformField: React.FC<SubformFieldProps> = ({ value = [], onChange, colum
                             placeholder="0.00"
                           />
                         </div>
+                      ) : col.type === 'date' ? (
+                        <input
+                          disabled={readonly}
+                          type="date"
+                          value={item[col.name] || ''}
+                          onChange={e => updateItem(index, col.name, e.target.value)}
+                          className="w-full bg-transparent border-none text-xs font-medium text-slate-600 focus:ring-0 p-0"
+                        />
                       ) : (
                         <input
                           disabled={readonly}

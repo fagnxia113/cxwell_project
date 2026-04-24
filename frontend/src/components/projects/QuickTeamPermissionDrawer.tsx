@@ -53,7 +53,7 @@ export default function QuickTeamPermissionDrawer({
   const togglePermission = async (employeeId: string, currentStatus: boolean) => {
     try {
       const newStatus = !currentStatus
-      const result = await apiClient.put<any>(`/api/projects/extensions/${projectId}/personnel/${employeeId}/permission`, { canEdit: newStatus })
+      const result = await apiClient.put<any>(`/api/project/extension/${projectId}/personnel/${employeeId}/permission`, { canEdit: newStatus })
       if (result?.success) {
         setMembers(prev => prev.map(m => 
           m.employee_id === employeeId ? { ...m, can_edit: newStatus } : m

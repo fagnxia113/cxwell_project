@@ -1,69 +1,87 @@
 import React, { useState, useEffect } from 'react'
-import { v4 as uuidv4 } from 'uuid'
-import { API_URL } from '../../config/api'
+import dayjs from 'dayjs'
+import {
+  Users,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Search,
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  BarChart3
+} from 'lucide-react'
 import { apiClient } from '../../utils/apiClient'
 import { useMessage } from '../../hooks/useMessage'
 import { useTranslation } from 'react-i18next'
-import { 
-  Users, 
-  CheckCircle2, 
-  XCircle, 
-  AlertCircle, 
-  Search, 
-  Bell,
-  RefreshCw,
-  Projector
-} from 'lucide-react'
 import { cn } from '../../utils/cn'
 
-interface AttendanceStatus {
-  employeeId: string;
-  name: string;
-  projectName: string;
-  hasClockedIn: boolean;
-  checkInTime?: string;
-  checkOutTime?: string;
-  locationName?: string;
-  hasDailyReport: boolean;
-  status: 'normal' | 'missing_report' | 'absent';
+interface SummaryData {
+  yearMonth: string
+  totalDays: number
+  employees: {
+    employeeId: string
+    name: string
+    workedDays: number
+    expectedDays: number
+    absentDays: number
+    attendanceRate: number
+    projects: string[]
+  }[]
 }
+
+interface CalendarData {
+  yearMonth: string
+  days: number[]
+  employees: {
+    employeeId: string
+    name: string
+    calendar: Record<string, {
+      hasClockedIn: boolean
+      checkInTime?: string
+      checkOutTime?: string
+      locationName?: string
+      projectName: string
+    }>
+  }[]
+}
+
+type ViewMode = 'summary' | 'calendar'
 
 export default function AttendanceBoardPage() {
   const { t } = useTranslation()
-  const [data, setData] = useState<AttendanceStatus[]>([])
+  const { success, error: showError } = useMessage()
+  const [viewMode, setViewMode] = useState<ViewMode>('summary')
+  const [currentMonth, setCurrentMonth] = useState(dayjs().format('YYYY-MM'))
+  const [summaryData, setSummaryData] = useState<SummaryData | null>(null)
+  const [calendarData, setCalendarData] = useState<CalendarData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [reminding, setReminding] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const { success, error: showError } = useMessage()
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    loadData()
+  }, [currentMonth, viewMode])
 
-  const fetchData = async () => {
+  const loadData = async () => {
     try {
       setLoading(true)
-      const res = await apiClient.get<AttendanceStatus[]>('/api/personnel/attendance/board')
-      if (res) {
-        setData(Array.isArray(res) ? res : [])
+      if (viewMode === 'summary') {
+        const res = await apiClient.get<SummaryData>(`/api/personnel/attendance/summary?year_month=${currentMonth}`)
+        if (res && res.success && res.data) {
+          setSummaryData(res.data)
+        }
+      } else {
+        const res = await apiClient.get<CalendarData>(`/api/personnel/attendance/calendar?year_month=${currentMonth}`)
+        if (res && res.success && res.data) {
+          setCalendarData(res.data)
+        }
       }
     } catch (err: any) {
-      showError(t('personnel.error.load_failed') + ': ' + err.message)
+      showError('加载失败: ' + err.message)
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleRemindAll = async () => {
-    try {
-      setReminding(true)
-      const res = await apiClient.post<any>('/api/personnel/attendance/remind', {})
-      success(t('personnel.action.remind_success', { count: res.count || 0 }))
-    } catch (err: any) {
-      showError(t('common.error') + ': ' + err.message)
-    } finally {
-      setReminding(false)
     }
   }
 
@@ -72,237 +90,267 @@ export default function AttendanceBoardPage() {
       setSyncing(true)
       const res = await apiClient.post<any>('/api/personnel/attendance/sync/dingtalk', {})
       if (res.success) {
-        success(t('personnel.action.sync_dingtalk') + ' ' + t('common.success'))
-        fetchData()
+        success('同步成功，共 ' + res.count + ' 条记录')
+        loadData()
+      } else {
+        showError(res.message || '同步失败')
       }
     } catch (err: any) {
-      showError(t('common.error') + ': ' + err.message)
+      showError('同步失败: ' + err.message)
     } finally {
       setSyncing(false)
     }
   }
 
-  const filteredData = data.filter(item => 
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.projectName.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredSummary = summaryData?.employees.filter(emp =>
+    emp.name.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || []
 
-  const stats = {
-    total: data.length,
-    normal: data.filter(i => i.status === 'normal').length,
-    missing: data.filter(i => i.status === 'missing_report').length,
-    absent: data.filter(i => i.status === 'absent').length
-  }
+  const filteredCalendar = calendarData?.employees.filter(emp =>
+    emp.name.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || []
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <div className="w-12 h-12 border-4 border-primary/20 border-t-accent rounded-full animate-spin"></div>
-        <p className="text-primary font-medium animate-pulse">{t('personnel.attendance.sync_hint')}</p>
-      </div>
-    )
+  const getWeekdayLabel = (day: number) => {
+    const date = dayjs(`${currentMonth}-${String(day).padStart(2, '0')}`)
+    const weekdays = ['日', '一', '二', '三', '四', '五', '六']
+    return weekdays[date.day()]
   }
 
   return (
-    <div className="min-h-screen bg-mesh p-4 lg:p-6 space-y-4 animate-fade-in custom-scrollbar">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="p-6 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-700 flex items-center gap-3">
-            <div className="p-2 bg-primary rounded-lg text-white shadow-brand">
-              <Users size={20} strokeWidth={2.5} />
-            </div>
-            {t('personnel.attendance.board_title')}
-          </h1>
-          <p className="text-slate-500 text-sm mt-0.5 flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-accent animate-pulse shadow-[0_0_10px_rgba(0,204,121,0.5)]"></span>
-            Real-time Personnel Presence & Report Compliance Tracker (Today: {new Date().toLocaleDateString()})
-          </p>
+          <h1 className="text-xl font-black text-slate-900">考勤统计</h1>
+          <p className="text-xs text-slate-400 mt-1">统计每月员工出勤情况</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+        <div className="flex items-center gap-3">
           <button
             onClick={handleSyncDingTalk}
             disabled={syncing}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-600/20 disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg text-xs font-bold hover:bg-emerald-600 transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={cn("w-4 h-4", syncing && "animate-spin")} />
-            {syncing ? t('personnel.action.syncing') : t('personnel.action.sync_dingtalk')}
-          </button>
-          <button
-            onClick={fetchData}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-white border-2 border-slate-100 text-primary font-bold rounded-lg hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
-          >
-            <RefreshCw className="w-4 h-4" />
-            {t('common.all')}
-          </button>
-          <button
-            onClick={handleRemindAll}
-            disabled={reminding || stats.missing === 0}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 btn-primary text-xs"
-          >
-            <Bell className="w-4 h-4" />
-            {reminding ? t('personnel.action.updating') : t('personnel.action.one_click_remind')}
+            <RefreshCw size={14} className={syncing ? 'animate-spin' : ''} />
+            同步钉钉
           </button>
         </div>
       </div>
 
-      {/* 统计卡片 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          icon={<Users className="w-6 h-6 text-primary" />}
-          label={t('personnel.stats.on_attendance')}
-          value={stats.total}
-          color="bg-primary/10"
-        />
-        <StatCard
-          icon={<CheckCircle2 className="w-6 h-6 text-accent" />}
-          label={t('personnel.stats.today_normal')}
-          value={stats.normal}
-          color="bg-accent/10"
-        />
-        <StatCard
-          icon={<AlertCircle className="w-6 h-6 text-amber-500" />}
-          label={t('personnel.stats.pending_report')}
-          value={stats.missing}
-          color="bg-amber-50"
-        />
-        <StatCard 
-          icon={<XCircle className="w-6 h-6 text-red-500" />} 
-          label={t('personnel.stats.absent')} 
-          value={stats.absent} 
-          color="bg-red-50" 
-        />
-      </div>
+      {/* Controls */}
+      <div className="flex items-center justify-between mb-4 gap-4">
+        <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-xl w-fit">
+          <button
+            onClick={() => setViewMode('summary')}
+            className={cn(
+              "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5",
+              viewMode === 'summary' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
+            )}
+          >
+            <BarChart3 size={12} />
+            汇总
+          </button>
+          <button
+            onClick={() => setViewMode('calendar')}
+            className={cn(
+              "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5",
+              viewMode === 'calendar' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
+            )}
+          >
+            <Calendar size={12} />
+            按月
+          </button>
+        </div>
 
-      {/* 列表区域 */}
-      <div className="bg-white rounded-2xl border border-slate-200/60 shadow-2xl shadow-slate-200/40 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row gap-4 items-center">
-          <div className="relative flex-1 w-full">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <input 
-              type="text" 
-              placeholder={t('personnel.attendance.search_placeholder')} 
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+            <input
+              type="text"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-lg focus:ring-2 focus:ring-accent/30 outline-none transition-all font-medium text-primary"
+              onChange={e => setSearchTerm(e.target.value)}
+              placeholder="搜索员工..."
+              className="pl-9 pr-4 py-2 bg-white border border-slate-100 rounded-lg text-xs font-medium focus:ring-2 focus:ring-emerald-500 outline-none w-48"
             />
           </div>
-          <div className="flex gap-2 p-1 bg-slate-50 rounded-xl">
-             <button className="px-4 py-1.5 text-xs font-bold rounded-lg bg-primary text-white shadow-sm">{t('common.all')}</button>
-             <button className="px-4 py-1.5 text-xs font-bold text-slate-500 hover:text-primary">{t('personnel.attendance.exception_only')}</button>
+
+          <div className="flex items-center gap-2 bg-white border border-slate-100 rounded-lg px-1 py-1">
+            <button
+              onClick={() => setCurrentMonth(dayjs(currentMonth).subtract(1, 'month').format('YYYY-MM'))}
+              className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+            >
+              <ChevronLeft size={16} className="text-slate-400" />
+            </button>
+            <span className="text-sm font-black text-slate-900 min-w-[80px] text-center">
+              {dayjs(currentMonth + '-01').format('YYYY年M月')}
+            </span>
+            <button
+              onClick={() => setCurrentMonth(dayjs(currentMonth).add(1, 'month').format('YYYY-MM'))}
+              className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+            >
+              <ChevronRight size={16} className="text-slate-400" />
+            </button>
           </div>
         </div>
+      </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50/50">
-                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider">{t('personnel.fields.name')}</th>
-                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider">{t('personnel.attendance.daily_report')}</th>
-                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider text-center">{t('personnel.attendance.clock_in')}</th>
-                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider text-center">{t('personnel.attendance.daily_report')}</th>
-                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-wider">{t('common.status')} {t('common.remark')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredData.length === 0 ? (
+      {/* Summary View */}
+      {viewMode === 'summary' && (
+        <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
+          {loading ? (
+            <div className="p-12 text-center text-xs font-bold text-slate-400 italic tracking-widest uppercase">加载中...</div>
+          ) : (
+            <table className="min-w-full divide-y divide-slate-100">
+              <thead className="bg-slate-50/80">
                 <tr>
-                  <td colSpan={5} className="px-6 py-20 text-center text-slate-400 font-medium">
-                    {t('personnel.empty.no_records')}
-                  </td>
+                  <th className="px-4 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">员工</th>
+                  <th className="px-4 py-3 text-center text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">出勤天数</th>
+                  <th className="px-4 py-3 text-center text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">应勤天数</th>
+                  <th className="px-4 py-3 text-center text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">出勤率</th>
+                  <th className="px-4 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">所属项目</th>
                 </tr>
-              ) : (
-                filteredData.map((item) => (
-                  <tr key={item.employeeId} className="group hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-primary font-bold group-hover:scale-110 transition-transform">
-                          {item.name[0]}
-                        </div>
-                        <span className="font-bold text-primary">{item.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-2 text-slate-600 font-bold">
-                        <Projector className="w-4 h-4 opacity-40" />
-                        {item.projectName}
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 text-center">
-                      <div className="flex flex-col items-center gap-1">
-                        <StatusBadge active={item.hasClockedIn} />
-                        {item.checkInTime && (
-                           <span className="text-[10px] font-bold text-slate-400">
-                             {t('personnel.attendance.in_out', { in: item.checkInTime, out: item.checkOutTime || '--:--' })}
-                           </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 text-center">
-                      <StatusBadge active={item.hasDailyReport} />
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex flex-col items-start gap-1">
-                        <StatusDescription status={item.status} t={t} />
-                        {item.locationName && (
-                          <span className="text-[10px] font-bold text-secondary opacity-60 truncate max-w-[150px]" title={item.locationName}>
-                            📍 {item.locationName}
-                          </span>
-                        )}
-                      </div>
-                    </td>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {filteredSummary.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-12 text-center text-xs font-bold text-slate-300 italic tracking-widest uppercase">暂无数据</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  filteredSummary.map(emp => (
+                    <tr key={emp.employeeId} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black",
+                            emp.workedDays > 0 ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-400"
+                          )}>
+                            {emp.name?.charAt(0) || '?'}
+                          </div>
+                          <span className="text-xs font-black text-slate-900">{emp.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={cn(
+                          "text-sm font-black",
+                          emp.workedDays > 0 ? "text-emerald-600" : "text-slate-300"
+                        )}>
+                          {emp.workedDays}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className="text-sm font-black text-slate-400">{emp.expectedDays}</span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="w-16 bg-slate-100 rounded-full h-1.5">
+                            <div
+                              className={cn(
+                                "h-full rounded-full",
+                                emp.attendanceRate >= 80 ? "bg-emerald-500" :
+                                emp.attendanceRate >= 50 ? "bg-amber-500" : "bg-rose-500"
+                              )}
+                              style={{ width: `${emp.attendanceRate}%` }}
+                            />
+                          </div>
+                          <span className={cn(
+                            "text-xs font-black",
+                            emp.attendanceRate >= 80 ? "text-emerald-600" :
+                            emp.attendanceRate >= 50 ? "text-amber-500" : "text-rose-500"
+                          )}>
+                            {emp.attendanceRate}%
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-1">
+                          {emp.projects.length > 0 ? emp.projects.map((p, i) => (
+                            <span key={i} className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[9px] font-bold rounded">
+                              {p}
+                            </span>
+                          )) : <span className="text-slate-300 text-[10px]">-</span>}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
-      </div>
-    </div>
-  )
-}
+      )}
 
-function StatCard({ icon, label, value, color }: { icon: React.ReactNode, label: string, value: number, color: string }) {
-  return (
-    <div className="bg-white p-6 rounded-xl border border-slate-200/60 shadow-xl shadow-slate-200/20 flex items-center gap-5 group hover:-translate-y-1 transition-all">
-      <div className={`w-14 h-14 rounded-2xl ${color} flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner`}>
-        {icon}
-      </div>
-      <div>
-        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">{label}</p>
-        <p className="text-2xl font-bold text-primary mt-1">{value}</p>
-      </div>
-    </div>
-  )
-}
+      {/* Calendar View */}
+      {viewMode === 'calendar' && (
+        <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
+          {loading ? (
+            <div className="p-12 text-center text-xs font-bold text-slate-400 italic tracking-widest uppercase">加载中...</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-100">
+                <thead className="bg-slate-50/80">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] sticky left-0 bg-slate-50/80 z-10">员工</th>
+                    {calendarData && calendarData.days.map(day => (
+                      <th key={day} className={cn(
+                        "px-1 py-2 text-center text-[8px] font-black w-8",
+                        getWeekdayLabel(day) === '六' || getWeekdayLabel(day) === '日' ? "text-rose-400" : "text-slate-400"
+                      )}>
+                        <div>{day}</div>
+                        <div className="text-[7px] font-normal">{getWeekdayLabel(day)}</div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {!calendarData || filteredCalendar.length === 0 ? (
+                    <tr>
+                      <td colSpan={35} className="px-4 py-12 text-center text-xs font-bold text-slate-300 italic tracking-widest uppercase">暂无数据</td>
+                    </tr>
+                  ) : (
+                    filteredCalendar.map(emp => (
+                      <tr key={emp.employeeId} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-3 py-2 sticky left-0 bg-white z-10">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] font-black">
+                              {emp.name?.charAt(0) || '?'}
+                            </div>
+                            <span className="text-[10px] font-black text-slate-700 whitespace-nowrap">{emp.name}</span>
+                          </div>
+                        </td>
+                        {calendarData && calendarData.days.map(day => {
+                          const dateStr = `${currentMonth}-${String(day).padStart(2, '0')}`
+                          const record = emp.calendar[dateStr]
+                          const isWeekend = getWeekdayLabel(day) === '六' || getWeekdayLabel(day) === '日'
 
-function StatusBadge({ active }: { active: boolean }) {
-  return (
-    <div className="flex justify-center">
-      {active ? (
-        <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent shadow-inner">
-          <CheckCircle2 className="w-5 h-5" />
-        </div>
-      ) : (
-        <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-400 shadow-inner">
-          <XCircle className="w-5 h-5" />
+                          return (
+                            <td key={day} className={cn(
+                              "px-1 py-1 text-center",
+                              isWeekend ? "bg-rose-50/30" : ""
+                            )}>
+                              {record?.hasClockedIn ? (
+                                <div className="w-7 h-7 mx-auto rounded bg-emerald-500 text-white flex items-center justify-center text-[9px] font-black" title={record.projectName}>
+                                  ●
+                                </div>
+                              ) : (
+                                <div className="w-7 h-7 mx-auto rounded bg-slate-100 text-slate-300 flex items-center justify-center text-[9px]">
+                                  -
+                                </div>
+                              )}
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div className="px-4 py-3 bg-slate-50/50 border-t border-slate-100 flex items-center gap-4 text-[10px]">
+            <span className="flex items-center gap-1"><span className="w-4 h-4 rounded bg-emerald-500 text-white flex items-center justify-center text-[9px]">●</span> 已出勤</span>
+            <span className="flex items-center gap-1"><span className="w-4 h-4 rounded bg-slate-100 text-slate-300 flex items-center justify-center">-</span> 未出勤</span>
+          </div>
         </div>
       )}
     </div>
-  )
-}
-
-function StatusDescription({ status, t }: { status: 'normal' | 'missing_report' | 'absent', t: any }) {
-  const configs = {
-    normal: { label: t('personnel.attendance.status_normal'), class: 'bg-accent/10 text-accent' },
-    missing_report: { label: t('personnel.attendance.missing_report'), class: 'bg-amber-50 text-amber-600' },
-    absent: { label: t('personnel.attendance.system_absent'), class: 'bg-red-50 text-red-500' }
-  }
-  
-  const config = configs[status]
-  
-  return (
-    <span className={`px-4 py-1.5 rounded-full text-xs font-black shadow-sm ${config.class}`}>
-      {config.label}
-    </span>
   )
 }

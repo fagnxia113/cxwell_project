@@ -41,7 +41,7 @@ export default function ProjectDetailPage() {
   const {
     // 数据
     project, phases, tasks, milestones, personnel, knowledge,
-    currentUser, isAdmin, loading,
+    currentUser, isAdmin, loading, usedManDays,
     // 编辑
     isEditing, editForm, setEditForm,
     handleEdit, handleCancelEdit, handleSave, handleDelete,
@@ -178,6 +178,18 @@ export default function ProjectDetailPage() {
             <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest leading-none mb-1">{t('project.milestone.completed_count') || 'Milestones Completed'}</p>
             <p className="text-lg font-black text-emerald-900 leading-none">
               {milestones.filter(m => m.status === 'completed').length} <span className="text-[10px] text-emerald-400">/ {milestones.length}</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 px-4 py-2 bg-amber-50 rounded-xl border border-amber-100 min-w-[160px]">
+          <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-amber-600 shadow-sm">
+            <Users size={20} />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest leading-none mb-1">已占用人天</p>
+            <p className="text-lg font-black text-amber-900 leading-none">
+              {usedManDays} <span className="text-[10px] text-amber-400">人天</span>
             </p>
           </div>
         </div>
