@@ -476,11 +476,11 @@ export default function EmployeeDetailPage() {
                     <div className="text-[10px] font-bold text-slate-500">{employee.userId || t('common.noData')}</div>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">钉钉用户ID</label>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">{t('personnel.fields.dingtalk_user_id')}</label>
                     <div className="text-[10px] font-bold text-slate-500">{employee.dingtalkUserId || t('common.noData')}</div>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">钉钉部门ID</label>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">{t('personnel.fields.dingtalk_dept_id')}</label>
                     <div className="text-[10px] font-bold text-slate-500">{employee.dingtalkDeptId || t('common.noData')}</div>
                   </div>
                   <div>

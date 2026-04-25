@@ -127,6 +127,10 @@
     "todo": "待办",
     "pass": "已通过",
     "reject": "已驳回",
+    "withdraw": "已撤回",
+    "back_to_list": "返回列表",
+    "current_node": "当前环节",
+    "loading_task": "正在同步任务上下文...",
     "tabs": {
       "initiate": "发起流程",
       "todo": "待我处理",
@@ -137,9 +141,24 @@
     "status": {
       "running": "运行中",
       "finished": "已完成",
+      "completed": "已完成",
       "suspended": "已挂起",
       "canceled": "已取消",
-      "rejected": "已驳回"
+      "rejected": "已驳回",
+      "terminated": "已终止",
+      "pending": "待处理"
+    },
+    "message": {
+      "pass_success": "审批通过，流程已推进",
+      "reject_success": "已成功驳回至指定环节",
+      "withdraw_success": "已成功撤回申请",
+      "select_reject_target": "请选择驳回目标并确认",
+      "confirm_content": "您正在处理节点 [{{node}}]，确定提交决策吗？"
+    },
+    "error": {
+      "not_found": "任务不存在或已处理",
+      "load_failed": "加载详情失败",
+      "no_tasks": "当前没有待处理的任务"
     },
     "action": {
       "approve": "同意",
@@ -150,15 +169,23 @@
       "cancel": "撤回",
       "submit": "提交",
       "save_draft": "保存草稿",
-      "view_detail": "查看详情"
+      "view_detail": "查看详情",
+      "pass": "核准通过",
+      "reject_action": "执行驳回",
+      "view_flow": "查看流程图",
+      "withdraw": "撤销申请"
     },
     "form": {
       "comment": "审批意见",
       "comment_placeholder": "请输入审批意见...",
+      "opinion": "决策办理意见",
+      "opinion_placeholder": "在此输入您的专业审批意见或驳回改进建议...",
       "next_node": "下一步节点",
       "assignee": "负责人",
       "cc_users": "抄送人员",
-      "attachments": "附件"
+      "attachments": "附件",
+      "return_node": "回退目标节点",
+      "default_previous": "默认 (上一步)"
     },
     "history": {
       "title": "审批记录",
@@ -186,6 +213,8 @@
     "success": "操作成功",
     "error": "操作失败",
     "noData": "暂无数据",
+    "no_data": "暂无数据",
+    "last_update": "最近更新",
     "action": "操作",
     "status": "状态",
     "records": "条记录",
@@ -195,6 +224,10 @@
     "attachment": "附件",
     "all": "全部",
     "submitting": "提交中...",
+    "days": "天",
+    "new_today": "今日新增",
+    "safety_tip": "安全提示",
+    "safety_desc": "修改系统参数可能会影响业务流程的流转和消息通知的发送，请在确认配置项含义后再进行操作。",
     "just_now": "刚刚",
     "just_arrived": "刚刚",
     "hours_ago": "{{count}} 小时前",
@@ -291,35 +324,89 @@
     "search_placeholder": "搜索姓名、手机号、部门...",
     "add_employee": "录入新员工",
     "sync_dingtalk": "同步钉钉",
-    "tabs": {
-      "all": "全部人员",
-      "regular": "正式员工",
-      "on_leave": "休假中",
-      "resigned": "已离职"
+    "stats": {
+      "total": "总人数",
+      "active_count": "在职人数",
+      "on_attendance": "今日出勤",
+      "today_normal": "今日正常",
+      "pending_report": "待报备",
+      "absent": "缺勤"
     },
-    "columns": {
-      "employee": "员工",
-      "dept_pos": "部门 / 岗位",
-      "contact": "联系方式",
-      "type_status": "类型 / 状态",
-      "join_date": "入职日期",
-      "actions": "操作"
+    "action": {
+      "apply_onboarding": "入职申请",
+      "sync_dingtalk": "同步钉钉",
+      "sync_attendance": "同步考勤",
+      "add_to_project": "添加到项目",
+      "confirm_destroy": "确认移除",
+      "destroy_desc": "确定要从系统中移除员工 {{name}} 吗？该操作不可撤回。",
+      "transfer_desc": "修改员工职位与组织架构关系",
+      "edit_employee": "编辑档案",
+      "one_click_remind": "一键催报",
+      "remind_success": "已成功向 {{count}} 人发送提醒",
+      "syncing": "同步中...",
+      "updating": "保存中...",
+      "submit_update": "确认更新"
     },
-    "type_labels": {
-      "regular": "正式",
-      "probation": "试用",
-      "intern": "实习",
-      "contract": "外包",
-      "part_time": "兼职"
-    },
-    "status_labels": {
+    "status": {
       "active": "在职",
       "inactive": "待入职",
-      "on_leave": "休假",
-      "resigned": "离职"
+      "resigned": "离职",
+      "leave": "休假",
+      "on_duty": "在岗",
+      "business_trip": "出差",
+      "other": "其他",
+      "probation": "试用期"
+    },
+    "gender": {
+      "male": "男",
+      "female": "女"
+    },
+    "roles": {
+      "admin": "管理员",
+      "project_manager": "项目经理",
+      "hr_manager": "人事经理",
+      "equipment_manager": "资产经理",
+      "implementer": "实施人员",
+      "user": "普通用户"
+    },
+    "sections": {
+      "contact": "联系方式",
+      "professional": "职业信息",
+      "other": "其他信息"
+    },
+    "fields": {
+      "id": "ID",
+      "employee_no": "工号",
+      "info": "基本信息",
+      "name": "姓名",
+      "gender": "性别",
+      "phone": "手机号",
+      "email": "邮箱",
+      "dept": "部门",
+      "position": "岗位",
+      "contact_info": "联系方式",
+      "role": "系统角色",
+      "status": "状态",
+      "hire_date": "入职日期",
+      "hireDate": "入职日期",
+      "remark": "备注",
+      "userId": "用户ID",
+      "dingtalk_user_id": "钉钉用户ID",
+      "dingtalk_dept_id": "钉钉部门ID"
+    },
+    "error": {
+      "load_failed": "加载人员数据失败",
+      "delete_record": "记录已成功删除",
+      "update_success": "员工资料更新成功",
+      "not_found": "员工不存在",
+      "sync_success": "钉钉同步成功"
+    },
+    "empty": {
+      "no_records": "暂无人员记录"
     },
     "attendance": {
       "title": "考勤看板",
+      "board_title": "考勤看板",
       "subtitle": "全员出勤状态与打卡统计",
       "sync_dingtalk": "同步钉钉考勤",
       "load_failed": "考勤加载失败",
@@ -336,6 +423,17 @@
         "expected_days": "应出勤",
         "attendance_rate": "出勤率",
         "projects": "所在项目"
+      },
+      "status": {
+        "present": "已打卡",
+        "absent": "未打卡"
+      },
+      "weekdays": ["周日", "周一", "周二", "周三", "周四", "周五", "周六"],
+      "analysis_engine": "考勤分析引擎 v2.0",
+      "legend": {
+        "present": "已出勤",
+        "absent": "未出勤",
+        "holiday": "休息日/节假日"
       }
     },
     "rotation": {
@@ -381,7 +479,7 @@
         "title": "汇报关系管理",
         "subtitle": "设置员工直属上级，用于审批流动态审批人解析",
         "refresh": "刷新",
-        "batch_save": "批量保存",
+        "batch_save": "批量保存 ({{count}})",
         "list": "列表",
         "tree": "树形",
         "search_placeholder": "搜索员工...",
@@ -402,7 +500,12 @@
           "dept_leader": "发起人部门负责人",
           "n2": "发起人上2级上级",
           "role": "按角色指定（原有）"
-        }
+        },
+        "leaders": "管理岗位",
+        "dept_leaders": "部门负责人",
+        "superior": "直接上级汇报对象",
+        "sub_count": "下属人数",
+        "staff_column": "员工"
       },
       "add_segment": "添加时间段",
       "empty_hint": "准备好规划下个月了吗？点击「添加时间段」开始。",
@@ -415,22 +518,7 @@
         "home_desc": "轮换休假期间返回国内的时间段。",
         "rest": "本地休息",
         "rest_desc": "在现场周边的周末或当地法定节假日休息。"
-      },
-      "type": {
-        "work": "工作",
-        "home_rest": "回国休假",
-        "rest": "本地休息"
-      },
-      "error": {
-        "empty_segments": "请至少添加一个排班时段",
-        "invalid_date": "选择了无效的日期",
-        "date_order": "开始日期必须早于结束日期"
-      },
-      "success": {
-        "save": "月度计划提交成功"
-      },
-      "loading": "正在加载出勤数据...",
-      "staff_column": "人员"
+      }
     },
     "role": {
       "admin": "管理员",
@@ -456,13 +544,6 @@
       "intern": "实习",
       "contract": "外包",
       "part_time": "兼职"
-    },
-    "error": {
-      "load_failed": "人员加载失败",
-      "not_found": "员工不存在",
-      "delete_record": "记录已移除",
-      "update_success": "信息已更新",
-      "sync_success": "钉钉同步成功"
     }
   },
   "project": {
@@ -670,6 +751,104 @@
         "pending": "待处理",
         "in_progress": "处理中",
         "pending_review": "待审核"
+      },
+      "stats": {
+        "active_total": "活跃风险",
+        "high_severity": "高风险项",
+        "overdue_total": "已逾期",
+        "this_week_closed": "本周关闭"
+      },
+      "tabs": {
+        "active": "进行中",
+        "closed": "已关闭"
+      }
+    },
+    "reports": {
+      "title": "报告管理",
+      "add": "添加报告",
+      "edit": "编辑报告",
+      "delete_report": "删除报告",
+      "delete_report_confirm": "确定要删除该报告吗？",
+      "empty": "暂无报告",
+      "update_progress": "更新报告进度"
+    },
+    "tag": {
+      "name": "标签名称",
+      "type": "类型",
+      "required": "必贴",
+      "tagged": "已贴",
+      "verified": "已核",
+      "abnormal": "异常",
+      "status": "状态",
+      "types": {
+        "red": "红色",
+        "yellow": "黄色",
+        "green": "绿色",
+        "blue": "蓝色",
+        "white": "白色"
+      },
+      "status_labels": {
+        "pending": "待贴标",
+        "tagging": "贴标中",
+        "verifying": "核验中",
+        "completed": "已完成"
+      },
+      "add_record": "新增记录",
+      "edit_record": "编辑标签记录",
+      "update_progress": "更新进度",
+      "node_record": "节点记录",
+      "summary": "贴标概览",
+      "no_records": "暂无标签记录"
+    },
+    "team": {
+      "member_list": "成员列表",
+      "planned_attendance": "计划出勤",
+      "actual_attendance": "实际出勤",
+      "member": "成员",
+      "members": "团队成员",
+      "scheduled_attendance": "已排班",
+      "on_duty_current": "本项目工作中",
+      "on_duty_other": "其他项目工作中",
+      "home_rest": "回国休假",
+      "local_rest": "本地休息",
+      "transfer": "调动人员",
+      "transfer_to": "调动至项目",
+      "effective_date": "生效日期",
+      "remark": "备注",
+      "legend": {
+        "work": "项目中",
+        "leave": "休假",
+        "other": "其他项目"
+      }
+    },
+    "attendance": {
+      "clocked_in": "已打卡",
+      "not_clocked_in": "未打卡",
+      "config": "配置",
+      "dingtalk_config": "钉钉配置",
+      "dingtalk_group_id": "钉钉群组 ID",
+      "dingtalk_group_name": "群组名称 (可选)",
+      "save_config": "保存配置",
+      "sync_success": "考勤已同步",
+      "sync_failed": "同步失败"
+    },
+    "expense": {
+      "add_item": "新增费用",
+      "category": "类别",
+      "amount": "金额",
+      "date": "日期",
+      "notes": "备注",
+      "notes_placeholder": "用途描述...",
+      "no_records": "暂无费用记录",
+      "categories": {
+        "equipment": "设备采购",
+        "labor": "人工劳务",
+        "travel": "差旅费",
+        "meal": "餐费",
+        "transportation": "交通费",
+        "accommodation": "住宿费",
+        "material": "材料费",
+        "other": "其他"
       }
     }
   },
@@ -888,5 +1067,297 @@
       "high": "高",
       "urgent": "紧急"
     }
+  },
+  "workflow": {
+    "pending_center": "审批中心",
+    "pending_subtitle": "待处理的任务",
+    "no_pending": "暂无待办任务",
+    "load_pending_failed": "加载任务失败: {{message}}",
+    "center_title": "工作流中心",
+    "center_subtitle": "管理与配置系统工作流",
+    "action": {
+      "new": "新建流程",
+      "edit": "编辑模型",
+      "publish": "发布",
+      "pause": "暂停",
+      "delete": "下线",
+      "config": "配置引擎"
+    },
+    "stats": {
+      "total": "流程总数",
+      "active": "激活中",
+      "suspended": "已挂起",
+      "draft": "草稿"
+    },
+    "placeholder": {
+      "search": "搜索工作流..."
+    },
+    "categories": {
+      "hr": "人事",
+      "project": "项目",
+      "equipment": "资产",
+      "purchase": "采购",
+      "task": "任务",
+      "general": "通用"
+    },
+    "status": {
+      "draft": "草稿",
+      "active": "激活",
+      "suspended": "挂起",
+      "archived": "归档"
+    },
+    "fields": {
+      "sn": "序号",
+      "task_name": "任务名称",
+      "applicant": "申请人",
+      "priority": "优先级",
+      "current_node": "当前节点",
+      "title": "标题",
+      "initiator": "发起人",
+      "node": "节点",
+      "handler": "处理人",
+      "type": "类型",
+      "time": "时间",
+      "payload": "业务数据",
+      "node_handler": "环节/处理人",
+      "current_user": "当前用户",
+      "created_at": "创建时间",
+      "completion_time": "完成时间",
+      "comment": "审批意见",
+      "manage_code": "管理编号",
+      "received_quantity": "实收数量",
+      "receiving_images": "收货照片",
+      "shipping_images": "出库照片",
+      "shipping_info": "发货信息",
+      "shipping_date": "发货日期",
+      "shipping_no": "物流单号",
+      "shipping_note": "发货备注",
+      "package_images": "包装照片",
+      "shipping_items": "发货明细",
+      "item_shipping_images": "物料出库照片",
+      "receiving_info": "签收信息",
+      "receiving_time": "签收时间",
+      "receive_status": "签收状态",
+      "receive_note": "签收备注",
+      "receiving_package_images": "收货包装照片",
+      "receiving_items": "收货明细",
+      "item_receive_confirmation": "物料签收确认",
+      "shipping_quantity": "发货数量",
+      "exception_description": "异常说明",
+      "accessory_list": "配件明细",
+      "no_position": "无岗位",
+      "no_department": "无部门"
+    },
+    "engine_center": "工作流引擎",
+    "engine_desc": "可视化流程编排",
+    "new_engine": "新建工作流",
+    "initiate_workflow": "发起流程",
+    "select_workflow_desc": "选择要发起的流程",
+    "search_workflow_placeholder": "搜索流程...",
+    "no_matching_workflow": "未匹配到相关流程",
+    "definition_key_not_found": "流程定义未找到",
+    "no_definition": "无流程信息",
+    "no_records": "暂无记录",
+    "timeline": "审批历程",
+    "waiting": "等待审批决策...",
+    "click_to_initiate": "点击发起流程",
+    "prediction": {
+      "title": "路径预测",
+      "hint": "基于当前业务数据自动计算，实际路径可能因人工决策改变",
+      "approvers": "预估处理人",
+      "no_approver_skip": "无预估处理人 (可能自动跳过)"
+    },
+    "placeholder": {
+      "shipping_no": "输入物流单号 (选填)",
+      "shipping_note": "输入发货备注 (如封条号)",
+      "exception_description": "描述签收异常情况...",
+      "receive_note": "输入签收备注...",
+      "approve_comment": "输入审批意见...",
+      "reject_reason": "输入驳回原因 (必填)...",
+      "signer_comment": "输入加签说明...",
+      "return_comment": "输入回退原因...",
+      "search_engine": "搜索引擎名称、编码...",
+      "search_tasks": "搜索任务名称、发起人...",
+      "comment": "请输入审批意见..."
+    },
+    "stats": {
+      "total_requests": "累计申请",
+      "pending_tasks": "待办任务",
+      "urgent_tasks": "紧急任务",
+      "avg_response": "平均耗时",
+      "completion_rate": "办结率",
+      "hours_unit": "小时",
+      "total_blueprints": "流程蓝图",
+      "active_engines": "激活中",
+      "suspended_engines": "挂起中",
+      "draft_engines": "草稿箱",
+      "syncing": "同步中..."
+    },
+    "view_my_requests": "查看我发起的申请",
+    "submit_proposal": "提交申请",
+    "save_draft": "保存草稿",
+    "submit_confirm_title": "确认提交",
+    "submit_confirm_content": "请确认所有信息填写无误。提交后将无法撤回修改。",
+    "priority": {
+      "high": "紧急",
+      "normal": "普通",
+      "low": "低优先级",
+      "high_desc": "优先处理",
+      "normal_desc": "标准处理",
+      "low_desc": "常规处理"
+    },
+    "action": {
+      "reload": "刷新",
+      "submit": "提交",
+      "approve": "通过",
+      "reject": "驳回",
+      "return_target": "回退节点",
+      "default_previous": "默认 (上一步)",
+      "done_by": "已办",
+      "select_reject_target": "请选择驳回目标并确认",
+      "withdraw": "撤回",
+      "return": "退回",
+      "transfer": "转交",
+      "addSigner": "加签",
+      "receive": "确认收货",
+      "click_node": "点击节点",
+      "initiate": "发起",
+      "process_start": "流程启动",
+      "skip": "跳过",
+      "approval_panel": "审批办理",
+      "confirm_approve": "确认通过",
+      "confirm_reject": "确认驳回",
+      "select_action": "选择操作",
+      "view_flow_chart": "查看流程图",
+      "view_flow": "查看流程图",
+      "confirm_withdraw": "确认撤回申请",
+      "confirm_withdraw_desc": "确定要撤回该申请吗？撤回后流程将终止。",
+      "withdrawn_success": "已成功撤回申请",
+      "cc": "抄送",
+      "cc_select": "选择抄送人",
+      "more": "更多"
+    }
+  },
+  "order_types": {
+    "person_onboard": "员工入职",
+    "personnel_onboard": "员工入职",
+    "personnel_offboard": "员工离职",
+    "personnel_transfer": "人员调动",
+    "personnel_leave": "请假申请",
+    "personnel_trip": "出差申请",
+    "equipment_inbound": "资产入库",
+    "equipment_outbound": "资产出库",
+    "equipment_transfer": "资产调拨",
+    "equipment_repair": "资产维修",
+    "equipment_scrap": "资产报废",
+    "project_completion": "项目结项",
+    "purchase_request": "采购申请",
+    "project_approval": "项目立项"
+  },
+  "workflow_initiator": {
+    "all": "全部",
+    "search_placeholder": "搜索流程...",
+    "no_matching": "未匹配到相关流程",
+    "click_to_start": "点击发起流程",
+    "categories": {
+      "hr": "人力资源",
+      "personnel": "人力资源",
+      "project": "项目管理",
+      "equipment": "资产与设备",
+      "purchase": "供应链",
+      "admin": "行政管理",
+      "finance": "财务管理",
+      "travel": "出差管理",
+      "general": "通用业务",
+      "leave": "请假考勤"
+    },
+    "definitions": {
+      "employee-onboard": "员工入职",
+      "employee-onboarding": "员工入职",
+      "employee_onboarding": "员工入职",
+      "person_onboard": "员工入职",
+      "personnel_onboard": "员工入职",
+      "personnel_onboarding": "员工入职",
+      "employee-resignation": "员工离职",
+      "employee_resignation": "员工离职",
+      "personnel_resignation": "员工离职",
+      "expense_reimbursement": "报销申请",
+      "expense_reimburse": "报销申请",
+      "flight_booking": "机票预订",
+      "project_completion": "项目结项",
+      "project-completion": "项目结项",
+      "project_approval": "项目立项",
+      "project-approval": "项目立项",
+      "leave-approval": "请假申请",
+      "leave_approval": "请假申请",
+      "leave_request": "请假申请",
+      "leave": "请假申请",
+      "Leave": "请假申请",
+      "travel_request": "出差申请",
+      "equipment-inbound": "资产入库",
+      "equipment-transfer": "资产调拨",
+      "equipment-repair": "资产维修",
+      "equipment-scrap-sale": "资产报废/出售",
+      "purchase_price_approval": "采购限价审批",
+      "price_approval": "采购限价审批",
+      "purchase_price": "采购限价审批",
+      "general": "通用业务"
+    }
+  },
+  "approval_draft": {
+    "title": "草稿箱",
+    "subtitle": "管理未提交的流程草稿",
+    "total": "草稿总数",
+    "rejected": "被驳回",
+    "withdrawn": "已撤回",
+    "occupancy": "存储占用",
+    "all": "全部",
+    "draft": "草稿",
+    "rejected_status": "已驳回",
+    "withdrawn_status": "已撤回",
+    "search_placeholder": "搜索草稿...",
+    "number": "编号",
+    "draft_name": "草稿名称",
+    "update_time": "最后更新时间",
+    "status": "状态",
+    "type": "类型",
+    "no_drafts": "暂无草稿",
+    "records_count": "共 {{count}} 条记录，第 {{current}} / {{total}} 页",
+    "prev_page": "上一页",
+    "next_page": "下一页",
+    "no_name": "未命名草稿",
+    "draft_archived": "草稿已存档",
+    "delete_confirm": "确定要永久删除该草稿吗？此操作不可撤回。",
+    "draft_deleted": "草稿已删除",
+    "load_failed": "加载草稿失败",
+    "confirm_delete": "确认删除"
+  },
+  "approval_completed": {
+    "title": "已办任务",
+    "subtitle": "查看审批历史记录",
+    "total": "已办总数",
+    "approved": "已通过",
+    "quality": "审批质量",
+    "avg_time": "平均耗时",
+    "all": "全部",
+    "approved_status": "通过",
+    "rejected_status": "驳回",
+    "search_placeholder": "搜索审批记录...",
+    "number": "编号",
+    "task": "任务名称",
+    "applicant": "申请人",
+    "node": "环节",
+    "result": "结果",
+    "no_records": "暂无已办记录",
+    "records_count": "共 {{count}} 条记录，第 {{current}} / {{total}} 页",
+    "prev_page": "上一页",
+    "next_page": "下一页",
+    "load_failed": "加载已办任务失败"
+  },
+  "settings": {
+    "general": "常规设置",
+    "notification": "通知设置",
+    "smtp": "邮件服务",
+    "integration": "集成设置"
   }
 }

@@ -20,3 +20,15 @@ declare module "*.svg" {
   const src: string;
   export default src;
 }
+
+interface ImportMetaEnv {
+  readonly VITE_API_BASE_URL: string
+  readonly VITE_APP_TITLE: string
+  readonly VITE_PORT: string
+  readonly VITE_PROXY_TARGET: string
+  readonly VITE_ALLOWED_HOSTS: string
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv
+}

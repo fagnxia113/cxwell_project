@@ -12,12 +12,14 @@ import { workflowApi } from '../../api/workflowApi'
 import { formApi } from '../../api/formApi'
 import { useMessage } from '../../hooks/useMessage'
 import { useConfirm } from '../../hooks/useConfirm'
+import { useTranslation } from 'react-i18next'
 import { parseJWTToken } from '../../config/api'
 import { cn } from '../../utils/cn'
 import FlowDetailView from '../../components/workflow/FlowDetailView'
 
 export default function InstanceDetailPage() {
   const { instanceId } = useParams<{ instanceId: string }>()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const message = useMessage()
   const { confirm } = useConfirm()
@@ -49,7 +51,7 @@ export default function InstanceDetailPage() {
       setLoading(true)
       const res = await workflowApi.getTimeline(instanceId!)
       if (!res.success || !res.data) {
-        message.error('流程实例不存在')
+        message.error(t('approvals.error.not_found', 'Process instance not found'))
         return navigate(-1)
       }
 
@@ -78,7 +80,7 @@ export default function InstanceDetailPage() {
 
     } catch (error: any) {
       console.error(error)
-      message.error('加载流程详情失败')
+      message.error(t('approvals.error.load_failed', 'Failed to load process details'))
     } finally {
       setLoading(false)
     }
@@ -86,14 +88,14 @@ export default function InstanceDetailPage() {
 
   const handleAction = async (action: 'pass' | 'reject') => {
     if (!currentTasks || currentTasks.length === 0) {
-      message.error('当前没有待处理的任务')
+      message.error(t('approvals.error.no_tasks', 'No tasks to handle'))
       return
     }
 
     const task = currentTasks[0]
     const isConfirmed = await confirm({
-      title: action === 'pass' ? '确认通过审批' : '确认驳回申请',
-      content: `您正在处理节点 [${task.node_name || task.nodeName}]，确定提交决策吗？`,
+      title: action === 'pass' ? t('approvals.action.confirm_pass', 'Confirm Approve') : t('approvals.action.confirm_reject', 'Confirm Reject'),
+      content: t('approvals.action.confirm_content', { node: task.node_name || task.nodeName }),
       type: action === 'pass' ? 'primary' : 'danger'
     })
 
@@ -102,7 +104,7 @@ export default function InstanceDetailPage() {
     try {
       setSubmitting(true)
       await workflowApi.submitTask(task.id.toString(), action, { formData }, opinion, targetNodeCode)
-      message.success(action === 'pass' ? '审批通过，流程已推进' : '已成功驳回至指定环节')
+      message.success(action === 'pass' ? t('approvals.message.pass_success') : t('approvals.message.reject_success'))
       navigate('/approvals/center')
     } catch (err: any) {
       message.error(err.message || '操作失败')
@@ -122,18 +124,18 @@ export default function InstanceDetailPage() {
   if (loading) return (
     <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
       <div className="w-12 h-12 border-4 border-slate-100 border-t-indigo-600 rounded-full animate-spin" />
-      <p className="text-xs font-black uppercase tracking-widest text-slate-400">正在加载流程详情...</p>
+      <p className="text-xs font-black uppercase tracking-widest text-slate-400">{t('approvals.loading_task')}</p>
     </div>
   )
 
   if (!instance) return (
     <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-      <p className="text-sm font-black uppercase tracking-widest text-slate-400">流程实例不存在</p>
+      <p className="text-sm font-black uppercase tracking-widest text-slate-400">{t('approvals.error.not_found')}</p>
       <button
         onClick={() => navigate(-1)}
         className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all"
       >
-        返回
+        {t('common.back')}
       </button>
     </div>
   )
@@ -146,7 +148,7 @@ export default function InstanceDetailPage() {
       <div className="flex items-center justify-end gap-3">
         {currentNodeName && (
           <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-100">
-            当前环节: {currentNodeName}
+            {t('approvals.current_node')}: {currentNodeName}
           </span>
         )}
         {instance?.status && (
@@ -156,7 +158,7 @@ export default function InstanceDetailPage() {
             (instance.status === 'completed' || instance.status === 'finished') && 'bg-emerald-50 text-emerald-600 border-emerald-100',
             (instance.status === 'terminated' || instance.status === 'rejected') && 'bg-rose-50 text-rose-600 border-rose-100'
           )}>
-            {instance.status === 'running' ? '进行中' : (instance.status === 'completed' || instance.status === 'finished') ? '已完成' : '已终止'}
+            {instance.status === 'running' ? t('approvals.status.running') : (instance.status === 'completed' || instance.status === 'finished') ? t('approvals.status.finished') : t('approvals.status.terminated')}
           </span>
         )}
         <button
@@ -164,12 +166,12 @@ export default function InstanceDetailPage() {
           className="flex items-center gap-2 text-slate-400 hover:text-indigo-600 font-bold transition-all p-2"
         >
           <ArrowLeft size={20} />
-          返回列表
+          {t('approvals.back_to_list')}
         </button>
       </div>
 
       <FlowDetailView
-        title={instance?.title || instance?.process_title || '流程详情'}
+        title={instance?.title || instance?.process_title || t('approvals.history.title')}
         processTitle={instance?.title || instance?.process_title}
         initiatorName={instance?.initiator_name}
         createdAt={instance?.start_time || instance?.create_time}
@@ -263,7 +265,7 @@ export default function InstanceDetailPage() {
           className="px-8 py-4 bg-white border border-slate-200 text-slate-900 rounded-2xl hover:bg-slate-50 transition-all font-black text-xs uppercase tracking-widest flex items-center gap-3 shadow-sm"
         >
           <GitBranch size={16} className="text-indigo-600" />
-          查看流程图
+          {t('approvals.action.view_flow')}
         </button>
       </div>
     </div>

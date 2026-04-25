@@ -20,6 +20,9 @@ export default defineConfig(({ mode }) => {
       port: Number(env.VITE_PORT) || 3000,
       open: true,
       cors: true,
+      allowedHosts: env.VITE_ALLOWED_HOSTS 
+        ? env.VITE_ALLOWED_HOSTS.split(',').map(h => h.trim()) 
+        : true,
       proxy: {
         '/api': {
           target: env.VITE_PROXY_TARGET || 'http://localhost:8080',

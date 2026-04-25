@@ -1,7 +1,8 @@
 /**
- * 人员管理页面 - 现代�? * Premium High-Density List-Based UI
+ * 人员管理页面 - 现代? * Premium High-Density List-Based UI
  */
 import React, { useState, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -102,55 +103,8 @@ const StatCard = ({ title, value, icon: Icon, color, delay }: any) => (
   </motion.div>
 )
 
-const t = (key: string, vars?: Record<string, string>): string => {
-  const map: Record<string, string> = {
-    'personnel.status.active': '在职',
-    'personnel.status.inactive': '待入职',
-    'personnel.status.resigned': '离职',
-    'personnel.status.leave': '休假',
-    'personnel.error.load_failed': '加载失败',
-    'personnel.error.delete_record': '记录已删除',
-    'personnel.error.update_success': '更新成功',
-    'personnel.action.confirm_destroy': '确认删除',
-    'personnel.action.destroy_desc': '确定要删除员工 {{name}} 吗？',
-    'personnel.list_title': '人员名单',
-    'personnel.list_subtitle': '员工档案与入离职管理',
-    'personnel.action.apply_onboarding': '入职申请',
-    'personnel.stats.total': '总人数',
-    'personnel.stats.active_count': '在职人数',
-    'common.growth_rate': '本月增长',
-    'common.retention_rate': '留存率',
-    'personnel.search_placeholder': '搜索姓名、手机号、部门...',
-    'personnel.fields.employee_no': '工号',
-    'personnel.fields.info': '基本信息',
-    'personnel.fields.dept': '部门',
-    'personnel.fields.contact_info': '联系方式',
-    'common.status': '状态',
-    'personnel.empty.no_records': '暂无人员记录',
-    'common.total': '共',
-    'common.page': '页码',
-    'common.prev_page': '上一页',
-    'common.next_page': '下一页',
-    'personnel.action.edit_employee': '编辑员工',
-    'personnel.action.transfer_desc': '修改员工基本信息与组织关系',
-    'personnel.fields.name': '姓名',
-    'personnel.fields.position': '岗位',
-    'common.search': '选择',
-    'personnel.fields.phone': '手机号',
-    'personnel.fields.email': '邮箱',
-    'personnel.action.updating': '保存中...',
-    'personnel.action.submit_update': '确认更新'
-  };
-  let text = map[key] || key;
-  if (vars) {
-    Object.keys(vars).forEach(k => {
-      text = text.replace(`{{${k}}}`, vars[k]);
-    });
-  }
-  return text;
-};
-
 export default function PersonnelListPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { success, error: showError } = useMessage()
   const { confirm } = useConfirm()

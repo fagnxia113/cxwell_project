@@ -162,7 +162,7 @@ export default function EmployeeMonthlyReportPage() {
 
   const getEntryForDate = (date: string) => schedule.get(date)
 
-  const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+  const weekDays = t('personnel.attendance.weekdays', { returnObjects: true }) as string[]
 
   const hasScheduleData = schedule.size > 0
 

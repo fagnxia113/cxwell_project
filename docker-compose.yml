@@ -36,6 +36,8 @@ services:
       dockerfile: Dockerfile
     container_name: cxwell_frontend
     restart: always
+    environment:
+      - VITE_ALLOWED_HOSTS=${VITE_ALLOWED_HOSTS:-jlxayywgrwee.sealosbja.site}
     depends_on:
       - backend
     ports:

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   RefreshCw, 
-  Activity, 
+  Activity as ActivityIcon, 
   Play, 
+  Search,
   BarChart as BarChartIcon 
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
@@ -61,98 +62,135 @@ const WorkflowMonitorPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 flex flex-col">
-      {/* 顶部标题栏 */}
-      <div className="bg-white border-b border-slate-100 sticky top-0 z-20">
-        <div className="px-8 py-6 max-w-[1600px] mx-auto flex items-center justify-between">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">工作流监控</h1>
-            <div className="flex items-center gap-2">
-               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">实时监控工作流运行状态</p>
+    <div className="min-h-screen bg-mesh p-4 lg:p-6 space-y-4 animate-fade-in custom-scrollbar">
+      {/* Standard Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
+          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+            <div className="p-2 bg-primary rounded-lg text-white">
+              <ActivityIcon size={20} strokeWidth={2.5} />
             </div>
-          </div>
+            工作流监控
+          </h1>
+          <p className="text-slate-500 text-sm mt-0.5">实时监控运行状态与系统性能指标</p>
+        </motion.div>
+
+        <div className="flex items-center gap-2">
           <button
             onClick={() => fetchData(filterStatus)}
             disabled={loading}
-            className="flex items-center px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg active:scale-95 disabled:opacity-50"
+            className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg shadow-sm transition-all text-sm font-medium flex items-center gap-2 hover:bg-slate-50 disabled:opacity-50"
           >
-            <RefreshCw className={cn("w-3.5 h-3.5 mr-2", loading && "animate-spin")} />
-            刷新数据
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            <span>刷新数据</span>
           </button>
-        </div>
-
-        {/* 标签页切换 */}
-        <div className="px-8 max-w-[1600px] mx-auto hidden md:block">
-          <div className="flex space-x-10">
-            {[
-              { key: 'overview', label: '总览', icon: Activity },
-              { key: 'instances', label: '实例', icon: Play },
-              { key: 'statistics', label: '统计', icon: BarChartIcon }
-            ].map(({ key, label, icon: Icon }) => (
-              <button
-                key={key}
-                onClick={() => setActiveTab(key as any)}
-                className={cn(
-                  "flex items-center py-5 px-1 border-b-[3px] font-black text-[11px] uppercase tracking-widest transition-all",
-                  activeTab === key
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-slate-400 hover:text-slate-600"
-                )}
-              >
-                <Icon className="w-4 h-4 mr-2.5" />
-                {label}
-              </button>
-            ))}
-          </div>
         </div>
       </div>
 
-      {/* 主内容区 */}
-      <main className="flex-1 p-8 max-w-[1600px] mx-auto w-full">
-        {loading && !realtimeData && (
-          <div className="flex flex-col items-center justify-center py-32 gap-4">
-             <div className="w-12 h-12 border-4 border-slate-100 border-t-blue-500 rounded-full animate-spin" />
-             <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">正在同步引擎数据...</p>
-          </div>
-        )}
+      {/* Analytics Dashboard (Standard StatCards) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard title="运行中实例" value={statistics?.activeCount || 0} icon={Play} color="emerald" delay={0.1} />
+        <StatCard title="今日异常" value={statistics?.errorCount || 0} icon={ActivityIcon} color="rose" delay={0.2} />
+        <StatCard title="平均处理时长" value={formatDuration(statistics?.avgDuration)} icon={RefreshCw} color="blue" delay={0.3} />
+        <StatCard title="待干预任务" value={statistics?.pendingIntervention || 0} icon={RefreshCw} color="amber" delay={0.4} />
+      </div>
 
-        {/* 1. 总览页 (Dashboard) */}
-        {activeTab === 'overview' && realtimeData && (
-          <MonitorDashboard 
-            realtimeData={realtimeData} 
-            statistics={statistics} 
-            formatDuration={formatDuration} 
+      {/* Intelligence Filter Bar (Standard) */}
+      <div className="premium-card p-4 bg-white/60 backdrop-blur-xl border-none flex flex-wrap items-center gap-4 shadow-sm">
+        <div className="flex items-center gap-1 bg-slate-100/50 p-1 rounded-lg">
+          {[
+            { key: 'overview', label: '总览', icon: ActivityIcon },
+            { key: 'instances', label: '实例', icon: Play },
+            { key: 'statistics', label: '统计', icon: BarChartIcon }
+          ].map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key as any)}
+              className={cn(
+                "px-5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2",
+                activeTab === key
+                  ? "bg-white text-indigo-600 shadow-sm"
+                  : "text-slate-400 hover:text-slate-600"
+              )}
+            >
+              <Icon size={16} />
+              {label}
+            </button>
+          ))}
+        </div>
+        
+        <div className="flex-1 min-w-[200px] relative group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors" size={14} />
+          <input
+            type="text"
+            placeholder="搜索实例名称或单据编号..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="input-standard pl-9 !py-2 text-sm bg-white/50 border-white focus:bg-white !rounded-lg w-full"
           />
-        )}
+        </div>
+      </div>
 
-        {/* 2. 实例列表 (Instance Table) */}
-        {activeTab === 'instances' && (
-          <MonitorInstanceTable 
-            instances={instances}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            filterStatus={filterStatus}
-            setFilterStatus={setFilterStatus}
-            onView={(inst) => {
-              fetchInstanceDetail(inst.id);
-            }}
-            onIntervene={(inst) => {
-              setSelectedInstance(inst);
-              setInitialInterventionTask(null);
-              setShowInterventionModal(true);
-            }}
-            formatDuration={formatDuration}
-          />
-        )}
+      {/* Main Content Area */}
+      <main className="flex-1 w-full">
+        <AnimatePresence mode="wait">
+          {loading && !realtimeData ? (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="py-24 text-center space-y-6 bg-white/30 rounded-2xl border border-dashed border-slate-200"
+            >
+               <div className="w-16 h-16 border-4 border-slate-100 border-t-primary rounded-full animate-spin mx-auto" />
+               <p className="text-slate-400 font-black uppercase tracking-[0.3em] text-sm">同步中...</p>
+            </motion.div>
+          ) : (
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {/* 1. 总览页 (Dashboard) */}
+              {activeTab === 'overview' && realtimeData && (
+                <MonitorDashboard 
+                  realtimeData={realtimeData} 
+                  statistics={statistics} 
+                  formatDuration={formatDuration} 
+                />
+              )}
 
-        {/* 3. 统计报表 (Statistics) */}
-        {activeTab === 'statistics' && statistics && (
-          <MonitorStatisticsView statistics={statistics} />
-        )}
+              {/* 2. 实例列表 (Instance Table) */}
+              {activeTab === 'instances' && (
+                <MonitorInstanceTable 
+                  instances={instances}
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  filterStatus={filterStatus}
+                  setFilterStatus={setFilterStatus}
+                  onView={(inst) => {
+                    fetchInstanceDetail(inst.id);
+                  }}
+                  onIntervene={(inst) => {
+                    setSelectedInstance(inst);
+                    setInitialInterventionTask(null);
+                    setShowInterventionModal(true);
+                  }}
+                  formatDuration={formatDuration}
+                />
+              )}
+
+              {/* 3. 统计报表 (Statistics) */}
+              {activeTab === 'statistics' && statistics && (
+                <MonitorStatisticsView statistics={statistics} />
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
 
-      {/* 4. 实例详情覆盖层 */}
+      {/* Modals & Overlays */}
       {selectedInstance && !showInterventionModal && (
         <InstanceDetailOverlay 
           instance={selectedInstance}
@@ -166,7 +204,6 @@ const WorkflowMonitorPage: React.FC = () => {
         />
       )}
 
-      {/* 5. 行政干预表单弹窗 */}
       {showInterventionModal && selectedInstance && (
         <AdminInterventionForm 
           instance={{...selectedInstance, tasks: instanceTasks} as any}
@@ -178,5 +215,40 @@ const WorkflowMonitorPage: React.FC = () => {
     </div>
   );
 };
+
+// Standard StatCard implementation
+const StatCard = ({ title, value, icon: Icon, color, delay }: any) => {
+  const colorConfig: Record<string, { bg: string; text: string }> = {
+    emerald: { bg: 'bg-emerald-500', text: 'text-emerald-600' },
+    blue: { bg: 'bg-blue-500', text: 'text-blue-600' },
+    indigo: { bg: 'bg-indigo-500', text: 'text-indigo-600' },
+    amber: { bg: 'bg-amber-500', text: 'text-amber-600' },
+    rose: { bg: 'bg-rose-500', text: 'text-rose-600' }
+  }
+  const config = colorConfig[color] || colorConfig.blue
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, type: 'spring', damping: 25 }}
+      className="bg-white p-6 rounded-lg border border-slate-100/80 shadow-sm relative overflow-hidden group"
+    >
+      <div className={cn(
+        "absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-[0.03]",
+        config.bg
+      )} />
+      <div className="flex items-center gap-5 relative z-10">
+        <div className={cn("p-4 rounded-2xl", config.bg)}>
+          <Icon size={24} strokeWidth={2.5} className="text-white" />
+        </div>
+        <div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1.5">{title}</p>
+          <h3 className="text-3xl font-black text-slate-900 tracking-tighter leading-none">{value}</h3>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
 
 export default WorkflowMonitorPage;

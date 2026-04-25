@@ -50,6 +50,10 @@
     "todo": "Todo",
     "pass": "Passed",
     "reject": "Rejected",
+    "withdraw": "Withdrawn",
+    "back_to_list": "Back to List",
+    "current_node": "Current Node",
+    "loading_task": "Synchronizing task context...",
     "tabs": {
       "initiate": "Initiate",
       "todo": "To-do Tasks",
@@ -60,8 +64,59 @@
     "status": {
       "running": "Running",
       "finished": "Completed",
+      "completed": "Completed",
+      "suspended": "Suspended",
+      "cancelled": "Cancelled",
       "rejected": "Rejected",
-      "cancelled": "Cancelled"
+      "terminated": "Terminated",
+      "pending": "Pending"
+    },
+    "message": {
+      "pass_success": "Approve success, process moved forward",
+      "reject_success": "Rejected to target node successfully",
+      "withdraw_success": "Request withdrawn successfully",
+      "select_reject_target": "Please select reject target and confirm",
+      "confirm_content": "You are processing node [{{node}}], are you sure to submit your decision?"
+    },
+    "error": {
+      "not_found": "Task not found or already processed",
+      "load_failed": "Failed to load details",
+      "no_tasks": "No pending tasks at the moment"
+    },
+    "action": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "transfer": "Transfer",
+      "cc": "CC",
+      "add_signer": "Add Signer",
+      "cancel": "Withdraw",
+      "submit": "Submit",
+      "save_draft": "Save Draft",
+      "view_detail": "View Details",
+      "pass": "Approve",
+      "reject_action": "Reject",
+      "view_flow": "View Flowchart",
+      "withdraw": "Withdraw Request"
+    },
+    "form": {
+      "comment": "Comment",
+      "comment_placeholder": "Enter your comment...",
+      "opinion": "Decision Opinion",
+      "opinion_placeholder": "Enter your professional approval or rejection comments...",
+      "next_node": "Next Node",
+      "assignee": "Assignee",
+      "cc_users": "CC Users",
+      "attachments": "Attachments",
+      "return_node": "Return Node",
+      "default_previous": "Default (Previous)"
+    },
+    "history": {
+      "title": "History",
+      "node_name": "Node",
+      "handler": "Handler",
+      "action": "Action",
+      "time": "Time",
+      "duration": "Duration"
     }
   },
   "workflow_initiator": {
@@ -133,6 +188,8 @@
     "success": "Success",
     "error": "Error",
     "noData": "No Data Found",
+    "no_data": "No Data Found",
+    "last_update": "Last Update",
     "action": "Action",
     "status": "Status",
     "records": "records",
@@ -142,6 +199,10 @@
     "attachment": "Attachments",
     "all": "All",
     "submitting": "Processing...",
+    "days": "days",
+    "new_today": "New Today",
+    "safety_tip": "Security Notice",
+    "safety_desc": "Modifying system parameters may affect workflow execution and notifications. Please confirm configuration meanings before making changes.",
     "just_now": "Just now",
     "just_arrived": "Just arrived",
     "hours_ago_one": "1 hour ago",
@@ -303,40 +364,65 @@
     "pending": "Pending"
   },
   "personnel": {
-    "list_title": "Personnel",
-    "list_subtitle": "Workforce management & KPI monitoring",
-    "search_placeholder": "Search by name, ID or position...",
-    "ledger": "HR Ledger",
-    "detail": "Employee Profile",
+    "list_title": "Personnel List",
+    "list_subtitle": "Employee archives & workforce management",
+    "search_placeholder": "Search name, ID or department...",
+    "add_employee": "Register Employee",
+    "sync_dingtalk": "Sync DingTalk",
     "stats": {
-      "total": "Total",
-      "active_count": "Active",
+      "total": "Total Count",
+      "active_count": "Active Staff",
       "on_attendance": "Attendance",
       "today_normal": "Normal Today",
       "pending_report": "Pending Reports",
       "absent": "Absent"
     },
     "action": {
-      "apply_onboarding": "Onboarding",
+      "apply_onboarding": "Onboarding Request",
       "sync_dingtalk": "Sync DingTalk",
       "sync_attendance": "Sync Attendance",
       "add_to_project": "Add Member",
       "confirm_destroy": "Confirm Removal",
-      "destroy_desc": "Remove employee {{name}} from system? This cannot be undone.",
-      "transfer_desc": "Update position and organization",
+      "destroy_desc": "Are you sure you want to remove employee {{name}}? This cannot be undone.",
+      "transfer_desc": "Modify position and organization mapping",
       "edit_employee": "Edit Profile",
       "one_click_remind": "Remind Pending",
       "remind_success": "Sent reminders to {{count}} personnel",
       "syncing": "Syncing...",
-      "updating": "Updating...",
-      "submit_update": "Submit"
+      "updating": "Saving...",
+      "submit_update": "Confirm Update"
     },
-    "view_list": "Member List",
-    "view_schedule": "Schedule",
+    "status": {
+      "active": "Active",
+      "inactive": "On-boarding",
+      "resigned": "Resigned",
+      "leave": "On Leave",
+      "on_duty": "On Duty",
+      "business_trip": "Business Trip",
+      "other": "Other",
+      "probation": "Probation"
+    },
+    "gender": {
+      "male": "Male",
+      "female": "Female"
+    },
+    "roles": {
+      "admin": "Administrator",
+      "project_manager": "Project Manager",
+      "hr_manager": "HR Manager",
+      "equipment_manager": "Asset Manager",
+      "implementer": "Implementer",
+      "user": "Standard User"
+    },
+    "sections": {
+      "contact": "Contact Information",
+      "professional": "Professional Details",
+      "other": "Metadata"
+    },
     "fields": {
       "id": "ID",
-      "employee_no": "Employee ID",
-      "info": "Basic Info",
+      "employee_no": "Staff ID",
+      "info": "Information",
       "name": "Name",
       "gender": "Gender",
       "phone": "Phone",
@@ -344,26 +430,24 @@
       "dept": "Department",
       "position": "Position",
       "contact_info": "Contact",
-      "role": "Role",
+      "role": "System Role",
       "status": "Status",
       "hire_date": "Hire Date",
       "hireDate": "Hire Date",
       "remark": "Remark",
-      "address": "Address",
-      "emergency_contact": "Emergency Contact",
-      "emergency_phone": "Emergency Phone",
-      "education": "Education",
-      "major": "Major",
-      "graduation_school": "University",
-      "graduation_date": "Graduation Date",
-      "bank_account": "Bank Account",
-      "bank_name": "Bank Name",
-      "employee_type": "Employee Type",
-      "id_card": "ID Number",
-      "start_date": "Start Date"
+      "userId": "User ID",
+      "dingtalk_user_id": "DingTalk ID",
+      "dingtalk_dept_id": "DingTalk Dept ID"
+    },
+    "error": {
+      "load_failed": "Failed to load personnel data",
+      "delete_record": "Record deleted successfully",
+      "update_success": "Employee profile updated successfully",
+      "not_found": "Employee not found",
+      "sync_success": "DingTalk synced"
     },
     "empty": {
-      "no_records": "No Personnel Records Found"
+      "no_records": "No personnel records found"
     },
     "transfer": {
       "title": "Personnel Transfer Request",
@@ -410,39 +494,13 @@
       "in_out": "In: {{in}} / Out: {{out}}",
       "status_normal": "Valid Presence",
       "missing_report": "Report Missing",
-      "system_absent": "System Absent"
-    },
-    "role": {
-      "admin": "System Admin",
-      "root": "Root Authority",
-      "manager": "Executive",
-      "engineer": "Operations Engineer",
-      "staff": "Operator"
-    },
-    "status": {
-      "active": "Active",
-      "inactive": "Inactive",
-      "on_leave": "On Leave",
-      "resigned": "Resigned",
-      "leave": "On Leave"
-    },
-    "gender": {
-      "male": "Male",
-      "female": "Female"
-    },
-    "employee_type_labels": {
-      "regular": "Regular",
-      "probation": "Probation",
-      "intern": "Intern",
-      "contract": "Contract",
-      "part_time": "Part-time"
-    },
-    "error": {
-      "load_failed": "Failed to load personnel",
-      "not_found": "Employee not found",
-      "delete_record": "Employee removed",
-      "update_success": "Profile updated",
-      "sync_success": "DingTalk synced"
+      "system_absent": "System Absent",
+      "analysis_engine": "Attendance Analysis Engine v2.0",
+      "legend": {
+        "present": "Present",
+        "absent": "Absent",
+        "holiday": "Rest/Holiday"
+      }
     },
     "rotation": {
       "report_title": "Monthly Schedule Report",
@@ -515,7 +573,7 @@
         "title": "Reporting Structure",
         "subtitle": "Set direct managers for dynamic approval workflows.",
         "refresh": "Refresh",
-        "batch_save": "Batch Save",
+        "batch_save": "Batch Save ({{count}})",
         "list": "List",
         "tree": "Tree",
         "search_placeholder": "Search employees...",
@@ -536,7 +594,12 @@
           "dept_leader": "Submitter's Dept Leader",
           "n2": "Submitter's 2nd Level Manager",
           "role": "By Role (Existing)"
-        }
+        },
+        "leaders": "Management Roles",
+        "dept_leaders": "Dept Leaders",
+        "superior": "Direct Superior",
+        "sub_count": "Subordinates",
+        "staff_column": "Staff"
       }
     }
   },
@@ -1706,6 +1769,16 @@
     "secure_entry": "Secure Login",
     "infrastructure": "cxwell Project Management System",
     "copyright": "© 2026 cxwell All Rights Reserved"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications"
+  },
+  "settings": {
+    "general": "General",
+    "notification": "Notification",
+    "smtp": "Mail Service",
+    "integration": "Integrations"
   },
   "notification_center": {
     "title": "Notifications",
@@ -3272,5 +3345,11 @@
     "empty_title": "No content",
     "empty_desc": "No files yet.",
     "delete_confirm_desc": "Are you sure? Deleting a folder will also delete all its contents."
+  },
+  "settings": {
+    "general": "General",
+    "notification": "Notification",
+    "smtp": "Mail Service",
+    "integration": "Integrations"
   }
 }

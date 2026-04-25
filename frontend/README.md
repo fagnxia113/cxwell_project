@@ -21,6 +21,7 @@
 2. 编辑 `.env` 文件：
    - `VITE_API_BASE_URL`: 后端 API 基础地址（例如 `http://api.cxwell.com`）
    - `VITE_PORT`: 本地开发端口（默认 3000）
+   - `VITE_ALLOWED_HOSTS`: 允许访问的主机名（部署至 Sealos 等环境时需要设置，例如 `jlxayywgrwee.sealosbja.site`）
 
 ## 安装与运行
 

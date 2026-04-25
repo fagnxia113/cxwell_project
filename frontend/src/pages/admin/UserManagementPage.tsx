@@ -2,18 +2,16 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { 
   Users, 
   UserPlus, 
-  Shield, 
-  Mail, 
-  Key, 
-  Trash2, 
-  Edit3, 
   Search, 
-  CheckCircle2, 
-  XCircle,
+  RefreshCcw,
+  Edit3,
+  Trash2,
+  Key,
   ShieldCheck,
-  ShieldAlert,
   UserCircle,
-  FileKey
+  MoreHorizontal,
+  X,
+  Activity as ActivityIcon
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { systemApi } from '../../api/systemApi'
@@ -22,6 +20,7 @@ import { useConfirm } from '../../hooks/useConfirm'
 import { cn } from '../../utils/cn'
 import ModalDialog from '../../components/ModalDialog'
 import { usePermission } from '../../contexts/PermissionContext'
+import { useTranslation } from 'react-i18next'
 
 interface User {
   userId: string
@@ -33,23 +32,49 @@ interface User {
   createTime: string
 }
 
-const roleConfigs: Record<string, { label: string; color: string; icon: any; gradient: string }> = {
-  'admin': { label: '超级管理员', color: 'rose-500', icon: ShieldCheck, gradient: 'from-rose-500 to-pink-500' },
-  'project_manager': { label: '项目指挥官', color: 'blue-500', icon: Shield, gradient: 'from-blue-500 to-indigo-500' },
-  'hr_manager': { label: '人资调度室', color: 'purple-500', icon: Users, gradient: 'from-purple-500 to-violet-500' },
-  'equipment_manager': { label: '资产维护官', color: 'emerald-500', icon: ShieldAlert, gradient: 'from-emerald-500 to-teal-500' },
-  'implementer': { label: '一线实施员', color: 'amber-500', icon: UserCircle, gradient: 'from-amber-500 to-orange-500' },
-  'user': { label: '核心业务端', color: 'slate-500', icon: UserCircle, gradient: 'from-slate-500 to-slate-600' }
+const StatCard = ({ title, value, icon: Icon, color, delay }: any) => {
+  const colorConfig: Record<string, { bg: string; text: string }> = {
+    emerald: { bg: 'bg-emerald-500', text: 'text-emerald-600' },
+    blue: { bg: 'bg-blue-500', text: 'text-blue-600' },
+    indigo: { bg: 'bg-indigo-500', text: 'text-indigo-600' },
+    amber: { bg: 'bg-amber-500', text: 'text-amber-600' }
+  }
+  const config = colorConfig[color] || colorConfig.blue
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, type: 'spring', damping: 25 }}
+      className="bg-white p-6 rounded-lg border border-slate-100/80 shadow-sm relative overflow-hidden group"
+    >
+      <div className={cn(
+        "absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-[0.03]",
+        config.bg
+      )} />
+      <div className="flex items-center gap-5 relative z-10">
+        <div className={cn("p-4 rounded-2xl", config.bg)}>
+          <Icon size={24} strokeWidth={2.5} className="text-white" />
+        </div>
+        <div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1.5">{title}</p>
+          <h3 className="text-3xl font-black text-slate-900 tracking-tighter leading-none">{value}</h3>
+        </div>
+      </div>
+    </motion.div>
+  )
 }
 
 export default function UserManagementPage() {
+  const { t } = useTranslation()
   const message = useMessage()
   const { confirm } = useConfirm()
   const { hasButton } = usePermission()
+  
   const [users, setUsers] = useState<User[]>([])
   const [dynamicRoles, setDynamicRoles] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   
@@ -87,13 +112,20 @@ export default function UserManagementPage() {
   }
 
   const filteredUsers = useMemo(() => {
-    const query = searchQuery.toLowerCase()
+    const query = searchTerm.toLowerCase()
     return users.filter(u => 
       u.userName.toLowerCase().includes(query) || 
       u.loginName.toLowerCase().includes(query) || 
       u.email?.toLowerCase().includes(query)
     )
-  }, [users, searchQuery])
+  }, [users, searchTerm])
+
+  const stats = useMemo(() => ({
+    total: users.length,
+    active: users.filter(u => u.status === '0').length,
+    admins: users.filter(u => u.roles?.some((r: any) => r.roleKey === 'admin')).length,
+    newToday: 0 // Placeholder
+  }), [users])
 
   const handleOpenModal = (user?: User) => {
     if (user) {
@@ -125,16 +157,16 @@ export default function UserManagementPage() {
     try {
       if (editingUser) {
         await systemApi.updateUser(editingUser.userId, formData)
-        message.success('身份档案同步完成')
+        message.success(t('common.success'))
       } else {
-        if (!formData.password) return message.warning('必须输入初始密码')
+        if (!formData.password) return message.warning('请输入密码')
         await systemApi.createUser(formData)
-        message.success('新身份已建立')
+        message.success(t('common.success'))
       }
       setShowModal(false)
       loadData()
     } catch (error: any) {
-      message.error(error.message || '操作失败')
+      message.error(error.message || t('common.error'))
     }
   }
 
@@ -143,188 +175,254 @@ export default function UserManagementPage() {
     try {
       const newStatus = user.status === '0' ? '1' : '0'
       await systemApi.updateUserStatus(user.userId, newStatus)
-      message.success(`用户 "${user.userName}" 状态更新成功`)
+      message.success(t('common.success'))
       loadData()
     } catch (error) {
-       message.error('状态更新失败')
+       message.error(t('common.error'))
     }
   }
 
   const handleDelete = async (user: User, e: React.MouseEvent) => {
     e.stopPropagation();
     const isConfirmed = await confirm({
-      title: '注销身份令牌',
-      content: `该操作将永久注销 "${user.userName}" 的系统访问令牌。确认继续？`,
+      title: t('common.delete'),
+      content: `确定要删除用户 "${user.userName}" 吗？`,
       type: 'danger'
     })
-
-    if (!isConfirmed) return
-
-    try {
-      await systemApi.deleteUser(user.userId)
-      message.success('身份数据已抹除')
-      loadData()
-    } catch (error) {
-      message.error('删除失败')
+    if (isConfirmed) {
+      try {
+        await systemApi.deleteUser(user.userId)
+        message.success(t('common.success'))
+        loadData()
+      } catch (error) {
+        message.error(t('common.error'))
+      }
     }
   }
 
-  const handleOpenResetPwd = (user: User, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setResetPwdUser(user)
-    setNewPassword('')
-    setShowResetPwdModal(true)
-  }
-
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!resetPwdUser) return
+  const handleResetPassword = async () => {
+    if (!resetPwdUser || newPassword.length < 6) {
+      return message.warning('请输入至少6位新密码')
+    }
     try {
       await systemApi.resetUserPassword(resetPwdUser.userId, newPassword)
+      message.success('密码重置成功')
       setShowResetPwdModal(false)
-      message.success('重置指令执行成功')
-    } catch (error) {
-      message.error('重置异常')
+      setNewPassword('')
+      setResetPwdUser(null)
+    } catch (error: any) {
+      message.error(error.message || '重置失败')
     }
   }
 
   return (
-    <div className="max-w-full mx-auto space-y-6 animate-fade-in pb-20">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <div className="p-1.5 bg-slate-900 text-white rounded-xl shadow-lg shadow-slate-900/10">
-              <Users size={18} />
+    <div className="min-h-screen bg-mesh p-4 lg:p-6 space-y-4 animate-fade-in custom-scrollbar">
+      {/* Standard Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
+          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+            <div className="p-2 bg-primary rounded-lg text-white">
+              <Users size={20} strokeWidth={2.5} />
             </div>
-            <h1 className="text-xl font-black text-slate-800 tracking-tight">成员与访问控制</h1>
-          </div>
-          <p className="text-slate-400 text-xs font-medium">管理企业数字身份、权限分配及系统访问安全准则</p>
+            {t('sidebar.users')}
+          </h1>
+          <p className="text-slate-500 text-sm mt-0.5">{t('personnel.list_subtitle')}</p>
+        </motion.div>
+
+        <div className="flex gap-2">
+          {hasButton('system:user:create') && (
+            <button
+              onClick={() => handleOpenModal()}
+              className="px-4 py-2 bg-primary text-white rounded-lg shadow-sm transition-all text-sm font-medium flex items-center gap-2 hover:brightness-110"
+            >
+              <UserPlus size={14} />
+              <span>{t('common.create')}</span>
+            </button>
+          )}
         </div>
-        
-        {hasButton('system:user:create') && (
-        <button
-          onClick={() => handleOpenModal()}
-          className="px-5 py-2 bg-indigo-600 text-white rounded-xl text-[11px] font-black shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 hover:-translate-y-0.5 transition-all uppercase tracking-wider"
-        >
-          <UserPlus size={16} />
-          建立新身份
-        </button>
-        )}
       </div>
 
-      <div className="bg-white/70 backdrop-blur-md p-3 rounded-2xl border border-slate-100 shadow-lg shadow-slate-200/30">
-        <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={16} />
+      {/* Analytics Dashboard */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard title={t('common.total')} value={stats.total} icon={Users} color="blue" delay={0.1} />
+        <StatCard title={t('personnel.status.active')} value={stats.active} icon={ShieldCheck} color="emerald" delay={0.2} />
+        <StatCard title={t('personnel.roles.admin')} value={stats.admins} icon={UserCircle} color="amber" delay={0.3} />
+        <StatCard title={t('common.new_today')} value={stats.newToday} icon={ActivityIcon} color="indigo" delay={0.4} />
+      </div>
+
+      {/* Filter Bar */}
+      <div className="premium-card p-4 bg-white/60 backdrop-blur-xl border-none flex flex-wrap items-center gap-4 shadow-sm">
+        <div className="flex-1 min-w-[200px] relative group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors" size={14} />
           <input
             type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="通过账号、姓名或邮箱进行模糊检索..."
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 focus:bg-white outline-none transition-all text-xs font-bold shadow-inner"
+            placeholder={t('personnel.search_placeholder')}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="input-standard pl-9 !py-2 text-sm bg-white/50 border-white focus:bg-white !rounded-lg w-full"
           />
         </div>
+
+        <button
+          onClick={() => loadData()}
+          className="p-2 bg-white rounded-lg border border-slate-200 text-slate-400 hover:text-primary transition-all shadow-sm"
+        >
+          <RefreshCcw size={14} className={loading ? "animate-spin" : ""} />
+        </button>
       </div>
 
-      <div className="bg-white rounded-2xl p-0 overflow-hidden border border-slate-100 shadow-xl shadow-slate-200/40">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-100">
-            <thead className="bg-slate-50/50">
-              <tr>
-                <th className="px-6 py-4 text-left text-[9px] font-black text-slate-400 uppercase tracking-widest">核心身份图景</th>
-                <th className="px-5 py-4 text-left text-[9px] font-black text-slate-400 uppercase tracking-widest">职能角色</th>
-                <th className="px-5 py-4 text-left text-[9px] font-black text-slate-400 uppercase tracking-widest">动力状态</th>
-                <th className="px-6 py-4 text-right text-[9px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">协议操作</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {loading ? (
-                <tr>
-                  <td colSpan={4} className="py-16 text-center">
-                    <div className="flex flex-col items-center gap-3 text-slate-300">
-                      <div className="w-6 h-6 border-2 border-slate-100 border-t-indigo-500 rounded-full animate-spin" />
-                      <p className="text-[9px] font-black uppercase tracking-[0.2em]">同步身份目录...</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                filteredUsers.map((user, i) => {
-                  const role = user.roles && user.roles.length > 0 ? user.roles[0] : null
-                  return (
-                    <motion.tr 
-                      key={user.userId}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: i * 0.02 }}
-                      className="group hover:bg-slate-50/50 transition-all cursor-pointer"
-                      onClick={() => handleOpenModal(user)}
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-black text-[12px] shadow-md shadow-indigo-500/20">
-                            {user.userName.substring(0, 1).toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="text-[13px] font-bold text-slate-800 group-hover:text-indigo-600 transition-colors tracking-tight">{user.userName}</div>
-                            <div className="text-[9px] font-bold text-slate-400 font-mono uppercase">账号: {user.loginName}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-5 py-4">
-                        <span className="px-2 py-1 bg-slate-50 border border-slate-100 rounded-lg text-[9px] font-bold text-slate-500 uppercase tracking-wider">
-                          {role?.roleName || '未分配角色'}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4">
-                        <button
-                          onClick={(e) => handleToggleStatus(user, e)}
-                          className={cn(
-                            "px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5 transition-all",
-                            user.status === '0' 
-                              ? 'bg-emerald-50 text-emerald-600' 
-                              : 'bg-slate-100 text-slate-400'
-                          )}
-                        >
-                          {user.status === '0' ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
-                          {user.status === '0' ? '在线运行' : '锁定中'}
-                        </button>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
-                          {hasButton('system:user:update') && (
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); handleOpenModal(user); }}
-                            className="p-2 bg-white text-slate-500 hover:bg-indigo-600 hover:text-white rounded-lg shadow-sm border border-slate-100 transition-all"
-                          >
-                            <Edit3 size={14} />
-                          </button>
-                          )}
-                          {hasButton('system:user:resetPwd') && (
-                          <button 
-                            onClick={(e) => handleOpenResetPwd(user, e)}
-                            className="p-2 bg-white text-slate-500 hover:bg-orange-600 hover:text-white rounded-lg shadow-sm border border-slate-100 transition-all"
-                          >
-                            <Key size={14} />
-                          </button>
-                          )}
-                          {user.loginName !== 'admin' && hasButton('system:user:delete') && (
-                            <button 
-                              onClick={(e) => handleDelete(user, e)}
-                              className="p-2 bg-white text-slate-300 hover:bg-rose-600 hover:text-white rounded-lg shadow-sm border border-slate-100 transition-all"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </motion.tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
+      {/* Rows List */}
+      <div className="space-y-2 pb-16">
+        <div className="grid grid-cols-12 gap-3 px-4 py-2 text-xs font-medium text-slate-400">
+          <div className="col-span-4">用户信息</div>
+          <div className="col-span-3">所属角色</div>
+          <div className="col-span-3 text-center">状态</div>
+          <div className="col-span-2"></div>
         </div>
+
+        <AnimatePresence mode="popLayout">
+          {loading ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-white/40 h-20 rounded-xl animate-pulse border border-dashed border-slate-200" />
+            ))
+          ) : filteredUsers.length === 0 ? (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-24 text-center space-y-6 bg-white/30 rounded-2xl border border-dashed border-slate-200">
+              <Users size={48} className="mx-auto text-slate-200" />
+              <p className="text-slate-400 font-black uppercase tracking-[0.3em] text-sm">暂无匹配用户</p>
+            </motion.div>
+          ) : (
+            filteredUsers.map((user, idx) => (
+              <motion.div
+                key={user.userId}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.02 }}
+                onClick={() => handleOpenModal(user)}
+                className="grid grid-cols-12 gap-4 px-8 py-5 items-center bg-white border border-slate-100 rounded-xl hover:bg-slate-50 hover:shadow-md hover:scale-[1.005] cursor-pointer transition-all group"
+              >
+                <div className="col-span-4 flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold group-hover:bg-primary group-hover:text-white transition-all">
+                    {user.userName.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 leading-none mb-1 group-hover:text-primary">{user.userName}</h4>
+                    <p className="text-[10px] font-mono text-slate-400 uppercase tracking-tighter">{user.loginName}</p>
+                  </div>
+                </div>
+
+                <div className="col-span-3">
+                  <div className="flex flex-wrap gap-1">
+                    {user.roles?.map((r: any) => (
+                      <span key={r.roleId} className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-lg border border-slate-200">
+                        {r.roleName}
+                      </span>
+                    )) || <span className="text-slate-300 text-[10px]">未分配</span>}
+                  </div>
+                </div>
+
+                <div className="col-span-3 text-center">
+                  <button
+                    onClick={(e) => handleToggleStatus(user, e)}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border transition-all",
+                      user.status === '0' ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-50 text-slate-400 border-slate-100"
+                    )}
+                  >
+                    <div className={cn("w-1.5 h-1.5 rounded-full", user.status === '0' ? "bg-emerald-500" : "bg-slate-300")} />
+                    {user.status === '0' ? '在线' : '停用'}
+                  </button>
+                </div>
+
+                <div className="col-span-2 text-right">
+                  <div className="opacity-0 group-hover:opacity-100 transition-all flex items-center justify-end gap-1.5">
+                    {hasButton('system:user:update') && (
+                      <button onClick={(e) => { e.stopPropagation(); handleOpenModal(user); }} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-white rounded-lg border border-transparent hover:border-slate-100 transition-all">
+                        <Edit3 size={14} />
+                      </button>
+                    )}
+                    {hasButton('system:user:resetPwd') && (
+                      <button onClick={(e) => { e.stopPropagation(); setResetPwdUser(user); setShowResetPwdModal(true); }} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-amber-600 hover:bg-white rounded-lg border border-transparent hover:border-slate-100 transition-all">
+                        <Key size={14} />
+                      </button>
+                    )}
+                    {user.loginName !== 'admin' && hasButton('system:user:delete') && (
+                      <button onClick={(e) => handleDelete(user, e)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-white rounded-lg border border-transparent hover:border-slate-100 transition-all">
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            ))
+          )}
+        </AnimatePresence>
       </div>
 
+      {/* Edit Modal */}
+      <ModalDialog
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={editingUser ? '编辑用户信息' : '建立新用户'}
+        size="md"
+        footer={
+          <div className="flex gap-2 w-full justify-end">
+            <button onClick={() => setShowModal(false)} className="px-4 py-2 text-sm font-medium text-slate-500">取消</button>
+            <button onClick={handleSubmit} className="px-6 py-2 bg-primary text-white rounded-lg text-sm font-medium shadow-sm">提交</button>
+          </div>
+        }
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500">登录账号</label>
+              <input
+                type="text"
+                value={formData.loginName}
+                onChange={(e) => setFormData({ ...formData, loginName: e.target.value })}
+                disabled={!!editingUser}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-primary outline-none disabled:opacity-50"
+                required
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500">显示名称</label>
+              <input
+                type="text"
+                value={formData.userName}
+                onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-primary outline-none"
+                required
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-slate-500">分配角色</label>
+            <select
+              value={formData.roleId}
+              onChange={(e) => setFormData({ ...formData, roleId: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-primary outline-none"
+              required
+            >
+              <option value="">选择角色</option>
+              {dynamicRoles.map(r => <option key={r.roleId} value={r.roleId}>{r.roleName}</option>)}
+            </select>
+          </div>
+          {!editingUser && (
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500">初始密码</label>
+              <input
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-primary outline-none"
+                required
+              />
+            </div>
+          )}
+        </form>
+      </ModalDialog>
+
+      {/* Password Reset Modal */}
       <ModalDialog
         isOpen={showResetPwdModal}
         onClose={() => setShowResetPwdModal(false)}
@@ -332,95 +430,23 @@ export default function UserManagementPage() {
         size="md"
         footer={
           <div className="flex gap-2 w-full justify-end">
-            <button onClick={() => setShowResetPwdModal(false)} className="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors">取消</button>
-            <button onClick={handleResetPassword} className="px-5 py-1.5 bg-orange-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest shadow-md shadow-orange-500/20 active:scale-95 transition-all">确认重置</button>
+            <button onClick={() => setShowResetPwdModal(false)} className="px-4 py-2 text-sm font-medium text-slate-500">取消</button>
+            <button onClick={handleResetPassword} className="px-6 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium shadow-sm">确认重置</button>
           </div>
         }
       >
         <div className="space-y-4 py-2">
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-3">
-            <div className="p-2 bg-orange-100 text-orange-600 rounded-lg"><FileKey size={18} /></div>
-            <div>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest lh-none">目标用户</p>
-              <h4 className="text-base font-black text-slate-900 leading-none mt-0.5">{resetPwdUser?.userName}</h4>
-            </div>
-          </div>
+          <p className="text-sm text-slate-500">正在为 <span className="font-bold text-slate-900">{resetPwdUser?.userName}</span> 重置密码。</p>
           <input
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:border-orange-500 outline-none transition-all text-xs font-bold shadow-inner placeholder:font-normal placeholder:text-slate-300"
+            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-amber-500"
             placeholder="输入新密码 (至少6位)"
             required
             minLength={6}
           />
         </div>
-      </ModalDialog>
-
-      <ModalDialog
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        title={editingUser ? '同步身份档案' : '建立数字化身'}
-        size="md"
-        footer={
-          <div className="flex gap-2 w-full justify-end">
-            <button onClick={() => setShowModal(false)} className="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">取消</button>
-            <button onClick={handleSubmit} className="px-5 py-1.5 bg-indigo-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest shadow-md shadow-indigo-600/20 active:scale-95 transition-all">部署变更</button>
-          </div>
-        }
-      >
-        <form onSubmit={handleSubmit} className="space-y-5 py-2">
-           <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1 block">登录账号</label>
-                <input
-                  type="text"
-                  value={formData.loginName}
-                  onChange={(e) => setFormData({ ...formData, loginName: e.target.value })}
-                  disabled={!!editingUser}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:border-indigo-500 disabled:bg-slate-50 outline-none transition-all text-xs font-bold shadow-inner"
-                  placeholder="账号"
-                  required
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1 block">显示名称</label>
-                <input
-                  type="text"
-                  value={formData.userName}
-                  onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition-all text-xs font-bold shadow-inner"
-                  placeholder="姓名"
-                  required
-                />
-              </div>
-           </div>
-           <div className="space-y-1.5">
-            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1 block">分配角色</label>
-            <select
-              value={formData.roleId}
-              onChange={(e) => setFormData({ ...formData, roleId: e.target.value })}
-              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition-all text-xs font-bold"
-              required
-            >
-              <option value="">请选择角色</option>
-              {dynamicRoles.map(r => <option key={r.roleId} value={r.roleId}>{r.roleName}</option>)}
-            </select>
-           </div>
-           {!editingUser && (
-             <div className="space-y-1.5">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1 block">初始密码</label>
-                <input
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition-all text-xs font-bold shadow-inner"
-                  placeholder="请输入初始密码"
-                  required
-                />
-             </div>
-           )}
-        </form>
       </ModalDialog>
     </div>
   )

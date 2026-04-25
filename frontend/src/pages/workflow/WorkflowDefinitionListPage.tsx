@@ -1,77 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Plus, 
-  Edit2, 
-  Play, 
-  Pause, 
   Trash2, 
-  Settings,
-  FileText,
+  Settings2,
   Users,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-  Shapes,
-  Activity,
-  Zap,
-  LayoutGrid,
+  CheckCircle2,
+  Activity as ActivityIcon,
+  Layers,
   Search,
   ArrowRight,
-  Box
+  RefreshCw,
+  LayoutGrid,
+  AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMessage } from '../../hooks/useMessage';
 import { useConfirm } from '../../hooks/useConfirm';
-import { apiClient } from '../../utils/apiClient';
 import { workflowApi } from '../../api/workflowApi';
 import { cn } from '../../utils/cn';
-
-const t = (key: string): string => {
-  const map: Record<string, string> = {
-    'workflow.categories.hr': '人事',
-    'workflow.categories.project': '项目',
-    'workflow.categories.equipment': '资产',
-    'workflow.categories.purchase': '采购',
-    'workflow.categories.task': '任务',
-    'workflow.categories.general': '通用',
-    'workflow.status.draft': '草稿',
-    'workflow.status.active': '已发布',
-    'workflow.status.suspended': '已挂起',
-    'workflow.status.archived': '已归档',
-    'common.load_failed': '加载失败',
-    'workflow.designer.save_success': '操作成功',
-    'common.error': '操作失败',
-    'common.delete': '删除',
-    'workflow.confirm_delete_definition': '确认删除该流程定义？',
-    'common.confirm': '确认',
-    'common.cancel': '取消',
-    'workflow.center_title': '流程定义',
-    'workflow.center_subtitle': '管理和配置系统的所有业务流程模型',
-    'workflow.action.new': '新建流程',
-    'workflow.stats.total': '流程总数',
-    'workflow.stats.active': '已发布',
-    'workflow.stats.suspended': '已挂起',
-    'workflow.stats.draft': '草稿箱',
-    'workflow.placeholder.search': '搜索流程名称或编码...',
-    'common.all': '全部',
-    'workflow.no_definition': '暂无流程定义',
-    'common.noData': '当前没有任何流程配置数据',
-    'workflow.action.edit': '编辑',
-    'workflow.action.pause': '挂起',
-    'workflow.action.publish': '发布',
-    'workflow.action.delete': '删除',
-    'workflow.action.config': '配置',
-    'workflow.rules.title': '设计规范',
-    'workflow.rules.rule1_title': '单一职责',
-    'workflow.rules.rule1_desc': '每个流程应只解决一个核心业务场景',
-    'workflow.rules.rule2_title': '节点精简',
-    'workflow.rules.rule2_desc': '控制审批层级，避免冗长的审批链',
-    'workflow.rules.rule3_title': '条件清晰',
-    'workflow.rules.rule3_desc': '分支网关必须配置明确的流转条件'
-  };
-  return map[key] || key;
-};
 
 interface WorkflowDefinition {
   id: string;
@@ -79,43 +26,52 @@ interface WorkflowDefinition {
   name: string;
   version: number;
   category: string;
-  entity_type: string;
   status: 'draft' | 'active' | 'suspended' | 'archived';
-  node_config: any;
-  form_schema?: any[];
-  variables?: any[];
-  created_at: string;
-  updated_at: string;
-  created_by: string;
+  updateTime: string;
 }
 
-const getCategoryMap = (): Record<string, { label: string; color: string; icon: any; gradient: string }> => ({
-  'hr': { label: '人事', color: 'indigo', icon: Users, gradient: 'from-indigo-500 to-blue-500' },
-  'project': { label: '项目', color: 'emerald', icon: Shapes, gradient: 'from-emerald-500 to-teal-500' },
-  'equipment': { label: '设备', color: 'orange', icon: Settings, gradient: 'from-orange-500 to-amber-500' },
-  'purchase': { label: '采购', color: 'rose', icon: FileText, gradient: 'from-rose-500 to-pink-500' },
-  'task': { label: '任务', color: 'sky', icon: CheckCircle, gradient: 'from-sky-500 to-cyan-500' },
-  'general': { label: '通用', color: 'slate', icon: FileText, gradient: 'from-slate-500 to-slate-600' }
-});
+const StatCard = ({ title, value, icon: Icon, color, delay }: any) => {
+  const colorConfig: Record<string, { bg: string; text: string }> = {
+    emerald: { bg: 'bg-emerald-500', text: 'text-emerald-600' },
+    blue: { bg: 'bg-blue-500', text: 'text-blue-600' },
+    indigo: { bg: 'bg-indigo-500', text: 'text-indigo-600' },
+    amber: { bg: 'bg-amber-500', text: 'text-amber-600' }
+  }
+  const config = colorConfig[color] || colorConfig.blue
 
-const getStatusMap = (): Record<string, { label: string; className: string }> => ({
-  'draft': { label: '草稿', className: 'bg-slate-100 text-slate-600 border-slate-200' },
-  'active': { label: '运行中', className: 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm shadow-emerald-500/10' },
-  'suspended': { label: '已暂停', className: 'bg-amber-50 text-amber-600 border-amber-100' },
-  'archived': { label: '已归档', className: 'bg-rose-50 text-rose-500 border-rose-100 opacity-60' }
-});
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, type: 'spring', damping: 25 }}
+      className="bg-white p-6 rounded-lg border border-slate-100/80 shadow-sm relative overflow-hidden group"
+    >
+      <div className={cn(
+        "absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-[0.03]",
+        config.bg
+      )} />
+      <div className="flex items-center gap-5 relative z-10">
+        <div className={cn("p-4 rounded-2xl", config.bg)}>
+          <Icon size={24} strokeWidth={2.5} className="text-white" />
+        </div>
+        <div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1.5">{title}</p>
+          <h3 className="text-3xl font-black text-slate-900 tracking-tighter leading-none">{value}</h3>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
 
 export default function WorkflowDefinitionListPage() {
   const navigate = useNavigate();
   const message = useMessage();
   const { confirm } = useConfirm();
-  const CATEGORY_MAP = getCategoryMap();
-  const STATUS_MAP = getStatusMap();
+
   const [definitions, setDefinitions] = useState<WorkflowDefinition[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterCategory, setFilterCategory] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterCategory, setFilterCategory] = useState<string>('');
 
   useEffect(() => {
     loadDefinitions();
@@ -126,15 +82,13 @@ export default function WorkflowDefinitionListPage() {
       setLoading(true);
       const res = await workflowApi.getDefinitions();
       if (res && res.success) {
-        // 适配新旧模型差异
         const adaptedData = (res.data || []).map((def: any) => ({
           ...def,
           key: def.flowCode,
           name: def.flowName,
           status: def.isPublish === 1 ? 'active' : 'draft',
           category: (def.category || 'general').toLowerCase(),
-          entity_type: (def.category || 'general').toLowerCase(),
-          updated_at: def.updateTime || def.createTime
+          updateTime: def.updateTime || def.createTime
         }));
         setDefinitions(adaptedData);
       }
@@ -146,335 +100,188 @@ export default function WorkflowDefinitionListPage() {
     }
   };
 
-  const handleToggleStatus = async (id: string, currentStatus: string) => {
-    try {
-      if (currentStatus === 'active') {
-        message.warning('当前引擎尚不支持直接取消发布，请联系管理员');
-        return;
-      }
-      
-      const res = await workflowApi.publish(id);
-      if (res && res.success) {
-        message.success('工作流已成功发布');
-        await loadDefinitions();
-      }
-    } catch (error: any) {
-      message.error(error.message || '发布失败');
-    }
-  };
-
   const handleDelete = async (id: string) => {
     const isConfirmed = await confirm({
       title: '删除',
-      content: '确定要注销此工作流定义吗？（此操作仅标记逻辑删除）',
-      type: 'danger',
-      confirmText: '确认',
-      cancelText: '取消'
+      content: '确定要注销此工作流定义吗？',
+      type: 'danger'
     });
-
-    if (!isConfirmed) return;
-    
-    try {
-      // TODO: 后端增加逻辑删除接口，目前先做简单处理
-      message.info('功能开发中：逻辑删除暂未开放');
-    } catch (error: any) {
-      message.error(error.message || '注销失败');
-    }
+    if (isConfirmed) message.info('功能开发中');
   };
 
-  const filteredDefinitions = definitions.filter(def => {
-    if (filterCategory !== 'all' && def.category !== filterCategory) return false;
-    if (filterStatus !== 'all' && def.status !== filterStatus) return false;
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      return (
-        def.name.toLowerCase().includes(query) ||
-        def.key?.toLowerCase().includes(query)
-      );
-    }
-    return true;
-  });
+  const filteredDefinitions = definitions.filter(def => 
+    def.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (filterCategory === '' || def.category === filterCategory)
+  );
 
-  const stats = {
+  const stats = useMemo(() => ({
     total: definitions.length,
     active: definitions.filter(d => d.status === 'active').length,
-    draft: definitions.filter(d => d.status === 'draft').length,
-    suspended: definitions.filter(d => d.status === 'suspended').length
-  };
+    categories: new Set(definitions.map(d => d.category)).size,
+    latest: definitions.sort((a, b) => new Date(b.updateTime).getTime() - new Date(a.updateTime).getTime())[0]?.name || '-'
+  }), [definitions]);
 
   return (
-    <div className="max-w-full mx-auto space-y-8 animate-fade-in pb-12">
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-indigo-600 text-white rounded-2xl shadow-xl shadow-indigo-500/20">
-              <Zap size={24} />
+    <div className="min-h-screen bg-mesh p-4 lg:p-6 space-y-4 animate-fade-in custom-scrollbar">
+      {/* Standard Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
+          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+            <div className="p-2 bg-primary rounded-lg text-white">
+              <Layers size={20} strokeWidth={2.5} />
             </div>
-            <h1 className="text-2xl font-bold text-slate-700">工作流中心</h1>
-          </div>
-          <p className="text-slate-500 font-medium">管理和配置系统工作流</p>
+            流程定义
+          </h1>
+          <p className="text-slate-500 text-sm mt-0.5">管理系统业务流程模型与版本控制</p>
+        </motion.div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate('/workflow/definitions/new')}
+            className="px-4 py-2 bg-primary text-white rounded-lg shadow-sm transition-all text-sm font-medium flex items-center gap-2 hover:brightness-110"
+          >
+            <Plus size={14} />
+            <span>新建流程</span>
+          </button>
         </div>
+      </div>
+
+      {/* Analytics Dashboard */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard title="流程总数" value={stats.total} icon={Layers} color="blue" delay={0.1} />
+        <StatCard title="生效中" value={stats.active} icon={CheckCircle2} color="emerald" delay={0.2} />
+        <StatCard title="业务分类" value={stats.categories} icon={Settings2} color="indigo" delay={0.3} />
+        <StatCard title="最近更新" value={stats.latest} icon={ActivityIcon} color="amber" delay={0.4} />
+      </div>
+
+      {/* Filter Bar */}
+      <div className="premium-card p-4 bg-white/60 backdrop-blur-xl border-none flex flex-wrap items-center gap-4 shadow-sm">
+        <div className="flex-1 min-w-[200px] relative group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors" size={14} />
+          <input
+            type="text"
+            placeholder="搜索流程名称或标识..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="input-standard pl-9 !py-2 text-sm bg-white/50 border-white focus:bg-white !rounded-lg w-full"
+          />
+        </div>
+
+        <select
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+          className="input-standard !w-40 !py-2 text-xs font-medium !rounded-lg"
+        >
+          <option value="">所有分类</option>
+          <option value="hr">人事行政</option>
+          <option value="finance">财务审批</option>
+          <option value="project">项目管理</option>
+        </select>
         
         <button
-          onClick={() => navigate('/workflow/designer/new')}
-          className="btn-primary flex items-center justify-center gap-2 shadow-xl shadow-indigo-500/30"
+          onClick={() => loadDefinitions()}
+          className="p-2 bg-white rounded-lg border border-slate-200 text-slate-400 hover:text-primary transition-all shadow-sm"
         >
-          <Plus size={18} />
-          新建工作流
+          <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="premium-card p-5 bg-white flex items-center gap-4"
-        >
-          <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600">
-            <Box size={24} />
-          </div>
-          <div>
-            <div className="text-2xl font-black text-slate-900 leading-none">{stats.total}</div>
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">总定义数</div>
-          </div>
-        </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="premium-card p-5 bg-white flex items-center gap-4 border-l-4 border-l-emerald-500"
-        >
-          <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600">
-            <Activity size={24} />
-          </div>
-          <div>
-            <div className="text-2xl font-black text-emerald-600 leading-none">{stats.active}</div>
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">运行中</div>
-          </div>
-        </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="premium-card p-5 bg-white flex items-center gap-4 border-l-4 border-l-amber-500"
-        >
-          <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600">
-            <Pause size={24} />
-          </div>
-          <div>
-            <div className="text-2xl font-black text-amber-600 leading-none">{stats.suspended}</div>
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">已暂停</div>
-          </div>
-        </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="premium-card p-5 bg-white border-dashed flex items-center gap-4"
-        >
-          <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400">
-            <LayoutGrid size={24} />
-          </div>
-          <div>
-            <div className="text-2xl font-black text-slate-400 leading-none">{stats.draft}</div>
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">草稿</div>
-          </div>
-        </motion.div>
-      </div>
-
-      <div className="premium-card p-6 bg-white/70 backdrop-blur-md">
-        <div className="flex flex-col lg:flex-row gap-4 items-center">
-          <div className="relative flex-1 w-full group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={20} />
-            <input
-              type="text"
-              placeholder="搜索工作流..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white outline-none transition-all text-sm font-bold"
-            />
-          </div>
-          <div className="flex gap-2 w-full lg:w-auto">
-            <select
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              className="form-control min-w-[140px]"
+      {/* Workflow Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <AnimatePresence mode="popLayout">
+          {loading ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-white/40 h-48 rounded-xl animate-pulse border border-dashed border-slate-200" />
+            ))
+          ) : filteredDefinitions.length === 0 ? (
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              className="col-span-full py-24 text-center space-y-6 bg-white/30 rounded-2xl border border-dashed border-slate-200"
             >
-              <option value="all">全部</option>
-              {Object.entries(CATEGORY_MAP).map(([key, val]) => (
-                <option key={key} value={key}>{val.label}</option>
-              ))}
-            </select>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="form-control min-w-[120px]"
-            >
-              <option value="all">全部</option>
-              <option value="active">运行中</option>
-              <option value="draft">草稿</option>
-              <option value="suspended">已暂停</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {loading ? (
-          <div className="col-span-full py-20 flex flex-col items-center gap-4">
-            <div className="w-12 h-12 border-4 border-slate-100 border-t-indigo-600 rounded-full animate-spin"></div>
-            <p className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">同步中</p>
-          </div>
-        ) : filteredDefinitions.length === 0 ? (
-          <div className="col-span-full py-32 flex flex-col items-center text-center px-4">
-            <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-slate-200 mb-6 group hover:bg-indigo-50 hover:text-indigo-200 transition-colors">
-              <Shapes size={48} className="group-hover:scale-110 transition-transform duration-500" />
-            </div>
-            <h3 className="text-xl font-black text-slate-900 mb-2">暂无工作流定义</h3>
-            <p className="text-slate-400 max-w-sm font-medium">暂无数据</p>
-          </div>
-        ) : (
-          <AnimatePresence mode="popLayout">
-            {filteredDefinitions.map((def, i) => {
-              const category = CATEGORY_MAP[def.category] || CATEGORY_MAP['general'];
-              const status = STATUS_MAP[def.status] || STATUS_MAP['draft'];
-              const CategoryIcon = category.icon;
-
-              return (
-                <motion.div
-                  key={def.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ delay: i * 0.05 }}
-                  className="premium-card group hover:shadow-2xl hover:shadow-indigo-500/10 transition-all p-0 overflow-hidden"
-                >
-                  <div className="p-6 md:p-8">
-                    <div className="flex items-start justify-between gap-4 mb-6">
-                      <div className="flex items-center gap-4">
-                        <div className={cn(
-                          "w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg shrink-0 transition-transform group-hover:rotate-12",
-                          `bg-gradient-to-br ${category.gradient}`
-                        )}>
-                          <CategoryIcon size={24} />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className={cn(
-                              "px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-tighter border",
-                              status.className
-                            )}>
-                              {status.label}
-                            </span>
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                              Engine v{def.version}.0
-                            </span>
-                          </div>
-                          <h3 className="text-xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors">
-                            {def.name}
-                          </h3>
-                        </div>
-                      </div>
-                      
-                    <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
-                      <button
-                        onClick={() => navigate(`/workflow/designer/${def.id}`)}
-                        className="p-2.5 bg-slate-100 text-slate-600 hover:bg-indigo-600 hover:text-white rounded-xl transition-all"
-                        title="编辑架构"
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleToggleStatus(def.id, def.status)}
-                        className={cn(
-                          "p-2.5 rounded-xl transition-all",
-                          def.status === 'active' 
-                            ? 'bg-amber-100 text-amber-600 hover:bg-amber-600 hover:text-white' 
-                            : 'bg-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white'
-                        )}
-                        title={def.status === 'active' ? '暂停工作流' : '激活工作流'}
-                      >
-                        {def.status === 'active' ? <Pause size={16} /> : <Play size={16} />}
-                      </button>
-                      <button
-                        onClick={() => handleDelete(def.id)}
-                        className="p-2.5 bg-slate-100 text-slate-400 hover:bg-rose-600 hover:text-white rounded-xl transition-all"
-                        title="注销定义"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+               <Layers size={48} className="mx-auto text-slate-200" />
+               <p className="text-slate-400 font-black uppercase tracking-[0.3em] text-sm italic">暂无流程定义</p>
+            </motion.div>
+          ) : (
+            filteredDefinitions.map((def, idx) => (
+              <motion.div
+                key={def.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                className="p-5 bg-white border border-slate-100 rounded-xl hover:shadow-md hover:border-indigo-100 transition-all cursor-pointer group flex flex-col justify-between"
+                onClick={() => navigate(`/workflow/definitions/${def.id}`)}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                      <Layers size={18} />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">{def.name}</h3>
+                      <p className="text-[10px] font-mono text-slate-400 mt-0.5 uppercase tracking-tighter">{def.key}</p>
                     </div>
                   </div>
+                  <div className={cn(
+                    "px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border",
+                    def.status === 'active' ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-50 text-slate-400 border-slate-100"
+                  )}>
+                    {def.status === 'active' ? '运行中' : '草稿'}
+                  </div>
+                </div>
 
-                  <p className="text-sm font-medium text-slate-500 mb-6 bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50 backdrop-blur-sm line-clamp-2">
-                    <span className="font-black text-slate-400 uppercase tracking-widest text-[10px] block mb-1">标识层</span>
-                    {def.key} · {def.entity_type}
-                  </p>
-
-                    <div className="flex flex-wrap items-center gap-6 pt-6 border-t border-slate-100">
-                      <div className="flex items-center gap-2">
-                        <Clock size={14} className="text-slate-400" />
-                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
-                          最后更新: {def.updated_at ? new Date(def.updated_at).toISOString().split('T')[0] : '-'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex -space-x-2">
-                          {[1, 2, 3].map(i => (
-                            <div key={i} className="w-5 h-5 rounded-full bg-slate-100 border-2 border-white" />
-                          ))}
-                        </div>
-                        <span className="text-[11px] font-black text-slate-600 uppercase tracking-widest">
-                          {def.node_config?.nodes?.length || 0} 动态节点
-                        </span>
-                      </div>
-                      <button 
-                        onClick={() => navigate(`/workflow/designer/${def.id}`)}
-                        className="ml-auto flex items-center gap-2 text-xs font-black text-indigo-600 uppercase tracking-widest hover:gap-3 transition-all"
-                      >
-                        配置引擎
-                        <ArrowRight size={14} />
-                      </button>
+                <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                  <div className="flex items-center gap-4">
+                    <div className="flex flex-col">
+                      <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">版本</span>
+                      <span className="text-xs font-black text-slate-700">v{def.version}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">更新于</span>
+                      <span className="text-xs font-black text-slate-700">{new Date(def.updateTime).toLocaleDateString()}</span>
                     </div>
                   </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        )}
+                  
+                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleDelete(def.id); }}
+                      className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                    <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                      <ArrowRight size={16} />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))
+          )}
+        </AnimatePresence>
       </div>
 
+      {/* Guide Footer */}
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="premium-card bg-indigo-900 border-none p-8 relative overflow-hidden group"
+        className="premium-card p-6 bg-slate-50/50 border-none shadow-sm rounded-xl mt-8"
       >
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-white/10 transition-colors duration-700" />
-        <div className="relative flex items-start gap-6">
-          <div className="p-3 bg-white/10 rounded-2xl text-white backdrop-blur-md">
-            <AlertCircle size={24} />
+        <div className="flex items-center gap-4 mb-4">
+          <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+            <AlertCircle size={18} />
           </div>
-          <div className="space-y-4">
-            <h4 className="text-xl font-black text-white tracking-tight">工作流规则</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="space-y-1">
-                <p className="text-[10px] font-black text-indigo-300 uppercase tracking-[0.2em]">规则一</p>
-                <p className="text-sm text-indigo-100/80 font-medium">工作流定义是一套规范，描述了任务的提交流程</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-[10px] font-black text-indigo-300 uppercase tracking-[0.2em]">规则二</p>
-                <p className="text-sm text-indigo-100/80 font-medium">每个工作流可以有多个版本，但只能有一个激活版本</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-[10px] font-black text-indigo-300 uppercase tracking-[0.2em]">规则三</p>
-                <p className="text-sm text-indigo-100/80 font-medium">工作流状态变更会触发相应的业务逻辑</p>
-              </div>
+          <h3 className="text-sm font-bold text-slate-800">流程设计建议</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            { label: '单一职责', desc: '每个流程应只解决一个核心业务场景。' },
+            { label: '节点精简', desc: '控制审批层级，避免冗长的审批链。' },
+            { label: '条件清晰', desc: '分支网关必须配置明确的流转条件。' }
+          ].map((rule, idx) => (
+            <div key={idx} className="space-y-1">
+              <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">规则 {idx + 1}</p>
+              <p className="text-xs text-slate-500">{rule.desc}</p>
             </div>
-          </div>
+          ))}
         </div>
       </motion.div>
     </div>

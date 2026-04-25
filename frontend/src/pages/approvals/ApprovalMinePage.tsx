@@ -242,10 +242,13 @@ export default function ApprovalMinePageNew() {
   const paginatedOrders = filteredOrders.slice((currentPage - 1) * pageSize, currentPage * pageSize)
   
   const handleWithdraw = async (id: string) => {
-    if (!(await confirm({ title: t('workflow.action.confirm_withdraw') || 'Confirm Withdraw', content: t('workflow.action.confirm_withdraw_desc') || 'Are you sure you want to withdraw this request?' }))) return
+    if (!(await confirm({ 
+      title: t('workflow.action.confirm_withdraw', 'Confirm Withdraw'), 
+      content: t('workflow.action.confirm_withdraw_desc', 'Are you sure you want to withdraw this request?') 
+    }))) return
     try {
       await apiClient.post(`${API_URL.BASE}/api/workflow/processes/${id}/withdraw`)
-      success(t('workflow.action.withdrawn_success') || 'Withdrawn')
+      success(t('workflow.action.withdrawn_success', 'Withdrawn'))
       loadOrders()
     } catch (e) {}
   }
@@ -511,7 +514,7 @@ export default function ApprovalMinePageNew() {
                       className="px-10 py-4 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-rose-600/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
                     >
                       <RotateCcw size={16} strokeWidth={3} />
-                      Withdraw Request
+                      {t('approvals.action.withdraw')}
                     </button>
                   )}
                 </div>

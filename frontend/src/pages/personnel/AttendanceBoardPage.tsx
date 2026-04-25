@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import dayjs from 'dayjs'
 import {
   Users,
@@ -10,8 +10,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar,
-  BarChart3
+  BarChart3,
+  Activity as ActivityIcon,
+  LayoutGrid
 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { apiClient } from '../../utils/apiClient'
 import { useMessage } from '../../hooks/useMessage'
 import { useTranslation } from 'react-i18next'
@@ -48,6 +51,39 @@ interface CalendarData {
 }
 
 type ViewMode = 'summary' | 'calendar'
+
+const StatCard = ({ title, value, icon: Icon, color, delay }: any) => {
+  const colorConfig: Record<string, { bg: string; text: string }> = {
+    emerald: { bg: 'bg-emerald-500', text: 'text-emerald-600' },
+    blue: { bg: 'bg-blue-500', text: 'text-blue-600' },
+    indigo: { bg: 'bg-indigo-500', text: 'text-indigo-600' },
+    amber: { bg: 'bg-amber-500', text: 'text-amber-600' }
+  }
+  const config = colorConfig[color] || colorConfig.blue
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, type: 'spring', damping: 25 }}
+      className="bg-white p-6 rounded-lg border border-slate-100/80 shadow-sm relative overflow-hidden group"
+    >
+      <div className={cn(
+        "absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-[0.03]",
+        config.bg
+      )} />
+      <div className="flex items-center gap-5 relative z-10">
+        <div className={cn("p-4 rounded-2xl", config.bg)}>
+          <Icon size={24} strokeWidth={2.5} className="text-white" />
+        </div>
+        <div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1.5">{title}</p>
+          <h3 className="text-3xl font-black text-slate-900 tracking-tighter leading-none">{value}</h3>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
 
 export default function AttendanceBoardPage() {
   const { t } = useTranslation()
@@ -112,252 +148,284 @@ export default function AttendanceBoardPage() {
 
   const getWeekdayLabel = (day: number) => {
     const date = dayjs(`${currentMonth}-${String(day).padStart(2, '0')}`)
-    const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+    const weekdays = t('personnel.attendance.weekdays', { returnObjects: true }) as string[]
     return weekdays[date.day()]
   }
 
+  const stats = useMemo(() => ({
+    totalEmployees: summaryData?.employees.length || 0,
+    averageRate: summaryData?.employees.length 
+      ? Math.round(summaryData.employees.reduce((acc, curr) => acc + curr.attendanceRate, 0) / summaryData.employees.length) 
+      : 0,
+    totalWorked: summaryData?.employees.reduce((acc, curr) => acc + curr.workedDays, 0) || 0,
+    totalExpected: summaryData?.employees.reduce((acc, curr) => acc + curr.expectedDays, 0) || 0
+  }), [summaryData])
+
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-black text-slate-900">{t('personnel.attendance.title')}</h1>
-          <p className="text-xs text-slate-400 mt-1">{t('personnel.attendance.subtitle')}</p>
-        </div>
-        <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-mesh p-4 lg:p-6 space-y-4 animate-fade-in custom-scrollbar">
+      {/* Standard Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
+          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+            <div className="p-2 bg-primary rounded-lg text-white">
+              <BarChart3 size={20} strokeWidth={2.5} />
+            </div>
+            {t('personnel.attendance.board_title')}
+          </h1>
+          <p className="text-slate-500 text-sm mt-0.5">{t('personnel.attendance.subtitle')}</p>
+        </motion.div>
+
+        <div className="flex gap-2">
           <button
             onClick={handleSyncDingTalk}
             disabled={syncing}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg text-xs font-bold hover:bg-emerald-600 transition-colors disabled:opacity-50"
+            className="px-4 py-2 bg-emerald-500 text-white rounded-lg shadow-sm transition-all text-sm font-medium flex items-center gap-2 hover:brightness-110 disabled:opacity-50"
           >
             <RefreshCw size={14} className={syncing ? 'animate-spin' : ''} />
-            {syncing ? t('personnel.attendance.syncing') : t('personnel.attendance.sync_dingtalk')}
+            <span>{syncing ? t('personnel.attendance.syncing') : t('personnel.attendance.sync_dingtalk')}</span>
           </button>
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="flex items-center justify-between mb-4 gap-4">
-        <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-xl w-fit">
+      {/* Analytics Dashboard */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard title={t('personnel.stats.total')} value={stats.totalEmployees} icon={Users} color="blue" delay={0.1} />
+        <StatCard title={t('personnel.attendance.columns.attendance_rate')} value={`${stats.averageRate}%`} icon={CheckCircle2} color="emerald" delay={0.2} />
+        <StatCard title={t('personnel.attendance.columns.worked_days')} value={stats.totalWorked} icon={ActivityIcon} color="indigo" delay={0.3} />
+        <StatCard title={t('personnel.attendance.columns.expected_days')} value={stats.totalExpected} icon={Calendar} color="amber" delay={0.4} />
+      </div>
+
+      {/* Filter & Control Bar */}
+      <div className="premium-card p-4 bg-white/60 backdrop-blur-xl border-none flex flex-wrap items-center gap-4 shadow-sm">
+        <div className="flex items-center gap-1 bg-slate-100/50 p-1 rounded-lg">
           <button
             onClick={() => setViewMode('summary')}
             className={cn(
-              "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5",
-              viewMode === 'summary' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
+              "px-5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2",
+              viewMode === 'summary' ? "bg-white text-primary shadow-sm" : "text-slate-400 hover:text-slate-600"
             )}
           >
-            <BarChart3 size={12} />
+            <BarChart3 size={16} />
             {t('personnel.attendance.view_mode.summary')}
           </button>
           <button
             onClick={() => setViewMode('calendar')}
             className={cn(
-              "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5",
-              viewMode === 'calendar' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
+              "px-5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2",
+              viewMode === 'calendar' ? "bg-white text-primary shadow-sm" : "text-slate-400 hover:text-slate-600"
             )}
           >
-            <Calendar size={12} />
+            <Calendar size={16} />
             {t('personnel.attendance.view_mode.calendar')}
           </button>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              placeholder={t('personnel.attendance.search_placeholder')}
-              className="pl-9 pr-4 py-2 bg-white border border-slate-100 rounded-lg text-xs font-medium focus:ring-2 focus:ring-emerald-500 outline-none w-48"
-            />
-          </div>
+        <div className="flex-1 min-w-[200px] relative group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors" size={14} />
+          <input
+            type="text"
+            placeholder={t('personnel.attendance.search_placeholder')}
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="input-standard pl-9 !py-2 text-sm bg-white/50 border-white focus:bg-white !rounded-lg w-full"
+          />
+        </div>
 
-          <div className="flex items-center gap-2 bg-white border border-slate-100 rounded-lg px-1 py-1">
-            <button
-              onClick={() => setCurrentMonth(dayjs(currentMonth).subtract(1, 'month').format('YYYY-MM'))}
-              className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
-            >
-              <ChevronLeft size={16} className="text-slate-400" />
-            </button>
-            <span className="text-sm font-black text-slate-900 min-w-[80px] text-center">
-              {dayjs(currentMonth + '-01').format('YYYY') === dayjs().format('YYYY') 
-                ? dayjs(currentMonth + '-01').format('MMMM')
-                : dayjs(currentMonth + '-01').format('MMM YYYY')}
+        <div className="flex items-center gap-2 bg-white rounded-lg border border-slate-200 p-1">
+          <button
+            onClick={() => setCurrentMonth(dayjs(currentMonth).subtract(1, 'month').format('YYYY-MM'))}
+            className="p-1.5 hover:bg-slate-50 rounded-md transition-all"
+          >
+            <ChevronLeft size={16} className="text-slate-400" />
+          </button>
+          <div className="px-3 min-w-[100px] text-center">
+            <span className="text-xs font-bold text-slate-700">
+              {dayjs(currentMonth + '-01').format('YYYY年MM月')}
             </span>
-            <button
-              onClick={() => setCurrentMonth(dayjs(currentMonth).add(1, 'month').format('YYYY-MM'))}
-              className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
-            >
-              <ChevronRight size={16} className="text-slate-400" />
-            </button>
           </div>
+          <button
+            onClick={() => setCurrentMonth(dayjs(currentMonth).add(1, 'month').format('YYYY-MM'))}
+            className="p-1.5 hover:bg-slate-50 rounded-md transition-all"
+          >
+            <ChevronRight size={16} className="text-slate-400" />
+          </button>
         </div>
       </div>
 
-      {/* Summary View */}
-      {viewMode === 'summary' && (
-        <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
-          {loading ? (
-            <div className="p-12 text-center text-xs font-bold text-slate-400 italic tracking-widest uppercase">{t('common.loading')}</div>
-          ) : (
-            <table className="min-w-full divide-y divide-slate-100">
-              <thead className="bg-slate-50/80">
-                <tr>
-                  <th className="px-4 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('personnel.attendance.columns.employee')}</th>
-                  <th className="px-4 py-3 text-center text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('personnel.attendance.columns.worked_days')}</th>
-                  <th className="px-4 py-3 text-center text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('personnel.attendance.columns.expected_days')}</th>
-                  <th className="px-4 py-3 text-center text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('personnel.attendance.columns.attendance_rate')}</th>
-                  <th className="px-4 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('personnel.attendance.columns.projects')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {filteredSummary.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-12 text-center text-xs font-bold text-slate-300 italic tracking-widest uppercase">{t('common.no_data')}</td>
-                  </tr>
-                ) : (
-                  filteredSummary.map(emp => (
-                    <tr key={emp.employeeId} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className={cn(
-                            "w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black",
-                            emp.workedDays > 0 ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-400"
-                          )}>
-                            {emp.name?.charAt(0) || '?'}
-                          </div>
-                          <span className="text-xs font-black text-slate-900">{emp.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={cn(
-                          "text-sm font-black",
-                          emp.workedDays > 0 ? "text-emerald-600" : "text-slate-300"
-                        )}>
-                          {emp.workedDays}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className="text-sm font-black text-slate-400">{emp.expectedDays}</span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <div className="w-16 bg-slate-100 rounded-full h-1.5">
-                            <div
-                              className={cn(
-                                "h-full rounded-full",
-                                emp.attendanceRate >= 80 ? "bg-emerald-500" :
-                                emp.attendanceRate >= 50 ? "bg-amber-500" : "bg-rose-500"
-                              )}
-                              style={{ width: `${emp.attendanceRate}%` }}
-                            />
-                          </div>
-                          <span className={cn(
-                            "text-xs font-black",
-                            emp.attendanceRate >= 80 ? "text-emerald-600" :
-                            emp.attendanceRate >= 50 ? "text-amber-500" : "text-rose-500"
-                          )}>
-                            {emp.attendanceRate}%
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-1">
-                          {emp.projects.length > 0 ? emp.projects.map((p, i) => (
-                            <span key={i} className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[9px] font-bold rounded">
-                              {p}
-                            </span>
-                          )) : <span className="text-slate-300 text-[10px]">-</span>}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
-        </div>
-      )}
-
-      {/* Calendar View */}
-      {viewMode === 'calendar' && (
-        <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
-          {loading ? (
-            <div className="p-12 text-center text-xs font-bold text-slate-400 italic tracking-widest uppercase">{t('common.loading')}</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-100">
-                <thead className="bg-slate-50/80">
-                  <tr>
-                    <th className="px-3 py-2 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] sticky left-0 bg-slate-50/80 z-10">{t('personnel.attendance.columns.employee')}</th>
-                    {calendarData && calendarData.days.map(day => {
-                      const date = dayjs(`${currentMonth}-${String(day).padStart(2, '0')}`);
-                      const isWeekend = date.day() === 0 || date.day() === 6;
-                      return (
-                        <th key={day} className={cn(
-                          "px-1 py-2 text-center text-[8px] font-black w-8",
-                          isWeekend ? "text-rose-400" : "text-slate-400"
-                        )}>
-                          <div>{day}</div>
-                          <div className="text-[7px] font-normal">{getWeekdayLabel(day)}</div>
-                        </th>
-                      );
-                    })}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {!calendarData || filteredCalendar.length === 0 ? (
-                    <tr>
-                      <td colSpan={35} className="px-4 py-12 text-center text-xs font-bold text-slate-300 italic tracking-widest uppercase">{t('common.no_data')}</td>
-                    </tr>
-                  ) : (
-                    filteredCalendar.map(emp => (
-                      <tr key={emp.employeeId} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-3 py-2 sticky left-0 bg-white z-10">
-                          <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] font-black">
-                              {emp.name?.charAt(0) || '?'}
-                            </div>
-                            <span className="text-[10px] font-black text-slate-700 whitespace-nowrap">{emp.name}</span>
-                          </div>
-                        </td>
-                        {calendarData && calendarData.days.map(day => {
-                          const dateStr = `${currentMonth}-${String(day).padStart(2, '0')}`
-                          const date = dayjs(dateStr)
-                          const record = emp.calendar[dateStr]
-                          const isWeekend = date.day() === 0 || date.day() === 6
-
-                          return (
-                            <td key={day} className={cn(
-                              "px-1 py-1 text-center",
-                              isWeekend ? "bg-rose-50/30" : ""
-                            )}>
-                              {record?.hasClockedIn ? (
-                                <div className="w-7 h-7 mx-auto rounded bg-emerald-500 text-white flex items-center justify-center text-[9px] font-black" title={record.projectName}>
-                                  ●
-                                </div>
-                              ) : (
-                                <div className="w-7 h-7 mx-auto rounded bg-slate-100 text-slate-300 flex items-center justify-center text-[9px]">
-                                  -
-                                </div>
-                              )}
-                            </td>
-                          )
-                        })}
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-          <div className="px-4 py-3 bg-slate-50/50 border-t border-slate-100 flex items-center gap-4 text-[10px]">
-            <span className="flex items-center gap-1"><span className="w-4 h-4 rounded bg-emerald-500 text-white flex items-center justify-center text-[9px]">●</span> {t('personnel.attendance.status.present')}</span>
-            <span className="flex items-center gap-1"><span className="w-4 h-4 rounded bg-slate-100 text-slate-300 flex items-center justify-center">-</span> {t('personnel.attendance.status.absent')}</span>
+      {/* Main Content View */}
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+        {loading ? (
+          <div className="p-32 flex flex-col items-center gap-4 text-slate-300">
+            <div className="w-12 h-12 border-4 border-slate-100 border-t-primary rounded-full animate-spin" />
+            <p className="text-xs font-bold uppercase tracking-widest">{t('common.loading')}</p>
           </div>
+        ) : (
+          <>
+            {viewMode === 'summary' ? (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-50 bg-slate-50/30">
+                      <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('personnel.attendance.columns.employee')}</th>
+                      <th className="px-8 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('personnel.attendance.columns.worked_days')}({t('common.days') || '天'})</th>
+                      <th className="px-8 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('personnel.attendance.columns.expected_days')}({t('common.days') || '天'})</th>
+                      <th className="px-8 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('personnel.attendance.columns.attendance_rate')}</th>
+                      <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('personnel.attendance.columns.projects')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {filteredSummary.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-8 py-20 text-center text-slate-300 font-bold uppercase tracking-widest italic">{t('common.no_data')}</td>
+                      </tr>
+                    ) : (
+                      filteredSummary.map(emp => (
+                        <tr key={emp.employeeId} className="group hover:bg-slate-50/50 transition-all">
+                          <td className="px-8 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
+                                {emp.name?.charAt(0)}
+                              </div>
+                              <span className="text-sm font-bold text-slate-800">{emp.name}</span>
+                            </div>
+                          </td>
+                          <td className="px-8 py-4 text-center">
+                            <span className="text-sm font-black text-slate-700">{emp.workedDays}</span>
+                          </td>
+                          <td className="px-8 py-4 text-center">
+                            <span className="text-sm font-black text-slate-400">{emp.expectedDays}</span>
+                          </td>
+                          <td className="px-8 py-4">
+                            <div className="flex items-center justify-center gap-3 max-w-[160px] mx-auto">
+                              <div className="flex-1 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                <div
+                                  className={cn(
+                                    "h-full rounded-full transition-all duration-1000",
+                                    emp.attendanceRate >= 80 ? "bg-emerald-500" :
+                                    emp.attendanceRate >= 50 ? "bg-amber-500" : "bg-rose-500"
+                                  )}
+                                  style={{ width: `${emp.attendanceRate}%` }}
+                                />
+                              </div>
+                              <span className={cn(
+                                "text-[10px] font-black min-w-[35px] text-right",
+                                emp.attendanceRate >= 80 ? "text-emerald-600" :
+                                emp.attendanceRate >= 50 ? "text-amber-500" : "text-rose-500"
+                              )}>
+                                {emp.attendanceRate}%
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-8 py-4">
+                            <div className="flex flex-wrap gap-1.5">
+                              {emp.projects.length > 0 ? emp.projects.map((p, i) => (
+                                <span key={i} className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[9px] font-bold rounded border border-slate-200">
+                                  {p}
+                                </span>
+                              )) : <span className="text-slate-300 text-[9px] italic uppercase tracking-widest">{t('personnel.rotation.not_assigned')}</span>}
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead className="bg-slate-50/50 border-b border-slate-100">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest sticky left-0 bg-slate-50/50 backdrop-blur-md z-10">员工姓名</th>
+                      {calendarData && calendarData.days.map(day => {
+                        const date = dayjs(`${currentMonth}-${String(day).padStart(2, '0')}`);
+                        const isWeekend = date.day() === 0 || date.day() === 6;
+                        return (
+                          <th key={day} className={cn(
+                            "px-1 py-4 text-center min-w-[2.5rem]",
+                            isWeekend ? "bg-rose-50/50" : ""
+                          )}>
+                            <div className={cn(
+                              "text-[10px] font-black",
+                              isWeekend ? "text-rose-400" : "text-slate-900"
+                            )}>{day}</div>
+                            <div className={cn(
+                              "text-[8px] font-black opacity-50 uppercase",
+                              isWeekend ? "text-rose-300" : "text-slate-400"
+                            )}>{getWeekdayLabel(day).slice(-1)}</div>
+                          </th>
+                        );
+                      })}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {!calendarData || filteredCalendar.length === 0 ? (
+                      <tr>
+                        <td colSpan={35} className="px-8 py-20 text-center text-slate-300 font-bold uppercase tracking-widest italic">{t('common.no_data')}</td>
+                      </tr>
+                    ) : (
+                      filteredCalendar.map(emp => (
+                        <tr key={emp.employeeId} className="group hover:bg-slate-50/30 transition-all">
+                          <td className="px-6 py-3 sticky left-0 bg-white group-hover:bg-slate-50 z-10 border-r border-slate-50 shadow-[2px_0_10px_rgba(0,0,0,0.02)]">
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold">
+                                {emp.name?.charAt(0)}
+                              </div>
+                              <span className="text-xs font-bold text-slate-700 whitespace-nowrap">{emp.name}</span>
+                            </div>
+                          </td>
+                          {calendarData && calendarData.days.map(day => {
+                            const dateStr = `${currentMonth}-${String(day).padStart(2, '0')}`
+                            const date = dayjs(dateStr)
+                            const record = emp.calendar[dateStr]
+                            const isWeekend = date.day() === 0 || date.day() === 6
+
+                            return (
+                              <td key={day} className={cn(
+                                "px-1 py-3 text-center",
+                                isWeekend ? "bg-rose-50/10" : ""
+                              )}>
+                                {record?.hasClockedIn ? (
+                                  <div 
+                                    className="w-3 h-3 mx-auto rounded-full bg-emerald-500 shadow-sm transition-transform hover:scale-125 cursor-help" 
+                                    title={`${record.projectName}\n打卡: ${record.checkInTime || '-'} / ${record.checkOutTime || '-'}`}
+                                  />
+                                ) : (
+                                  <div className="w-1 h-1 mx-auto rounded-full bg-slate-100" />
+                                )}
+                              </td>
+                            )
+                          })}
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Legend Footer */}
+      <div className="flex items-center gap-6 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-emerald-500" />
+          <span>{t('personnel.attendance.legend.present')}</span>
         </div>
-      )}
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-slate-200" />
+          <span>{t('personnel.attendance.legend.absent')}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-rose-100 border border-rose-200" />
+          <span>{t('personnel.attendance.legend.holiday')}</span>
+        </div>
+        <div className="ml-auto flex items-center gap-2 italic">
+          <ActivityIcon size={14} />
+          <span>{t('personnel.attendance.analysis_engine')}</span>
+        </div>
+      </div>
     </div>
   )
 }
