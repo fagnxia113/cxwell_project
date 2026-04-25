@@ -150,7 +150,7 @@ export default function WorkflowDesignerNewPage() {
   }
 
   const handleExport = (data: UnifiedWorkflowData) => {
-    console.log('Exporting workflow data:', data)
+
   }
 
   const confirmSave = async () => {

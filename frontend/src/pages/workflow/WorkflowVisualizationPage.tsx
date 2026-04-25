@@ -133,7 +133,7 @@ export default function WorkflowVisualizationPage() {
         definition={definition}
         tasks={tasks}
         onNodeClick={(node) => {
-          console.log(t('workflow.action.click_node'), node)
+
         }}
       />
 

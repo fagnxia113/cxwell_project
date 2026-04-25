@@ -64,7 +64,7 @@ export class ProjectService {
     const { pageNum = 1, pageSize = 10, projectName, status } = query;
     const skip = (pageNum - 1) * pageSize;
 
-    console.log('getProjectList called, user:', JSON.stringify(user));
+
     const userId = user?.sub || user?.userId;
     const loginName = user?.loginName;
 
@@ -99,7 +99,7 @@ export class ProjectService {
       where.status = status;
     }
 
-    console.log('getProjectList where:', JSON.stringify(where));
+
 
     const [total, list] = await Promise.all([
       this.prisma.project.count({ where }),

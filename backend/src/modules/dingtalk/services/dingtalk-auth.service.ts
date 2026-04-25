@@ -34,18 +34,18 @@ export class DingtalkAuthService {
     }
 
     try {
-      console.log('[DingtalkAuth] Requesting access token with appKey:', this.appKey);
+
       const response = await axios.post('https://api.dingtalk.com/v1.0/oauth2/accessToken', {
         appKey: this.appKey,
         appSecret: this.appSecret,
       });
 
-      console.log('[DingtalkAuth] Access token response:', JSON.stringify(response.data));
+
 
       if (response.data.accessToken) {
         this.accessToken = response.data.accessToken;
         this.tokenExpireTime = Date.now() + (response.data.expireIn - 60) * 1000;
-        console.log('[DingtalkAuth] Got access token:', this.accessToken?.substring(0, 10) + '...');
+
         return response.data.accessToken;
       }
       throw new Error('Failed to get access token: ' + JSON.stringify(response.data));

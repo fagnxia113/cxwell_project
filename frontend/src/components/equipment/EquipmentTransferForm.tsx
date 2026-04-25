@@ -133,12 +133,9 @@ export default function EquipmentTransferForm({ transferOrderId, currentUser, on
 
   const loadOrder = async () => {
     setLoading(true)
-    console.log('[EquipmentTransferForm] Loading order with transferOrderId:', transferOrderId)
+
     try {
       const result = await apiClient.get<any>(`${API_URL.BASE}/api/equipment/transfers/${transferOrderId}`)
-      
-      console.log('[EquipmentTransferForm] API response:', result)
-
       if (result) {
         setOrder(result)
       } else {
@@ -409,9 +406,7 @@ export default function EquipmentTransferForm({ transferOrderId, currentUser, on
     return <div className="text-center py-8 text-gray-500">{t('equipment_transfer.not_exist')}</div>
   }
 
-  console.log('[EquipmentTransferForm] Rendering order:', order)
-  console.log('[EquipmentTransferForm] Order items:', order.items)
-  console.log('[EquipmentTransferForm] Order items length:', order.items?.length)
+
 
   const canShip = order.status === 'shipping' && currentUser?.id === order.from_manager_id
   const canReceive = order.status === 'receiving' && currentUser?.id === order.to_manager_id

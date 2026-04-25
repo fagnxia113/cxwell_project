@@ -216,7 +216,7 @@ export class PersonnelAttendanceController {
   @Post('sync/dingtalk')
   async syncFromDingtalk() {
     try {
-      console.log('[Sync] Starting DingTalk attendance sync...');
+
       
       // 获取所有需要同步考勤的项目及其考勤组配置
       const projectsWithConfig = await this.prisma.projectAttendanceConfig.findMany({
@@ -224,10 +224,10 @@ export class PersonnelAttendanceController {
         include: { project: true },
       });
 
-      console.log('[Sync] Found projects with attendance config:', projectsWithConfig.length);
+
       
       if (projectsWithConfig.length === 0) {
-        console.log('[Sync] No projects with attendance config found');
+
         return { success: false, message: '没有已配置考勤组的项目' };
       }
 
@@ -238,11 +238,11 @@ export class PersonnelAttendanceController {
       const workDateFrom = `${fromDate.getFullYear()}${String(fromDate.getMonth() + 1).padStart(2, '0')}${fromDate.getDate()}000000`;
       const workDateTo = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${today.getDate()}235959`;
 
-      console.log('[Sync] Querying DingTalk for date range:', workDateFrom, '-', workDateTo);
+
 
       // 遍历每个配置的考勤组
       for (const config of projectsWithConfig) {
-        console.log('[Sync] Processing project:', config.project?.projectName, '(ID:', config.projectId, ')', 'dingtalkGroupId:', config.dingtalkGroupId);
+
 
         // 获取该项目下的所有员工（使用钉钉用户ID）
         const members = await this.prisma.projectMember.findMany({
@@ -250,35 +250,31 @@ export class PersonnelAttendanceController {
           include: { employee: true },
         });
 
-        console.log('[Sync] Found members:', members.length);
+
 
         const userIds: string[] = members
           .map(m => m.employee.dingtalkUserId)
           .filter((id): id is string => !!id);
 
-        console.log('[Sync] Members with dingtalkUserId:', userIds.length, userIds);
+
 
         if (userIds.length === 0) {
-          console.log('[Sync] No members with dingtalkUserId, skipping project:', config.project?.projectName);
+
           continue;
         }
 
         // 调用钉钉考勤接口
-        console.log('[Sync] Calling DingTalk API for users:', userIds);
+
         const result = await this.dingtalkAttendanceService.getAttendanceList(
           userIds,
           workDateFrom,
           workDateTo
         );
 
-        console.log('[Sync] DingTalk API result:', {
-          success: result.success,
-          dataLength: result.data?.length,
-          error: result.error,
-        });
+
 
         if (result.success && result.data && result.data.length > 0) {
-          console.log('[Sync] Processing', result.data.length, 'records');
+
           
           // 按员工+日期聚合记录
           const recordMap = new Map<string, any[]>();
@@ -292,18 +288,18 @@ export class PersonnelAttendanceController {
             recordMap.get(key)!.push(record);
           }
           
-          console.log('[Sync] Aggregated records:', recordMap.size, 'days');
+
           
           // 处理每个员工每天的记录
           for (const [key, records] of recordMap) {
             const [userId, workDateStr] = key.split('-');
             const member = members.find(m => m.employee.dingtalkUserId === userId);
             if (!member) {
-              console.log('[Sync] Member not found for userId:', userId);
+
               continue;
             }
 
-            console.log('[Sync] Processing member:', member.employee.name, 'date:', workDateStr);
+
 
             // 区分上班和下班打卡
             let checkInTime: Date | null = null;
@@ -312,12 +308,7 @@ export class PersonnelAttendanceController {
             let checkType: string | null = null;
 
             for (const record of records) {
-              console.log('[Sync] Record details:', {
-                userId: record.userId || record.userId,
-                checkTime: record.userCheckTime || record.baseCheckTime || record.checkTime,
-                type: record.checkType || record.timeResult,
-                location: record.locationName,
-              });
+
               
               const time = record.userCheckTime || record.baseCheckTime || record.checkTime;
               const type = record.checkType || record.timeResult;
@@ -371,7 +362,7 @@ export class PersonnelAttendanceController {
 
             const workDate = parseWorkDate(workDateStr);
             if (!workDate) {
-              console.log('[Sync] Invalid workDate:', workDateStr, 'skipping');
+
               continue;
             }
 
@@ -402,19 +393,19 @@ export class PersonnelAttendanceController {
                   dingtalkUserId: userId,
                 },
               });
-              console.log('[Sync] Successfully upserted record');
+
             } catch (dbError) {
               console.error('[Sync] Database error:', dbError);
             }
           }
           totalSynced += recordMap.size;
-          console.log('[Sync] Synced', recordMap.size, 'days for project', config.project?.projectName);
+
         } else {
-          console.log('[Sync] No records to sync or request failed. Error:', result.error);
+
         }
       }
 
-      console.log('[Sync] Total synced:', totalSynced);
+
       return { success: true, count: totalSynced };
     } catch (error) {
       console.error('[Sync] DingTalk sync error:', error);

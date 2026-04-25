@@ -9,7 +9,7 @@ export default function WorkflowFormPage() {
   const { t } = useTranslation()
 
   const handleSuccess = (processInstanceId: string) => {
-    console.log('流程启动成功:', processInstanceId)
+
     navigate('/approvals/center')
   }
 

@@ -47,7 +47,7 @@ const statusConfig = {
 // 移除 systemTypeOptions，改为手输
 
 export default function TagsTab({ projectId, milestones, isProjectManager }: TagsTabProps) {
-  console.log('[TagsTab] Mounted, projectId:', projectId)
+
   const { t } = useTranslation()
   const [tags, setTags] = useState<TagRecord[]>([])
   const [loading, setLoading] = useState(false)
@@ -102,12 +102,9 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
     setLoading(true)
     try {
       const res = await apiClient.get('/api/tags', { params: { project_id: projectId } })
-      console.log('[TagsTab] Response:', res)
-      console.log('[TagsTab] projectId:', projectId)
       const data = res.data?.data || res.data || []
-      console.log('[TagsTab] Data:', data)
       const tagList = Array.isArray(data) ? data : []
-      console.log('[TagsTab] TagList:', tagList)
+
       const mappedTags: TagRecord[] = tagList.map((r: any) => {
         const progress = r.required_count > 0 ? Math.round((r.verified_count / r.required_count) * 100) : 0
         let status: TagRecord['status'] = 'pending'
@@ -176,7 +173,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
     if (!formData.milestone_id || !formData.tag_type) return
     try {
       if (editingRecord) {
-        console.log('[TagsTab] Updating:', editingRecord.id, formData)
+
         await apiClient.put(`/api/tags/${editingRecord.id}`, {
           milestone_id: formData.milestone_id || null,
           tag_type: formData.tag_type,
@@ -184,7 +181,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
           required_count: formData.required_count,
         })
       } else {
-        console.log('[TagsTab] Creating:', { project_id: projectId, ...formData })
+
         await apiClient.post('/api/tags', {
           project_id: projectId,
           milestone_id: formData.milestone_id,

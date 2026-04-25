@@ -21,7 +21,7 @@ export class DingtalkDeptService {
         }
       );
 
-      console.log('[DingtalkDept] Create department response:', JSON.stringify(response.data));
+
 
       if (response.data.errcode === 0) {
         const deptId = response.data.result?.dept_id || response.data.dept_id;

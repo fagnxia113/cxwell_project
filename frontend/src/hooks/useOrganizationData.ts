@@ -25,7 +25,7 @@ export function useOrganizationData() {
         return
       }
       const result = await response.json()
-      console.log('[useOrganizationData] Employee API response:', result)
+
       const rawList = result.data?.list || result.data || []
       const mapped = (Array.isArray(rawList) ? rawList : []).map((emp: any) => ({
         id: emp.employeeId?.toString() || emp.id?.toString() || '',

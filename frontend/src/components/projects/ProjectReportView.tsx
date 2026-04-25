@@ -26,7 +26,7 @@ export default function ProjectReportView({
   const totalSpentInWan = totalSpentInYuan / 10000
   const budgetUtilization = project.budget > 0 ? Math.round((totalSpentInWan / project.budget) * 100) : 0
 
-  console.log('[ProjectReportView] project.budget:', project.budget, 'totalSpentInYuan:', totalSpentInYuan, 'totalSpentInWan:', totalSpentInWan, 'budgetUtilization:', budgetUtilization)
+
 
   return (
     <div className="bg-white p-12 max-w-[1000px] mx-auto shadow-2xl print:shadow-none print:p-0" id="project-report-content">

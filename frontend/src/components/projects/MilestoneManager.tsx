@@ -149,22 +149,7 @@ export default function MilestoneManager({
     if (!selectedMilestoneForProgress) return
     try {
       const milestone = selectedMilestoneForProgress
-      console.log('=== Updating milestone progress ===')
-      console.log('milestoneId:', milestone.id)
-      console.log('progress:', progress)
 
-      const updateData: any = { progress }
-      if (progress > 0 && milestone.progress === 0) {
-        updateData.status = 'in_progress'
-        updateData.actual_start_date = new Date().toISOString().split('T')[0]
-      }
-
-      console.log('updateData:', updateData)
-      console.log('URL:', `/api/milestones/${milestone.id}/progress`)
-
-      const result = await apiClient.put(`/api/milestones/${milestone.id}/progress`, updateData)
-      console.log('API result:', result)
-      console.log('API result.data:', result?.data)
 
       setSelectedMilestoneForProgress(null)
       onRefresh()

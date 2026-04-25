@@ -261,7 +261,7 @@ export class WorkflowController {
   @Post('tasks/:id/transfer')
   async transferTask(@Param('id') id: string, @Body() body: { targetUserId: string; comment?: string }, @Req() req) {
     const currentUserId = req.user.loginName;
-    console.log(`[Workflow Trace] Transfer Action: taskId=${id}, from=${currentUserId}, to=${body.targetUserId}`);
+
 
     try {
       const result = await this.engineService.transferTask(BigInt(id), currentUserId, body.targetUserId, body.comment);
@@ -275,7 +275,7 @@ export class WorkflowController {
   @Post('add-signer')
   async addSigner(@Body() body: { instanceId: string; userIds: string[] }, @Req() req) {
     const creator = req.user.loginName;
-    console.log(`[Workflow Trace] Add Signer Action: instanceId=${body.instanceId}, users=${body.userIds}`);
+
 
     try {
       const result = await this.engineService.addSigner(BigInt(body.instanceId), body.userIds, creator);

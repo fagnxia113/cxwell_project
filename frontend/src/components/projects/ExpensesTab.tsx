@@ -25,7 +25,7 @@ export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteE
   const totalSpentInWan = totalSpentInYuan / 10000
   const utilization = budgetInYuan > 0 ? Math.round((totalSpentInYuan / budgetInYuan) * 100) : 0
 
-  console.log('[ExpensesTab] budgetInWan:', budgetInWan, 'budgetInYuan:', budgetInYuan, 'totalSpentInYuan:', totalSpentInYuan, 'utilization:', utilization)
+
 
   const handleAdd = () => {
     if (newExpense.amount <= 0) return

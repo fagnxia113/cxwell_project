@@ -199,12 +199,12 @@ export class OrganizationService {
       }
       const dingtalkResult = await this.dingtalkService.createDepartment(data.name, parentDingtalkDeptId, data.nameEn);
       if (dingtalkResult.success && dingtalkResult.deptId) {
-        console.log(`[Organization] 部门 ${data.name} 已同步到钉钉，钉钉部门ID: ${dingtalkResult.deptId}`);
+
         await this.prisma.sysDept.update({
           where: { deptId: dept.deptId },
           data: { dingtalkDeptId: dingtalkResult.deptId }
         });
-        console.log(`[Organization] 部门 ${data.name} 的钉钉部门ID已保存`);
+
       } else {
         console.warn(`[Organization] 部门 ${data.name} 同步钉钉失败: ${dingtalkResult.error}`);
       }
@@ -243,7 +243,7 @@ export class OrganizationService {
           data.nameEn
         );
         if (dingtalkResult.success) {
-          console.log(`[Organization] 部门 ${data.name} 已同步更新到钉钉`);
+
         } else {
           console.warn(`[Organization] 部门 ${data.name} 同步更新到钉钉失败: ${dingtalkResult.error}`);
         }
@@ -267,7 +267,7 @@ export class OrganizationService {
       try {
         const dingtalkResult = await this.dingtalkService.deleteDepartment(dept.dingtalkDeptId);
         if (dingtalkResult.success) {
-          console.log(`[Organization] 部门 ${dept.deptName} 已从钉钉删除`);
+
         } else {
           console.warn(`[Organization] 部门 ${dept.deptName} 从钉钉删除失败: ${dingtalkResult.error}`);
         }
@@ -428,7 +428,7 @@ export class OrganizationService {
           leader: leaderDingtalkUserId,
         });
         if (dingtalkResult.success) {
-          console.log(`[Organization] 员工 ${data.name} 信息已同步更新到钉钉`);
+
         } else {
           console.warn(`[Organization] 员工 ${data.name} 同步更新到钉钉失败: ${dingtalkResult.error}`);
         }
@@ -482,7 +482,7 @@ export class OrganizationService {
       try {
         const dingtalkResult = await this.dingtalkService.deleteUser(employee.dingtalkUserId);
         if (dingtalkResult.success) {
-          console.log(`[Organization] 员工 ${employee.name} 已从钉钉删除`);
+
         } else {
           console.warn(`[Organization] 员工 ${employee.name} 从钉钉删除失败: ${dingtalkResult.error}`);
         }
@@ -699,7 +699,7 @@ export class OrganizationService {
         );
 
         if (syncResult.success) {
-          console.log(`[ReportTo] Synced to DingTalk: employee ${employeeId} -> leader ${reportToId} (dingtalk: ${leaderDingtalkUserId})`);
+
         } else {
           console.warn(`[ReportTo] Failed to sync to DingTalk: ${syncResult.error}`);
         }

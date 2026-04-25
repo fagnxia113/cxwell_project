@@ -129,7 +129,7 @@ export class MilestoneService {
 
   // 递归同步父级里程碑进度
   private async syncParentProgress(parentId: bigint) {
-    console.log(`[Sync] === Starting sync for parentId: ${parentId} ===`);
+
     
     const parent = await this.prisma.projectMilestone.findUnique({
       where: { id: parentId },
@@ -137,12 +137,12 @@ export class MilestoneService {
     });
 
     if (!parent) {
-      console.log(`[Sync] Parent not found: ${parentId}`);
+
       return;
     }
     
     if (!parent.children || parent.children.length === 0) {
-      console.log(`[Sync] Parent has no children: ${parentId}`);
+
       return;
     }
 
@@ -150,25 +150,19 @@ export class MilestoneService {
     const totalWeight = parent.children.reduce((sum, c) => sum + (Number(c.weight) || 0), 0);
     let newProgress = 0;
     
-    console.log(`[Sync] Parent: ${parent.name} (id=${parentId})`);
-    console.log(`[Sync] Total children weight: ${totalWeight}`);
-    console.log(`[Sync] Children details:`, parent.children.map(c => ({
-      id: c.id.toString(),
-      name: c.name,
-      weight: c.weight,
-      progress: c.progress,
-      status: c.status
-    })));
+
+
+
 
     if (totalWeight > 0) {
       const weightedSum = parent.children.reduce((sum, c) => sum + ((Number(c.progress) || 0) * (Number(c.weight) || 0)), 0);
       newProgress = Math.round(weightedSum / totalWeight);
-      console.log(`[Sync] Weighted calculation: ${weightedSum} / ${totalWeight} = ${newProgress}`);
+
     } else {
       // 如果没有权重，则计算简单平均
       const simpleSum = parent.children.reduce((sum, c) => sum + (Number(c.progress) || 0), 0);
       newProgress = Math.round(simpleSum / parent.children.length);
-      console.log(`[Sync] No weight found, using simple average: ${simpleSum} / ${parent.children.length} = ${newProgress}`);
+
     }
 
     // 确定新状态
@@ -181,7 +175,7 @@ export class MilestoneService {
       newStatus = '0'; // 未开始
     }
 
-    console.log(`[Sync] Updating parent progress from ${parent.progress} to ${newProgress}, status from ${parent.status} to ${newStatus}`);
+
 
     // 更新父级进度和状态
     await this.prisma.projectMilestone.update({
@@ -191,20 +185,20 @@ export class MilestoneService {
         status: newStatus
       }
     });
-    console.log(`[Sync] Successfully updated parent ${parentId} to progress ${newProgress}`);
+
 
     // 继续向上同步（递归处理祖父级）
     if (parent.parentId) {
-      console.log(`[Sync] Parent has grandparent ${parent.parentId}, recursing...`);
+
       await this.syncParentProgress(parent.parentId);
     } else {
-      console.log(`[Sync] Parent is root milestone, stopping recursion`);
+
     }
   }
 
   // 同步项目总进度
   private async syncProjectProgress(projectId: bigint) {
-    console.log(`[Sync] === Starting project sync for projectId: ${projectId} ===`);
+
     const rootMilestones = await this.prisma.projectMilestone.findMany({
       where: {
         projectId,
@@ -212,14 +206,8 @@ export class MilestoneService {
       }
     });
 
-    console.log(`[Sync] Found ${rootMilestones.length} root milestones`);
-    console.log(`[Sync] Root milestones details:`, rootMilestones.map(m => ({
-      id: m.id.toString(),
-      name: m.name,
-      weight: m.weight,
-      progress: m.progress,
-      status: m.status
-    })));
+
+
 
     if (rootMilestones.length === 0) return;
 
@@ -229,11 +217,11 @@ export class MilestoneService {
     if (totalWeight > 0) {
       const weightedSum = rootMilestones.reduce((sum, m) => sum + ((Number(m.progress) || 0) * (Number(m.weight) || 0)), 0);
       projectProgress = Math.round(weightedSum / totalWeight);
-      console.log(`[Sync] Project weighted sum: ${weightedSum}, Total weight: ${totalWeight}, Result: ${projectProgress}`);
+
     } else {
       const simpleSum = rootMilestones.reduce((sum, m) => sum + (Number(m.progress) || 0), 0);
       projectProgress = Math.round(simpleSum / rootMilestones.length);
-      console.log(`[Sync] Project simple average: ${simpleSum} / ${rootMilestones.length} = ${projectProgress}`);
+
     }
 
     // 确定项目状态
@@ -246,7 +234,7 @@ export class MilestoneService {
 
     // 如果项目已经是 "已结项" (3)，则不再通过里程碑自动更新状态
     if (projectStatus === '3') {
-      console.log(`[Sync] Project is already closed (status=3), skipping status update`);
+
     } else {
       // 只要有进度，就进入 "进行中" (2)
       // 如果没有进度，保持原状（如 "立项中" (1)）
@@ -255,11 +243,11 @@ export class MilestoneService {
       }
     }
 
-    console.log(`[Sync] Updating project progress to ${projectProgress}, status to ${projectStatus}`);
+
     await this.prisma.project.update({
       where: { projectId },
       data: { progress: projectProgress, status: projectStatus }
     });
-    console.log(`[Sync] === Project sync completed ===`);
+
   }
 }
