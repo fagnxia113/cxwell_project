@@ -59,11 +59,11 @@ const ApprovalCenterPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const tabs = [
-    { key: 'initiate', label: '发起流程', icon: Zap, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-    { key: 'todo', label: '待我处理', icon: Inbox, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { key: 'done', label: '我已处理', icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { key: 'own', label: '我发起的', icon: Send, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-    { key: 'draft', label: '草稿箱', icon: FileEdit, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { key: 'initiate', label: t('approvals.tabs.initiate'), icon: Zap, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    { key: 'todo', label: t('approvals.tabs.todo'), icon: Inbox, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { key: 'done', label: t('approvals.tabs.done'), icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { key: 'own', label: t('approvals.tabs.own'), icon: Send, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    { key: 'draft', label: t('approvals.tabs.draft'), icon: FileEdit, color: 'text-amber-600', bg: 'bg-amber-50' },
   ];
 
   const fetchData = async (type: HubType) => {
@@ -82,10 +82,10 @@ const ApprovalCenterPage: React.FC = () => {
         const normalizeItem = (i: any, category: 'todo' | 'cc') => ({
           id: i.id || '',
           instance_id: i.instance_id || i.instanceId || '',
-          process_title: i.process_title || i.title || '未命名流程',
+          process_title: i.process_title || i.title || t('common.noData'),
           process_type: i.process_type || i.processType || '',
           node_name: i.node_name || i.nodeName || '',
-          initiator_name: i.initiator_name || i.initiatorName || '系统',
+          initiator_name: i.initiator_name || i.initiatorName || t('common.system'),
           status: i.status || 'pending',
           create_time: i.create_time || i.createTime || new Date().toISOString(),
           finish_time: i.finish_time || i.finishTime,
@@ -106,10 +106,10 @@ const ApprovalCenterPage: React.FC = () => {
           const normalized = (res.data || []).map((i: any) => ({
             id: i.id || '',
             instance_id: i.instance_id || i.instanceId || '',
-            process_title: i.process_title || i.title || '未命名流程',
+            process_title: i.process_title || i.title || t('common.noData'),
             process_type: i.process_type || i.processType || '',
             node_name: i.node_name || i.nodeName || '',
-            initiator_name: i.initiator_name || i.initiatorName || '系统',
+            initiator_name: i.initiator_name || i.initiatorName || t('common.system'),
             status: i.status || 'pending',
             create_time: i.create_time || i.createTime || new Date().toISOString(),
             finish_time: i.finish_time || i.finishTime,
@@ -147,6 +147,11 @@ const ApprovalCenterPage: React.FC = () => {
     }
   };
 
+  const getLocalizedStatus = (status: string) => {
+      const key = `approvals.status.${status}`;
+      return t(key, { defaultValue: status });
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-110px)] bg-white rounded-lg border border-slate-100 shadow-sm overflow-hidden">
       {/* Top Navigation Bar */}
@@ -157,16 +162,16 @@ const ApprovalCenterPage: React.FC = () => {
               <div className="p-2 bg-indigo-600 rounded-lg text-white">
                 <ClipboardCheck size={20} strokeWidth={2.5} />
               </div>
-              审批中心
+              {t('approvals.center_title')}
             </h1>
-            <p className="text-slate-500 text-sm mt-0.5">Workflow Center</p>
+            <p className="text-slate-500 text-sm mt-0.5">{t('approvals.center_subtitle')}</p>
           </div>
           <button
             onClick={() => fetchData(activeTab)}
             className="px-4 py-2 bg-white border border-slate-200 text-slate-500 hover:text-indigo-600 rounded-lg shadow-sm transition-all text-sm font-medium flex items-center gap-2 hover:brightness-110"
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-            <span>刷新</span>
+            <span>{t('approvals.refresh')}</span>
           </button>
         </div>
 
@@ -210,7 +215,7 @@ const ApprovalCenterPage: React.FC = () => {
                       <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={15} />
                       <input
                         type="text"
-                        placeholder="搜索标题、申请人..."
+                        placeholder={t('approvals.search_placeholder')}
                         className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-transparent rounded-lg text-sm font-medium outline-none focus:bg-white focus:border-indigo-100 focus:ring-2 focus:ring-indigo-500/5 transition-all"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -219,7 +224,7 @@ const ApprovalCenterPage: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-slate-400 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
-                       Total: {filteredData.length}
+                       {t('approvals.total_count', { count: filteredData.length })}
                     </span>
                   </div>
                 </div>
@@ -241,7 +246,7 @@ const ApprovalCenterPage: React.FC = () => {
                       ) : filteredData.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-24 text-slate-300">
                           <Inbox size={36} strokeWidth={1.5} />
-                          <p className="mt-4 text-sm font-semibold">暂无数据</p>
+                          <p className="mt-4 text-sm font-semibold">{t('approvals.no_data')}</p>
                         </div>
                       ) : (
                         filteredData.map((item) => (
@@ -268,21 +273,21 @@ const ApprovalCenterPage: React.FC = () => {
                                 <div className="flex items-center gap-2.5 mb-1">
                                   <h3 className="text-sm font-bold text-slate-800">{item.process_title}</h3>
                                   <span className={cn("px-2 py-0.5 rounded text-[10px] font-semibold uppercase", getStatusColor(item.status))}>
-                                    {item.node_name || item.status}
+                                    {item.node_name || getLocalizedStatus(item.status)}
                                   </span>
                                   {item.hub_category === 'cc' && (
                                       <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded text-[10px] font-semibold uppercase border border-purple-100">
-                                          抄送
+                                          {t('approvals.cc')}
                                       </span>
                                   )}
                                   {item.hub_category === 'todo' && (
                                       <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[10px] font-semibold uppercase border border-indigo-100">
-                                          待办
+                                          {t('approvals.todo')}
                                       </span>
                                   )}
                                 </div>
                                 <div className="flex items-center gap-4 text-xs text-slate-400">
-                                  <span className="flex items-center gap-1.5"><User size={12} /> {item.initiator_name || '系统'}</span>
+                                  <span className="flex items-center gap-1.5"><User size={12} /> {item.initiator_name || t('common.system')}</span>
                                   <span>|</span>
                                   <span>{formatDate(item.create_time)}</span>
                                 </div>
@@ -295,7 +300,7 @@ const ApprovalCenterPage: React.FC = () => {
                                   "px-2 py-0.5 rounded text-[10px] font-semibold uppercase",
                                   item.result === 'pass' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'
                                 )}>
-                                  {item.result === 'pass' ? '已通过' : '已驳回'}
+                                  {item.result === 'pass' ? t('approvals.pass') : t('approvals.reject')}
                                 </span>
                               )}
                               <div className="w-9 h-9 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">

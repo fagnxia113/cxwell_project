@@ -278,7 +278,7 @@ export default function RoleManagementPage() {
             </div>
 
             <h3 className="text-xl font-black text-slate-900 mb-1">{role.roleName}</h3>
-            <code className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono block mb-4">KEY: {role.roleKey}</code>
+            <code className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono block mb-4">唯一标识: {role.roleKey}</code>
 
             <p className="text-sm text-slate-500 font-medium line-clamp-2 mb-6 min-h-[40px]">
               {role.remark || '暂无描述'}
@@ -287,7 +287,7 @@ export default function RoleManagementPage() {
             <div className="pt-6 border-t border-slate-50 flex items-center justify-between mt-auto">
               <div className="flex items-center gap-2">
                 <div className="px-2 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-tight">
-                  ACTIVE PROTOCOL
+                  活跃状态
                 </div>
               </div>
               <button
@@ -323,7 +323,7 @@ export default function RoleManagementPage() {
                   onChange={(e) => setFormData({ ...formData, roleKey: e.target.value })}
                   disabled={!!editingRole}
                   className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:border-indigo-500 transition-all text-sm font-bold shadow-inner disabled:bg-slate-50"
-                  placeholder="role_key"
+                  placeholder="输入角色标识"
                   required
                 />
               </div>

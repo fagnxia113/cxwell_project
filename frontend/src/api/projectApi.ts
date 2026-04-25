@@ -18,5 +18,19 @@ export const projectApi = {
    */
   getProjectDetail: (id: string) => {
     return apiClient.get<any>(`/api/project/${id}`);
+  },
+
+  /**
+   * 获取指定项目的风险列表
+   */
+  getProjectRisks: (projectId: string) => {
+    return apiClient.get<any>(`/api/project/extension/${projectId}/risks`);
+  },
+
+  /**
+   * 获取聚合任务看板数据
+   */
+  getTaskBoard: () => {
+    return apiClient.get<any>('/api/project/task-board');
   }
 };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import {
   User,
   FileText,
@@ -13,7 +14,8 @@ import {
   Search,
   Box,
   Briefcase,
-  Cpu
+  Cpu,
+  Clock
 } from 'lucide-react'
 import { workflowApi } from '../../../api/workflowApi'
 import { cn } from '../../../utils/cn'
@@ -36,16 +38,17 @@ interface WorkflowDefinition {
   form_template_id?: string
 }
 
-const CATEGORY_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
-  'hr': { label: '人事管理', color: 'blue', icon: User },
-  'personnel': { label: '人事管理', color: 'blue', icon: User },
-  'project': { label: '项目管理', color: 'indigo', icon: Briefcase },
-  'equipment': { label: '设备资产', color: 'emerald', icon: Cpu },
-  'purchase': { label: '采购供应链', color: 'amber', icon: ShoppingCart },
-  'admin': { label: '行政后勤', color: 'rose', icon: ShieldCheck },
-  'finance': { label: '财务管理', color: 'emerald', icon: Zap },
-  'travel': { label: '商旅管理', color: 'amber', icon: Briefcase },
-  'general': { label: '通用业务', color: 'slate', icon: Layers }
+const CATEGORY_CONFIG: Record<string, { labelKey: string; color: string; icon: any }> = {
+  'hr': { labelKey: 'hr', color: 'blue', icon: User },
+  'personnel': { labelKey: 'personnel', color: 'blue', icon: User },
+  'project': { labelKey: 'project', color: 'indigo', icon: Briefcase },
+  'equipment': { labelKey: 'equipment', color: 'emerald', icon: Cpu },
+  'purchase': { labelKey: 'purchase', color: 'amber', icon: ShoppingCart },
+  'admin': { labelKey: 'admin', color: 'rose', icon: ShieldCheck },
+  'finance': { labelKey: 'finance', color: 'emerald', icon: Zap },
+  'travel': { labelKey: 'travel', color: 'amber', icon: Briefcase },
+  'general': { labelKey: 'general', color: 'slate', icon: Layers },
+  'leave': { labelKey: 'leave', color: 'emerald', icon: Clock }
 }
 
 const PRESET_TO_WORKFLOW_KEY: Record<string, string> = {
@@ -58,6 +61,7 @@ const PRESET_TO_WORKFLOW_KEY: Record<string, string> = {
 }
 
 const ProcessInitiator: React.FC = () => {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [presets, setPresets] = useState<ProcessPreset[]>([])
   const [workflowDefinitions, setWorkflowDefinitions] = useState<WorkflowDefinition[]>([])
@@ -144,7 +148,7 @@ const ProcessInitiator: React.FC = () => {
               selectedCategory === null ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
             )}
           >
-            全部
+            {t('workflow_initiator.all')}
           </button>
           {categories.map(cat => (
             <button
@@ -155,7 +159,7 @@ const ProcessInitiator: React.FC = () => {
                 selectedCategory === cat ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
               )}
             >
-              {CATEGORY_CONFIG[cat]?.label || cat}
+              {t(`workflow_initiator.categories.${cat}`)}
             </button>
           ))}
         </div>
@@ -164,7 +168,7 @@ const ProcessInitiator: React.FC = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors" size={16} />
           <input
             type="text"
-            placeholder="搜索流程名称..."
+            placeholder={t('workflow_initiator.search_placeholder')}
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-transparent rounded-xl text-sm font-bold outline-none focus:bg-white focus:border-indigo-100 transition-all"
@@ -183,7 +187,7 @@ const ProcessInitiator: React.FC = () => {
             <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto text-slate-300 mb-6 shadow-sm">
               <Box size={40} />
             </div>
-            <p className="text-slate-400 font-black text-xs uppercase tracking-widest">暂未检索到匹配的流程</p>
+            <p className="text-slate-400 font-black text-xs uppercase tracking-widest">{t('workflow_initiator.no_matching')}</p>
           </div>
         ) : (
           Object.entries(groupedItems).map(([cat, items], idx) => {
@@ -201,13 +205,18 @@ const ProcessInitiator: React.FC = () => {
                   <div className={cn("p-1.5 rounded-lg text-white", `bg-${config.color}-600`, config.color === 'blue' && 'bg-blue-600', config.color === 'emerald' && 'bg-emerald-600', config.color === 'amber' && 'bg-amber-600', config.color === 'rose' && 'bg-rose-600', config.color === 'indigo' && 'bg-indigo-600', config.color === 'slate' && 'bg-slate-600')}>
                     <CategoryIcon size={14} strokeWidth={2.5} />
                   </div>
-                  <h2 className="text-xs font-black text-slate-600 uppercase tracking-widest">{config.label}</h2>
+                  <h2 className="text-xs font-black text-slate-600 uppercase tracking-widest">
+                    {t(`workflow_initiator.categories.${cat}`)}
+                  </h2>
                   <div className="h-px bg-slate-100 flex-1" />
                 </div>
 
                 <div className="space-y-2">
                   {items.map((item) => {
                     const isWorkflow = (item as WorkflowDefinition).key !== undefined
+                    const flowCode = isWorkflow ? (item as WorkflowDefinition).key : (PRESET_TO_WORKFLOW_KEY[item.id] || item.id)
+                    const localizedName = t(`workflow_initiator.definitions.${flowCode}`, { defaultValue: item.name })
+
                     return (
                       <motion.div
                         key={item.id}
@@ -221,10 +230,10 @@ const ProcessInitiator: React.FC = () => {
 
                         <div className="flex-1 min-w-0">
                           <h3 className="text-[13px] font-bold text-slate-800 truncate group-hover:text-indigo-600 transition-colors">
-                            {item.name}
+                            {localizedName}
                           </h3>
                           <p className="text-[10px] font-medium text-slate-400 truncate mt-0.5">
-                            {item.description || '点击发起流程'}
+                            {item.description || t('workflow_initiator.click_to_start')}
                           </p>
                         </div>
                       </motion.div>

@@ -53,6 +53,8 @@ model SysUser {
   updateTime  DateTime  @updatedAt @map("update_time")
   remark      String?   @db.VarChar(500)
 
+  employee    SysEmployee?
+
   @@map("sys_user")
 }
 
@@ -138,6 +140,7 @@ model SysEmployee {
   subordinates     SysEmployee[]   @relation("EmployeeReportTo")
   post             SysPost?        @relation(fields: [postId], references: [postId])
   leadingDepts     SysDept[]       @relation("DeptLeader")
+  user             SysUser?        @relation(fields: [userId], references: [userId])
 
   @@map("sys_employee")
 }

@@ -36,14 +36,14 @@ export default function ProjectStatsHeader({ stats }: ProjectStatsHeaderProps) {
         icon={CheckCircle2}
         label={t('project.stats.completed')}
         value={stats.completedCount}
-        color="blue"
+        color="emerald"
         delay={0.1}
       />
       <StatCard
         icon={Activity}
         label={t('common.progress')}
         value={`${stats.avgProgress}%`}
-        color="indigo"
+        color="emerald"
         delay={0.2}
       />
       <StatCard

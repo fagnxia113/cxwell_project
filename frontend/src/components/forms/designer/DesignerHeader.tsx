@@ -64,7 +64,7 @@ export default function DesignerHeader({
                )}
              >
                <Edit2 size={12} strokeWidth={3} />
-               Design
+               设计
              </button>
              <button
                onClick={() => setPreviewMode(true)}
@@ -74,7 +74,7 @@ export default function DesignerHeader({
                )}
              >
                <Eye size={12} strokeWidth={3} />
-               Simulation
+               模拟仿真
              </button>
           </div>
 

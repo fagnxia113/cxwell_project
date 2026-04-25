@@ -48,8 +48,8 @@ const FormDesignerPage: React.FC = () => {
            <div className="w-8 h-8 bg-indigo-600 rounded-lg animate-pulse" />
         </div>
         <div className="space-y-2 text-center">
-           <p className="text-xs font-black uppercase tracking-[0.4em] text-slate-400">Initializing Designer</p>
-           <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Hydrating schema from secure archive...</p>
+           <p className="text-xs font-black uppercase tracking-[0.4em] text-slate-400">正在初始化设计器</p>
+           <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">正在从安全归档中恢复架构...</p>
         </div>
       </div>
     )

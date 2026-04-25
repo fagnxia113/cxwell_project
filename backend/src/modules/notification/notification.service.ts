@@ -1,11 +1,20 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ConfigService } from '@nestjs/config';
+import { DingtalkMessageService } from '../dingtalk/services/dingtalk-message.service';
 
 @Injectable()
 export class NotificationService {
   private readonly logger = new Logger(NotificationService.name);
+  private readonly frontendUrl: string;
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+    @Optional() private dingtalkMessageService?: DingtalkMessageService,
+  ) {
+    this.frontendUrl = this.configService.get<string>('FRONTEND_URL', '');
+  }
 
   async getNotifications(userId: string, options: { isRead?: boolean; type?: string; limit?: number; offset?: number } = {}) {
     const { isRead, type, limit = 20, offset = 0 } = options;
@@ -61,6 +70,12 @@ export class NotificationService {
       }
     });
     this.logger.log(`Notification created for user ${data.userId}: ${data.title}`);
+    
+    // 异步同步到钉钉
+    this.syncToDingtalk([data.userId], data).catch(err => {
+      this.logger.error(`Failed to sync single notification to DingTalk: ${err.message}`);
+    });
+
     return notification;
   }
 
@@ -110,5 +125,44 @@ export class NotificationService {
 
     await this.prisma.sysNotification.createMany({ data: records });
     this.logger.log(`Batch created ${userIds.length} notifications: ${data.title}`);
+
+    // 异步同步到钉钉
+    this.syncToDingtalk(userIds, data).catch(err => {
+      this.logger.error(`Failed to sync batch notifications to DingTalk: ${err.message}`);
+    });
+  }
+
+  private async syncToDingtalk(loginNames: string[], data: { title: string; content?: string; actionUrl?: string }) {
+    if (!this.dingtalkMessageService || !loginNames.length) return;
+
+    // 获取这些用户的钉钉 ID
+    const employees = await this.prisma.sysEmployee.findMany({
+      where: {
+        user: {
+          loginName: { in: loginNames }
+        },
+        dingtalkUserId: { not: null }
+      },
+      select: {
+        dingtalkUserId: true,
+        user: { select: { loginName: true } }
+      }
+    });
+
+    if (!employees.length) return;
+
+    const fullUrl = data.actionUrl 
+      ? (data.actionUrl.startsWith('http') ? data.actionUrl : `${this.frontendUrl}${data.actionUrl}`)
+      : this.frontendUrl;
+
+    for (const emp of employees) {
+      if (emp.dingtalkUserId) {
+        await this.dingtalkMessageService.sendOaNotification(emp.dingtalkUserId, {
+          title: data.title,
+          text: data.content || data.title,
+          messageUrl: fullUrl,
+        });
+      }
+    }
   }
 }

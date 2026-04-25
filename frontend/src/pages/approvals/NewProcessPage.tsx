@@ -17,9 +17,9 @@ export default function NewProcessPage() {
             <div className="p-2 bg-indigo-500 rounded-lg text-white">
               <Plus size={20} strokeWidth={2.5} />
             </div>
-            发起新流程
+            {t('approvals.tabs.initiate')}
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5">选择要发起的业务流程</p>
+          <p className="text-slate-500 text-sm mt-0.5">{t('workflow_initiator.search_placeholder')}</p>
         </motion.div>
       </div>
 

@@ -48,7 +48,7 @@ export default function ProjectListGrid({ projects }: ProjectListGridProps) {
                 </div>
                 <h3 className="text-base font-black text-slate-800 group-hover:text-blue-600 transition-colors mb-1 line-clamp-1 tracking-tight uppercase">{project.name}</h3>
                 <div className="text-[9px] font-bold text-slate-400 font-mono uppercase tracking-widest flex items-center gap-1.5 opacity-60">
-                  <Hash size={10} /> {project.id.slice(0, 8)} | {project.country}
+                  <Hash size={10} /> {project.id.slice(0, 8)} | {t(`countries.${project.country}`, { defaultValue: project.country })}
                 </div>
               </div>
 
@@ -99,7 +99,7 @@ export default function ProjectListGrid({ projects }: ProjectListGridProps) {
                     <Zap size={10} />
                     <span className="text-[8px] font-black uppercase tracking-widest">Cap</span>
                   </div>
-                  <span className="text-[10px] font-black text-slate-700 tabular-nums">{project.it_capacity || '-'}</span>
+                  <span className="text-[10px] font-black text-slate-700 tabular-nums">{project.it_capacity || '-'} kW</span>
                 </div>
                 <div className="flex flex-col gap-0.5 border-x border-slate-100 px-2 text-center">
                   <div className="flex items-center justify-center gap-1.5 text-slate-400">
@@ -113,7 +113,7 @@ export default function ProjectListGrid({ projects }: ProjectListGridProps) {
                     <Maximize size={10} />
                     <span className="text-[8px] font-black uppercase tracking-widest">Area</span>
                   </div>
-                  <span className="text-[10px] font-black text-slate-700 tabular-nums">{project.building_area || '-'}</span>
+                  <span className="text-[10px] font-black text-slate-700 tabular-nums">{project.building_area || '-'} m²</span>
                 </div>
               </div>
 

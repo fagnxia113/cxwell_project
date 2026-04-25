@@ -103,9 +103,6 @@ export default function SystemSettingsPage() {
   const categoryConfig = {
     general: { label: '通用设置', icon: Settings, color: 'blue' },
     notification: { label: '通知设置', icon: Bell, color: 'rose' },
-    purchase: { label: '采购设置', icon: ShoppingCart, color: 'amber' },
-    equipment: { label: '设备设置', icon: Package, color: 'emerald' },
-    hr: { label: '人事设置', icon: Users, color: 'purple' },
     smtp: { label: '邮件设置', icon: Mail, color: 'indigo' },
     integration: { label: '集成设置', icon: Zap, color: 'emerald' },
   }
@@ -232,9 +229,6 @@ export default function SystemSettingsPage() {
       console.error(t('system_settings.params_load_failed'), error)
       // Fallback data for empty DBs
       setConfigs([
-        { id: '1', key: 'purchase_manager_id', value: '', description: t('system_settings.descriptions.purchase_manager_id'), category: 'purchase' },
-        { id: '2', key: 'equipment_manager_id', value: '', description: t('system_settings.descriptions.equipment_manager_id'), category: 'equipment' },
-        { id: '3', key: 'hr_manager_id', value: '', description: t('system_settings.descriptions.hr_manager_id'), category: 'hr' },
         { id: '4', key: 'daily_report_reminder_time', value: '18:00', description: t('system_settings.descriptions.daily_report_reminder_time'), category: 'notification' },
         { id: '5', key: 'progress_check_interval', value: '60', description: t('system_settings.descriptions.progress_check_interval'), category: 'notification' },
         { id: '6', key: 'deviation_threshold_warning', value: '5', description: t('system_settings.descriptions.deviation_threshold_warning'), category: 'notification' },
@@ -405,7 +399,7 @@ export default function SystemSettingsPage() {
                             )}></span>
                             <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">{config.description}</h4>
                           </div>
-                          <p className="text-[10px] font-mono text-slate-400 font-bold ml-3.5 uppercase">KEY: {config.key}</p>
+                          <p className="text-[10px] font-mono text-slate-400 font-bold ml-3.5 uppercase">标识符: {config.key}</p>
                         </div>
                         <div className="md:w-72 relative">
                           <input

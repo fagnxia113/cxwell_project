@@ -5,6 +5,7 @@ import dayjs from 'dayjs'
 import { apiClient } from '../../utils/apiClient'
 import { useMessage } from '../../hooks/useMessage'
 import { useUser } from '../../contexts/UserContext'
+import { useTranslation } from 'react-i18next'
 import { cn } from '../../utils/cn'
 
 interface ScheduleEntry {
@@ -19,13 +20,14 @@ interface Project {
   name: string
 }
 
-const TYPE_CONFIG = {
-  work: { label: '项目中', color: 'bg-blue-500', textColor: 'text-blue-600', bgLight: 'bg-blue-50', icon: Briefcase },
-  home_rest: { label: '回国休假', color: 'bg-emerald-500', textColor: 'text-emerald-600', bgLight: 'bg-emerald-50', icon: Plane },
-  rest: { label: '本地休息', color: 'bg-amber-500', textColor: 'text-amber-600', bgLight: 'bg-amber-50', icon: Home }
-}
+const getTypeConfig = (t: any) => ({
+  work: { label: t('personnel.rotation.types.work'), color: 'bg-blue-500', textColor: 'text-blue-600', bgLight: 'bg-blue-50', icon: Briefcase },
+  home_rest: { label: t('personnel.rotation.types.home_rest'), color: 'bg-emerald-500', textColor: 'text-emerald-600', bgLight: 'bg-emerald-50', icon: Plane },
+  rest: { label: t('personnel.rotation.types.rest'), color: 'bg-amber-500', textColor: 'text-amber-600', bgLight: 'bg-amber-50', icon: Home }
+});
 
 export default function EmployeeMonthlyReportPage() {
+  const { t } = useTranslation()
   const { user } = useUser()
   const { success, error: showError } = useMessage()
   const [submitting, setSubmitting] = useState(false)
@@ -37,6 +39,7 @@ export default function EmployeeMonthlyReportPage() {
   const [editingType, setEditingType] = useState<'work' | 'rest' | 'home_rest'>('work')
   const [editingProject, setEditingProject] = useState<string>('')
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const TYPE_CONFIG = getTypeConfig(t)
 
   const daysInMonth = dayjs(currentMonth).daysInMonth()
   const firstDayOfMonth = dayjs(currentMonth + '-01').day()
@@ -143,10 +146,10 @@ export default function EmployeeMonthlyReportPage() {
       await apiClient.post(`/api/personnel/rotation/plan/${employeeId}/${yearMonth}`, {
         segments
       })
-      success(`已保存 ${segments.length} 条行程记录`)
+      success(t('personnel.rotation.save_success', { count: segments.length }))
       setHasUnsavedChanges(false)
     } catch (e: any) {
-      showError(e.message || '保存失败')
+      showError(e.message || t('personnel.rotation.save_failed'))
     } finally {
       setSubmitting(false)
     }
@@ -159,7 +162,7 @@ export default function EmployeeMonthlyReportPage() {
 
   const getEntryForDate = (date: string) => schedule.get(date)
 
-  const weekDays = ['日', '一', '二', '三', '四', '五', '六']
+  const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 
   const hasScheduleData = schedule.size > 0
 
@@ -171,10 +174,10 @@ export default function EmployeeMonthlyReportPage() {
             <div className="p-2 bg-primary rounded-lg text-white shadow-brand">
               <Calendar size={20} strokeWidth={2.5} />
             </div>
-            月度行程报备
+            {t('personnel.rotation.report_title')}
           </h1>
           <p className="text-slate-500 text-sm mt-0.5">
-            提前规划您的工作与休息安排
+            {t('personnel.rotation.report_subtitle')}
           </p>
         </div>
 
@@ -183,22 +186,27 @@ export default function EmployeeMonthlyReportPage() {
             <ChevronLeft size={20} className="text-slate-400" />
           </button>
           <div className="px-6 py-2 bg-white rounded-xl shadow-sm border border-slate-100 text-center min-w-[140px]">
-            <span className="text-sm font-bold text-primary">{dayjs(currentMonth).format('YYYY年 M月')}</span>
+            <span className="text-sm font-bold text-primary">
+              {dayjs(currentMonth + '-01').format('YYYY') === dayjs().format('YYYY') 
+                ? dayjs(currentMonth + '-01').format('MMMM')
+                : dayjs(currentMonth + '-01').format('MMM YYYY')}
+            </span>
           </div>
           <button onClick={() => changeMonth(1)} className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 hover:bg-slate-50 transition-colors">
             <ChevronRight size={20} className="text-slate-400" />
           </button>
           <div className="h-6 w-px bg-slate-200 mx-2"></div>
-          <button
-            onClick={() => { setIsMultiSelectMode(!isMultiSelectMode); setSelectedDates(new Set()); }}
+          <button 
+            onClick={() => {
+              setIsMultiSelectMode(!isMultiSelectMode)
+              if (isMultiSelectMode) setSelectedDates(new Set())
+            }}
             className={cn(
-              "px-4 py-2 text-xs font-medium rounded-xl transition-colors",
-              isMultiSelectMode
-                ? "bg-primary text-white shadow-sm"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              "px-4 py-2 rounded-xl text-xs font-bold transition-all",
+              isMultiSelectMode ? "bg-primary text-white shadow-brand" : "bg-white border border-slate-100 text-slate-600 hover:bg-slate-50"
             )}
           >
-            {isMultiSelectMode ? '退出多选' : '多选'}
+            {isMultiSelectMode ? t('personnel.rotation.exit_multi_select') : t('personnel.rotation.multi_select')}
           </button>
         </div>
       </div>
@@ -206,12 +214,12 @@ export default function EmployeeMonthlyReportPage() {
       <div className="flex items-center justify-between bg-white rounded-2xl shadow-sm border border-slate-100 px-6 py-4">
         <div className="flex items-center gap-4">
           <span className="text-sm text-slate-600">
-            已安排 <span className="font-bold text-primary">{schedule.size}</span> 天
+            {t('personnel.rotation.scheduled_days', { count: schedule.size })}
           </span>
           {hasUnsavedChanges && (
             <span className="text-xs text-amber-500 flex items-center gap-1">
               <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
-              有未保存的修改
+              {t('personnel.rotation.unsaved_changes')}
             </span>
           )}
         </div>
@@ -221,7 +229,7 @@ export default function EmployeeMonthlyReportPage() {
           className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-medium hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Save size={18} />
-          {submitting ? '保存中...' : '保存月度计划'}
+          {submitting ? t('personnel.rotation.saving') : t('personnel.rotation.save_plan')}
         </button>
       </div>
 
@@ -280,7 +288,7 @@ export default function EmployeeMonthlyReportPage() {
                         className={cn("flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-white text-xs font-medium mb-1", TypeConfig.color)}
                       >
                         <IconComponent size={12} />
-                        <span className="truncate">{TypeConfig.label}</span>
+                        <span className="truncate">{t(`personnel.rotation.types.${entry.type}`)}</span>
                       </motion.div>
                     )}
                     {entry?.projectName && (
@@ -298,7 +306,7 @@ export default function EmployeeMonthlyReportPage() {
                 <div className={cn("w-6 h-6 rounded-lg flex items-center justify-center", config.color)}>
                   <config.icon size={12} className="text-white" />
                 </div>
-                <span className="text-xs font-medium text-slate-600">{config.label}</span>
+                <span className="text-xs font-medium text-slate-600">{t(`personnel.rotation.types.${key}`)}</span>
               </div>
             ))}
           </div>
@@ -318,15 +326,15 @@ export default function EmployeeMonthlyReportPage() {
                   <div>
                     <h3 className="text-lg font-bold text-slate-700">
                       {selectedDates.size === 1
-                        ? dayjs(Array.from(selectedDates)[0]).format('M月D日')
-                        : `${selectedDates.size} 天已选中`}
+                        ? dayjs(Array.from(selectedDates)[0]).format('MMM D')
+                        : t('personnel.rotation.apply_to_days', { count: selectedDates.size })}
                     </h3>
                     {selectedDates.size > 1 && (
                       <p className="text-xs text-slate-400 mt-0.5">
                         {(() => {
                           const sorted = Array.from(selectedDates).sort()
                           return sorted.length > 0
-                            ? `${dayjs(sorted[0]).format('M月D日')} ~ ${dayjs(sorted[sorted.length - 1]).format('M月D日')}`
+                            ? `${dayjs(sorted[0]).format('MMM D')} ~ ${dayjs(sorted[sorted.length - 1]).format('MMM D')}`
                             : ''
                         })()}
                       </p>
@@ -338,7 +346,7 @@ export default function EmployeeMonthlyReportPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">行程类型</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('personnel.rotation.schedule_type')}</label>
                   <div className="grid grid-cols-3 gap-2">
                     {Object.entries(TYPE_CONFIG).map(([key, config]) => (
                       <button
@@ -352,7 +360,7 @@ export default function EmployeeMonthlyReportPage() {
                         )}
                       >
                         <config.icon size={18} className={config.textColor} />
-                        <span className="text-xs font-medium">{config.label}</span>
+                        <span className="text-xs font-medium">{t(`personnel.rotation.types.${key}`)}</span>
                       </button>
                     ))}
                   </div>
@@ -360,13 +368,13 @@ export default function EmployeeMonthlyReportPage() {
 
                 {editingType === 'work' && (
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">选择项目</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('personnel.rotation.select_project')}</label>
                     <select
                       value={editingProject}
                       onChange={(e) => setEditingProject(e.target.value)}
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                     >
-                      <option value="">选择项目...</option>
+                      <option value="">{t('personnel.rotation.select_project')}</option>
                       {projects.map(p => (
                         <option key={p.id} value={p.id}>{p.name}</option>
                       ))}
@@ -380,14 +388,14 @@ export default function EmployeeMonthlyReportPage() {
                     className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white rounded-xl font-medium hover:brightness-110 transition-all"
                   >
                     <Check size={18} />
-                    应用到 {selectedDates.size} 天
+                    {t('personnel.rotation.apply_to_days', { count: selectedDates.size })}
                   </button>
                   {selectedDates.size === 1 && schedule.has(Array.from(selectedDates)[0]) && (
                     <button
                       onClick={clearSelectedDates}
                       className="px-4 py-3 bg-rose-50 text-rose-500 rounded-xl font-medium hover:bg-rose-100 transition-all"
                     >
-                      删除
+                      {t('personnel.rotation.delete')}
                     </button>
                   )}
                   {selectedDates.size > 1 && (
@@ -395,7 +403,7 @@ export default function EmployeeMonthlyReportPage() {
                       onClick={clearSelectedDates}
                       className="px-4 py-3 bg-rose-50 text-rose-500 rounded-xl font-medium hover:bg-rose-100 transition-all"
                     >
-                      清除
+                      {t('personnel.rotation.clear')}
                     </button>
                   )}
                 </div>
@@ -412,27 +420,27 @@ export default function EmployeeMonthlyReportPage() {
                   <Calendar size={32} className="text-slate-300" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-700">点击日期选择</h3>
-                  <p className="text-sm text-slate-400 mt-1">按住 Ctrl/Cmd 点击可多选日期</p>
+                  <h3 className="text-lg font-bold text-slate-700">{t('personnel.rotation.select_date_hint')}</h3>
+                  <p className="text-sm text-slate-400 mt-1">{t('personnel.rotation.ctrl_select_hint')}</p>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
 
           <div className="bg-slate-50 rounded-2xl p-4 space-y-3">
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">使用提示</h4>
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('personnel.rotation.usage_tips')}</h4>
             <ul className="space-y-2 text-xs text-slate-500">
               <li className="flex items-start gap-2">
                 <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-1.5"></span>
-                点击日期选择并设置行程类型
+                {t('personnel.rotation.tip_1')}
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-1.5"></span>
-                选择多个日期可批量应用设置
+                {t('personnel.rotation.tip_2')}
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-1.5"></span>
-                完成后点击右上角"保存月度计划"
+                {t('personnel.rotation.tip_3')}
               </li>
             </ul>
           </div>

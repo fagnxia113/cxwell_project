@@ -16,7 +16,7 @@ export default function MilestoneTimeline({ milestones, projectStatus }: Milesto
   if (!milestones || milestones.length === 0) {
     return (
       <div className="bg-white p-6 rounded-lg border border-slate-100 flex items-center justify-center min-h-[160px]">
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('common.noData') || 'No Milestones Found'}</p>
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('common.noData')}</p>
       </div>
     )
   }
@@ -37,7 +37,7 @@ export default function MilestoneTimeline({ milestones, projectStatus }: Milesto
   return (
     <div className="bg-white p-6 lg:p-8 rounded-xl border border-slate-100 shadow-sm overflow-x-auto custom-scrollbar">
       <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
-        <span className="w-1.5 h-4 bg-blue-500 rounded-full" /> {t('project.tabs.milestones') || 'Milestone Timeline'}
+        <span className="w-1.5 h-4 bg-blue-500 rounded-full" /> {t('project.milestone.timeline')}
       </h3>
       
       <div className="relative min-w-[600px] py-4">
@@ -66,7 +66,7 @@ export default function MilestoneTimeline({ milestones, projectStatus }: Milesto
                 {/* Node Status Label (Top) */}
                 <div className="absolute bottom-full mb-4 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
                   <div className="bg-slate-900 text-white text-[10px] uppercase font-bold py-1 px-3 rounded shadow-xl">
-                    {milestone.status}
+                    {t(`project.status.${milestone.status}`)}
                   </div>
                 </div>
 

@@ -27,6 +27,52 @@ import { apiClient } from '../../utils/apiClient';
 import { workflowApi } from '../../api/workflowApi';
 import { cn } from '../../utils/cn';
 
+const t = (key: string): string => {
+  const map: Record<string, string> = {
+    'workflow.categories.hr': '人事',
+    'workflow.categories.project': '项目',
+    'workflow.categories.equipment': '资产',
+    'workflow.categories.purchase': '采购',
+    'workflow.categories.task': '任务',
+    'workflow.categories.general': '通用',
+    'workflow.status.draft': '草稿',
+    'workflow.status.active': '已发布',
+    'workflow.status.suspended': '已挂起',
+    'workflow.status.archived': '已归档',
+    'common.load_failed': '加载失败',
+    'workflow.designer.save_success': '操作成功',
+    'common.error': '操作失败',
+    'common.delete': '删除',
+    'workflow.confirm_delete_definition': '确认删除该流程定义？',
+    'common.confirm': '确认',
+    'common.cancel': '取消',
+    'workflow.center_title': '流程定义',
+    'workflow.center_subtitle': '管理和配置系统的所有业务流程模型',
+    'workflow.action.new': '新建流程',
+    'workflow.stats.total': '流程总数',
+    'workflow.stats.active': '已发布',
+    'workflow.stats.suspended': '已挂起',
+    'workflow.stats.draft': '草稿箱',
+    'workflow.placeholder.search': '搜索流程名称或编码...',
+    'common.all': '全部',
+    'workflow.no_definition': '暂无流程定义',
+    'common.noData': '当前没有任何流程配置数据',
+    'workflow.action.edit': '编辑',
+    'workflow.action.pause': '挂起',
+    'workflow.action.publish': '发布',
+    'workflow.action.delete': '删除',
+    'workflow.action.config': '配置',
+    'workflow.rules.title': '设计规范',
+    'workflow.rules.rule1_title': '单一职责',
+    'workflow.rules.rule1_desc': '每个流程应只解决一个核心业务场景',
+    'workflow.rules.rule2_title': '节点精简',
+    'workflow.rules.rule2_desc': '控制审批层级，避免冗长的审批链',
+    'workflow.rules.rule3_title': '条件清晰',
+    'workflow.rules.rule3_desc': '分支网关必须配置明确的流转条件'
+  };
+  return map[key] || key;
+};
+
 interface WorkflowDefinition {
   id: string;
   key: string;

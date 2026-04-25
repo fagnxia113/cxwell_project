@@ -16,20 +16,20 @@ interface DesignerPropertyPanelProps {
 }
 
 const FIELD_TYPES = [
-  { value: 'text', label: 'Text Input' },
-  { value: 'number', label: 'Numerical' },
-  { value: 'currency', label: 'Currency' },
-  { value: 'textarea', label: 'Long Text' },
-  { value: 'select', label: 'Selection' },
-  { value: 'date', label: 'Date' },
-  { value: 'checkbox', label: 'Checkbox' },
-  { value: 'radio', label: 'Radio' },
-  { value: 'user', label: 'User Selector' },
-  { value: 'department', label: 'Dept Selector' },
-  { value: 'file', label: 'File Upload' },
-  { value: 'phone', label: 'Phone' },
-  { value: 'email', label: 'Email' },
-  { value: 'array', label: 'Table/Array' }
+  { value: 'text', label: '文本输入' },
+  { value: 'number', label: '数字' },
+  { value: 'currency', label: '金额' },
+  { value: 'textarea', label: '多行文本' },
+  { value: 'select', label: '选择器' },
+  { value: 'date', label: '日期' },
+  { value: 'checkbox', label: '复选框' },
+  { value: 'radio', label: '单选框' },
+  { value: 'user', label: '人员选择' },
+  { value: 'department', label: '部门选择' },
+  { value: 'file', label: '文件上传' },
+  { value: 'phone', label: '电话' },
+  { value: 'email', label: '邮箱' },
+  { value: 'array', label: '表格/自增行' }
 ];
 
 const PropertyLabel = ({ children }: { children: React.ReactNode }) => (
@@ -63,9 +63,9 @@ export default function DesignerPropertyPanel({
           <Settings className="w-8 h-8 text-slate-200 animate-[spin_10s_linear_infinite]" />
         </div>
         <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-          Property Matrix <br/> Idle State
+          属性矩阵 <br/> 空闲状态
         </p>
-        <p className="text-[10px] text-slate-300 font-bold mt-4 uppercase tracking-widest">Select an entity to configure</p>
+        <p className="text-[10px] text-slate-300 font-bold mt-4 uppercase tracking-widest">请选择一个实体进行配置</p>
       </div>
     );
   }
@@ -75,7 +75,7 @@ export default function DesignerPropertyPanel({
       <div className="space-y-12 pb-20">
         
         {/* Basic Config */}
-        <PropertyGrid title="Operational Logic" icon={Settings}>
+        <PropertyGrid title="操作逻辑" icon={Settings}>
           <div className="space-y-2">
             <PropertyLabel>{t('form_designer_page.field_name_label')}</PropertyLabel>
             <input
@@ -111,7 +111,7 @@ export default function DesignerPropertyPanel({
         </PropertyGrid>
 
         {/* Layout Config */}
-        <PropertyGrid title="Visual Architecture" icon={Layout}>
+        <PropertyGrid title="视觉架构" icon={Layout}>
           <div className="space-y-4">
             <div className="space-y-2">
               <PropertyLabel>{t('form_designer_page.field_width_label')}</PropertyLabel>
@@ -151,7 +151,7 @@ export default function DesignerPropertyPanel({
 
         {/* Dynamic & Validation Logic */}
         {(field.type === 'select' || field.type === 'radio' || field.type === 'number') && (
-          <PropertyGrid title="Protocol & Constraints" icon={AlertCircle}>
+          <PropertyGrid title="协议与约束" icon={AlertCircle}>
             {(field.type === 'select' || field.type === 'radio') && (
               <div className="space-y-2">
                 <PropertyLabel>{t('form_designer_page.options_label')}</PropertyLabel>
@@ -162,7 +162,7 @@ export default function DesignerPropertyPanel({
                   })}
                   rows={4}
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:bg-white outline-none resize-none font-mono"
-                  placeholder="One option per line..."
+                  placeholder="每行一个选项..."
                 />
               </div>
             )}
@@ -197,13 +197,13 @@ export default function DesignerPropertyPanel({
         )}
 
         {/* Security & Access */}
-        <PropertyGrid title="Access Protocols" icon={ShieldCheck}>
+        <PropertyGrid title="访问协议" icon={ShieldCheck}>
            <div className="p-5 bg-slate-50 rounded-[24px] border border-slate-100 space-y-5">
               <div className="flex items-center justify-between group">
                 <div className="space-y-1">
                    <p className="text-[10px] font-black text-slate-800 uppercase tracking-tight">{t('form_designer_page.required_field')}</p>
                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest items-center flex gap-1">
-                      <div className="w-1 h-1 rounded-full bg-rose-500" /> Validation required
+                      <div className="w-1 h-1 rounded-full bg-rose-500" /> 需要验证
                    </p>
                 </div>
                 <button
@@ -224,9 +224,9 @@ export default function DesignerPropertyPanel({
 
               <div className="flex items-center justify-between group">
                 <div className="space-y-1">
-                   <p className="text-[10px] font-black text-slate-800 uppercase tracking-tight">Immersive Visibility</p>
+                   <p className="text-[10px] font-black text-slate-800 uppercase tracking-tight">可见性控制</p>
                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest items-center flex gap-1">
-                      <div className="w-1 h-1 rounded-full bg-emerald-500" /> Default visibility
+                      <div className="w-1 h-1 rounded-full bg-emerald-500" /> 默认可见
                    </p>
                 </div>
                 <button
@@ -256,9 +256,9 @@ export default function DesignerPropertyPanel({
 
               <div className="flex items-center justify-between group">
                 <div className="space-y-1">
-                   <p className="text-[10px] font-black text-slate-800 uppercase tracking-tight">Write Access</p>
+                   <p className="text-[10px] font-black text-slate-800 uppercase tracking-tight">写入权限</p>
                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest items-center flex gap-1">
-                      <div className="w-1 h-1 rounded-full bg-indigo-500" /> Standard editability
+                      <div className="w-1 h-1 rounded-full bg-indigo-500" /> 标准可编辑性
                    </p>
                 </div>
                 <button

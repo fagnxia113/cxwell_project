@@ -66,7 +66,7 @@ export default function CustomerListPage() {
         setCustomers(res.data.list || [])
       }
     } catch (error: any) {
-      showError(error.message || t('customer.load_failed'))
+      showError(error.message || t('common.load_failed'))
     } finally {
       setLoading(false)
     }
@@ -97,25 +97,25 @@ export default function CustomerListPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.name) return showError(t('customer.name_required'))
+    if (!formData.name) return showError(t('organization.customer.name_required'))
 
     setSubmitting(true)
     try {
       if (!editingCustomer) {
         const res = await customerApi.createCustomer(formData)
         if (res.success) {
-          success(t('customer.create_success'))
+          success(t('organization.customer.create_success'))
           setShowModal(false)
           loadCustomers()
         }
       } else {
         // TODO: Implement update in API if needed
-        success(t('customer.sync_success'))
+        success(t('common.success'))
         setShowModal(false)
         loadCustomers()
       }
     } catch (error: any) {
-      showError(error.message || t('customer.operation_failed'))
+      showError(error.message || t('organization.customer.operation_failed'))
     } finally {
       setSubmitting(false)
     }
@@ -124,18 +124,18 @@ export default function CustomerListPage() {
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
     const confirmed = await confirm({
-      title: t('customer.delete_confirm_title'),
-      content: t('customer.delete_confirm_content'),
+      title: t('organization.customer.delete_confirm_title'),
+      content: t('organization.customer.delete_confirm_content'),
       type: 'danger'
     })
     if (!confirmed) return
 
     try {
       // TODO: Implement delete in API
-      success(t('customer.delete_success'))
+      success(t('organization.customer.delete_success'))
       loadCustomers()
     } catch (error: any) {
-      showError(error.message || t('customer.delete_failed'))
+      showError(error.message || t('organization.customer.delete_failed'))
     }
   }
 
@@ -189,9 +189,9 @@ export default function CustomerListPage() {
             <div className="p-2 bg-primary rounded-lg text-white">
               <Building2 size={20} strokeWidth={2.5} />
             </div>
-            {t('customer.page_title')}
+            {t('organization.customer.page_title')}
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5">{t('customer.page_subtitle')}</p>
+          <p className="text-slate-500 text-sm mt-0.5">{t('organization.customer.page_subtitle')}</p>
         </motion.div>
 
         <button
@@ -199,15 +199,15 @@ export default function CustomerListPage() {
           className="px-4 py-2 bg-primary text-white rounded-lg shadow-sm transition-all text-sm font-medium flex items-center gap-2 hover:brightness-110"
         >
           <UserPlus size={14} />
-          <span>{t('customer.add_customer')}</span>
+          <span>{t('organization.customer.add_customer')}</span>
         </button>
       </div>
 
       {/* Analytics Dashboard */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard title={t('customer.total_count')} value={stats.total} icon={Users} color="blue" delay={0.1} />
-        <StatCard title={t('customer.active_count')} value={stats.active} icon={ShieldCheck} color="emerald" delay={0.2} />
-        <StatCard title={t('customer.recent_count') || 'Recent'} value={stats.recent} icon={Layers} color="indigo" delay={0.3} />
+        <StatCard title={t('organization.customer.total_count')} value={stats.total} icon={Users} color="blue" delay={0.1} />
+        <StatCard title={t('organization.customer.active_count')} value={stats.active} icon={ShieldCheck} color="emerald" delay={0.2} />
+        <StatCard title={t('organization.customer.recent_count')} value={stats.recent} icon={Layers} color="indigo" delay={0.3} />
       </div>
 
       {/* Intelligence Filter Bar */}
@@ -216,7 +216,7 @@ export default function CustomerListPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={14} />
           <input
             type="text"
-            placeholder={t('customer.search_placeholder')}
+            placeholder={t('organization.customer.search_placeholder')}
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && loadCustomers()}
@@ -229,11 +229,11 @@ export default function CustomerListPage() {
       <div className="space-y-2">
         {/* Table Header */}
         <div className="grid grid-cols-12 gap-3 px-4 py-2 text-xs font-medium text-slate-400">
-          <div className="col-span-1">{t('customer.col_id')}</div>
-          <div className="col-span-4">{t('customer.col_info')}</div>
-          <div className="col-span-2">{t('customer.col_contact')}</div>
-          <div className="col-span-2">{t('customer.col_phone')}</div>
-          <div className="col-span-2 text-center">{t('customer.col_type')}</div>
+          <div className="col-span-1">{t('organization.customer.col_id')}</div>
+          <div className="col-span-4">{t('organization.customer.col_info')}</div>
+          <div className="col-span-2">{t('organization.customer.col_contact')}</div>
+          <div className="col-span-2">{t('organization.customer.col_phone')}</div>
+          <div className="col-span-2 text-center">{t('organization.customer.col_type')}</div>
           <div className="col-span-1"></div>
         </div>
 
@@ -247,7 +247,7 @@ export default function CustomerListPage() {
               <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-300">
                 <Building2 size={32} />
               </div>
-              <p className="text-slate-400 font-bold uppercase tracking-wider text-xs">{t('customer.no_results')}</p>
+              <p className="text-slate-400 font-bold uppercase tracking-wider text-xs">{t('organization.customer.no_results')}</p>
             </motion.div>
           ) : (
             filteredCustomers.map((customer, idx) => (
@@ -305,7 +305,7 @@ export default function CustomerListPage() {
                     customer.status === '0' ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-50 text-slate-600 border-slate-100"
                   )}>
                     <div className={cn("w-1.5 h-1.5 rounded-full", customer.status === '0' ? "bg-emerald-500" : "bg-slate-500")} />
-                    {customer.status === '0' ? t('common.status.active') || 'Active' : t('common.status.disabled') || 'Disabled'}
+                    {customer.status === '0' ? t('common.status_labels.active') || 'Active' : t('common.status_labels.disabled') || 'Disabled'}
                   </div>
                 </div>
 
@@ -335,11 +335,11 @@ export default function CustomerListPage() {
               <div className="px-8 py-6 flex justify-between items-center bg-slate-50 border-b border-slate-100 relative">
                 <div className="relative z-10">
                   <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                    {editingCustomer ? t('customer.edit_title') : t('customer.add_title')}
+                    {editingCustomer ? t('organization.customer.edit_title') : t('organization.customer.add_title')}
                   </h2>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1 flex items-center gap-2">
                     <ShieldCheck size={14} className="text-emerald-600" />
-                    {editingCustomer?.customerNo || t('customer.new_customer_no')}
+                    {editingCustomer?.customerNo || t('organization.customer.new_customer_no')}
                   </p>
                 </div>
                 <button onClick={() => setShowModal(false)} className="w-10 h-10 flex items-center justify-center bg-white shadow-sm border border-slate-100 hover:bg-rose-50 hover:border-rose-100 group rounded-lg transition-all relative z-10">
@@ -349,7 +349,7 @@ export default function CustomerListPage() {
 
               <form onSubmit={handleSubmit} className="p-10 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
                 <div className="space-y-2.5">
-                  <label className="form-label">{t('customer.legal_name_label')}</label>
+                  <label className="form-label">{t('organization.customer.legal_name_label')}</label>
                   <input
                     type="text"
                     value={formData.name}
@@ -362,7 +362,7 @@ export default function CustomerListPage() {
 
                 <div className="grid grid-cols-2 gap-8">
                   <div className="space-y-2.5">
-                    <label className="form-label">{t('customer.col_contact')}</label>
+                    <label className="form-label">{t('organization.customer.col_contact')}</label>
                     <div className="relative">
                       <UserCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
                       <input
@@ -370,14 +370,14 @@ export default function CustomerListPage() {
                         value={formData.contact}
                         onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
                         className="form-control pl-12"
-                        placeholder={t('customer.contact_placeholder')}
+                        placeholder={t('organization.customer.contact_placeholder')}
                       />
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="form-label">{t('customer.phone_label')}</label>
+                  <label className="form-label">{t('organization.customer.phone_label')}</label>
                   <div className="relative">
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
                     <input
@@ -385,28 +385,28 @@ export default function CustomerListPage() {
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       className="form-control pl-12"
-                      placeholder={t('customer.phone_placeholder')}
+                      placeholder={t('organization.customer.phone_placeholder')}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="form-label">{t('customer.address_label')}</label>
+                  <label className="form-label">{t('organization.customer.address_label')}</label>
                   <div className="relative">
                     <MapPin className="absolute left-4 top-3 text-slate-300" size={16} />
                     <textarea
                       value={formData.address}
                       onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                       className="form-control pl-12 min-h-[80px] resize-none"
-                      placeholder={t('customer.address_placeholder')}
+                      placeholder={t('organization.customer.address_placeholder')}
                     />
                   </div>
                 </div>
 
                 <div className="flex justify-end gap-4 pt-6 mt-4 border-t border-slate-50">
-                  <button type="button" onClick={() => setShowModal(false)} className="px-6 py-2 font-bold text-xs text-slate-400 hover:text-slate-600">{t('customer.cancel')}</button>
+                  <button type="button" onClick={() => setShowModal(false)} className="px-6 py-2 font-bold text-xs text-slate-400 hover:text-slate-600">{t('common.cancel')}</button>
                   <button type="submit" disabled={submitting} className="btn-primary">
-                    {submitting ? t('customer.saving') : t('customer.save_changes')}
+                    {submitting ? t('organization.customer.saving') : t('organization.customer.save_changes')}
                   </button>
                 </div>
               </form>

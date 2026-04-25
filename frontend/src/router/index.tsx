@@ -10,7 +10,6 @@ const ProjectCompletionPage = lazy(() => import('../pages/projects/ProjectComple
 // 任务
 const TaskBoardPage = lazy(() => import('../pages/tasks/TaskBoardPage'))
 
-
 // 人员
 const PersonnelListPage = lazy(() => import('../pages/personnel/PersonnelListPage'))
 const EmployeeDetailPage = lazy(() => import('../pages/personnel/EmployeeDetailPage'))
@@ -22,19 +21,18 @@ const ProjectAttendanceOverview = lazy(() => import('../pages/projects/ProjectAt
 
 // 客户与地点
 const CustomerListPage = lazy(() => import('../pages/customers/CustomerListPage'))
+
 // 审批处理
 const ApprovalCenterPage = lazy(() => import('../pages/approvals/ApprovalCenterPage'))
 const NewProcessPage = lazy(() => import('../pages/approvals/NewProcessPage'))
 const WorkflowFormPage = lazy(() => import('../pages/approvals/WorkflowFormPage'))
-const ApprovalHandlePage = lazy(() => import('../pages/approvals/ApprovalHandlePage'))
-const InstanceDetailPage = lazy(() => import('../pages/approvals/InstanceDetailPage'))
+const WorkflowDetailPage = lazy(() => import('../pages/workflow/WorkflowDetailPage'))
+const ProcessInstanceDetailPage = lazy(() => import('../pages/workflow/ProcessInstanceDetailPage'))
 
 // 工作流管理
 const WorkflowVisualizationPage = lazy(() => import('../pages/workflow/WorkflowVisualizationPage'))
-const WorkflowDetailPage = lazy(() => import('../pages/workflow/WorkflowDetailPage'))
 const WorkflowDesignerNewPage = lazy(() => import('../pages/workflow/WorkflowDesignerNewPage'))
 const WorkflowDefinitionListPage = lazy(() => import('../pages/workflow/WorkflowDefinitionListPage'))
-const ProcessInstanceDetailPage = lazy(() => import('../pages/workflow/ProcessInstanceDetailPage'))
 
 // 其他功能
 const PurchaseRequestPage = lazy(() => import('../pages/purchase/PurchaseRequestPage'))
@@ -48,11 +46,8 @@ const FormTemplatesPage = lazy(() => import('../pages/forms/FormTemplatesPage'))
 
 // 系统设置与管理
 const SystemSettingsPage = lazy(() => import('../pages/settings/SystemSettingsPage'))
-const MetadataConfigPage = lazy(() => import('../pages/settings/MetadataConfigPage'))
-const DataLinkagePage = lazy(() => import('../pages/settings/DataLinkagePage'))
 const ChangePasswordPage = lazy(() => import('../pages/settings/ChangePasswordPage'))
 const UserManagementPage = lazy(() => import('../pages/admin/UserManagementPage'))
-const AdminDataPage = lazy(() => import('../pages/admin/AdminDataPage'))
 const WorkflowMonitorPage = lazy(() => import('../pages/admin/WorkflowMonitorPage'))
 const RoleManagementPage = lazy(() => import('../pages/admin/RoleManagementPage'))
 const KnowledgePage = lazy(() => import('../pages/knowledge/KnowledgePage'))
@@ -67,10 +62,10 @@ export const routes: RouteObject[] = [
         children: [
             { path: '', element: <ProjectListPage /> },
             { path: 'completion', element: <ProjectCompletionPage /> },
+            { path: 'board', element: <TaskBoardPage /> },
             { path: ':id', element: <ProjectDetailPage /> },
         ]
     },
-    { path: '/tasks/board', element: <TaskBoardPage /> },
     {
         path: '/personnel',
         children: [
@@ -141,15 +136,12 @@ export const routes: RouteObject[] = [
         path: '/settings',
         children: [
             { path: '', element: <SystemSettingsPage /> },
-            { path: 'metadata', element: <MetadataConfigPage /> },
-            { path: 'linkage', element: <DataLinkagePage /> },
             { path: 'password', element: <ChangePasswordPage /> },
         ]
     },
 
     { path: '/admin',
         children: [
-            { path: 'data', element: <AdminRoute><AdminDataPage /></AdminRoute> },
             { path: 'users', element: <AdminRoute><UserManagementPage /></AdminRoute> },
             { path: 'roles', element: <AdminRoute><RoleManagementPage /></AdminRoute> },
             { path: 'workflow-monitor', element: <AdminRoute><WorkflowMonitorPage /></AdminRoute> },

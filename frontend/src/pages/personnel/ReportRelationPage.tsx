@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { apiClient } from '../../utils/apiClient'
 import { useMessage } from '../../hooks/useMessage'
+import { useTranslation } from 'react-i18next'
 import { cn } from '../../utils/cn'
 
 interface ReportNode {
@@ -33,6 +34,7 @@ interface Employee {
 }
 
 export default function ReportRelationPage() {
+  const { t } = useTranslation()
   const { success, error: showError } = useMessage()
   const [reportTree, setReportTree] = useState<ReportNode[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
@@ -57,7 +59,7 @@ export default function ReportRelationPage() {
       setReportTree(Array.isArray(treeRes) ? treeRes : (treeRes as any)?.data || [])
       setEmployees(Array.isArray(empRes) ? empRes : (empRes as any)?.data || (empRes as any)?.list || [])
     } catch (err: any) {
-      showError('加载失败: ' + err.message)
+      showError(t('personnel.rotation.report_relation.load_failed') + ': ' + err.message)
     } finally {
       setLoading(false)
     }
@@ -72,7 +74,7 @@ export default function ReportRelationPage() {
       await apiClient.put(`/api/organization/report-to/${employeeId}`, {
         reportToId: reportToId,
       })
-      success('汇报关系更新成功')
+      success(t('personnel.rotation.report_relation.save_success'))
       setEditMap((prev) => {
         const next = { ...prev }
         delete next[employeeId]
@@ -80,7 +82,7 @@ export default function ReportRelationPage() {
       })
       loadData()
     } catch (err: any) {
-      showError('更新失败: ' + err.message)
+      showError(t('personnel.rotation.report_relation.save_failed') + ': ' + err.message)
     } finally {
       setSaving(false)
     }
@@ -92,18 +94,18 @@ export default function ReportRelationPage() {
       .map(([employeeId, reportToId]) => ({ employeeId, reportToId }))
 
     if (updates.length === 0) {
-      showError('没有需要保存的更改')
+      showError(t('personnel.rotation.report_relation.no_changes'))
       return
     }
 
     try {
       setSaving(true)
       await apiClient.post('/api/organization/report-to/batch', { updates })
-      success('批量更新成功')
+      success(t('personnel.rotation.report_relation.batch_save_success'))
       setEditMap({})
       loadData()
     } catch (err: any) {
-      showError('批量更新失败: ' + err.message)
+      showError(t('personnel.rotation.report_relation.batch_save_failed') + ': ' + err.message)
     } finally {
       setSaving(false)
     }
@@ -179,7 +181,7 @@ export default function ReportRelationPage() {
               {node.position && <span className="text-[10px] text-slate-400">{node.position}</span>}
               {node.leadingDepts?.map((d) => (
                 <span key={d.deptId} className="px-1.5 py-0.5 bg-amber-50 text-amber-600 text-[9px] font-bold rounded">
-                  {d.deptName}负责人
+                  {t('personnel.rotation.report_relation.dept_leader', { deptName: d.deptName })}
                 </span>
               ))}
             </div>
@@ -195,7 +197,7 @@ export default function ReportRelationPage() {
               }))}
               className="text-xs border border-slate-200 rounded-md px-2 py-1 bg-white min-w-[100px]"
             >
-              <option value="">无上级</option>
+              <option value="">{t('personnel.rotation.report_relation.no_upper')}</option>
               {employees
                 .filter((e) => e.employeeId !== node.employeeId)
                 .map((e) => (
@@ -230,8 +232,8 @@ export default function ReportRelationPage() {
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-black text-slate-900">汇报关系管理</h1>
-          <p className="text-xs text-slate-400 mt-1">设置员工直属上级，用于审批流动态审批人解析</p>
+          <h1 className="text-xl font-black text-slate-900">{t('personnel.rotation.report_relation.title')}</h1>
+          <p className="text-xs text-slate-400 mt-1">{t('personnel.rotation.report_relation.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -239,7 +241,7 @@ export default function ReportRelationPage() {
             className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50"
           >
             <RefreshCw size={12} />
-            刷新
+            {t('personnel.rotation.report_relation.refresh')}
           </button>
           {Object.keys(editMap).length > 0 && (
             <button
@@ -248,7 +250,7 @@ export default function ReportRelationPage() {
               className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg text-xs font-bold hover:bg-emerald-600 disabled:opacity-50"
             >
               <Save size={12} />
-              批量保存 ({Object.keys(editMap).length})
+              {t('personnel.rotation.report_relation.batch_save')} ({Object.keys(editMap).length})
             </button>
           )}
         </div>
@@ -263,7 +265,7 @@ export default function ReportRelationPage() {
               viewMode === 'list' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
             )}
           >
-            列表
+            {t('personnel.rotation.report_relation.list')}
           </button>
           <button
             onClick={() => setViewMode('tree')}
@@ -272,7 +274,7 @@ export default function ReportRelationPage() {
               viewMode === 'tree' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
             )}
           >
-            树形
+            {t('personnel.rotation.report_relation.tree')}
           </button>
         </div>
 
@@ -282,7 +284,7 @@ export default function ReportRelationPage() {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="搜索员工..."
+            placeholder={t('personnel.rotation.report_relation.search_placeholder')}
             className="pl-9 pr-4 py-2 bg-white border border-slate-100 rounded-lg text-xs font-medium focus:ring-2 focus:ring-emerald-500 outline-none w-48"
           />
         </div>
@@ -290,11 +292,11 @@ export default function ReportRelationPage() {
 
       <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
         {loading ? (
-          <div className="p-12 text-center text-xs font-bold text-slate-400 italic tracking-widest uppercase">加载中...</div>
+          <div className="p-12 text-center text-xs font-bold text-slate-400 italic tracking-widest uppercase">{t('common.loading')}</div>
         ) : viewMode === 'list' ? (
           <div className="divide-y divide-slate-50">
             {filteredReportTree.length === 0 ? (
-              <div className="p-12 text-center text-xs font-bold text-slate-300 italic tracking-widest uppercase">暂无数据</div>
+              <div className="p-12 text-center text-xs font-bold text-slate-300 italic tracking-widest uppercase">{t('common.noData')}</div>
             ) : (
               filteredReportTree.map((emp) => {
                 const currentReportTo = getReportToForEmployee(emp)
@@ -318,18 +320,18 @@ export default function ReportRelationPage() {
                         {emp.position && <span className="text-[10px] text-slate-400">{emp.position}</span>}
                         {emp.leadingDepts?.map((d) => (
                           <span key={d.deptId} className="px-1.5 py-0.5 bg-amber-50 text-amber-600 text-[9px] font-bold rounded">
-                            {d.deptName}负责人
+                            {t('personnel.rotation.report_relation.dept_leader', { deptName: d.deptName })}
                           </span>
                         ))}
                       </div>
                       <div className="text-[10px] text-slate-400 mt-0.5">
-                        下属: {emp.subordinates?.length || 0} 人
+                        {t('personnel.rotation.report_relation.subordinates_count', { count: emp.subordinates?.length || 0 })}
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <ArrowUpRight size={12} className="text-slate-300" />
-                      <span className="text-[10px] text-slate-400">直属上级</span>
+                      <span className="text-[10px] text-slate-400">{t('personnel.rotation.report_relation.direct_upper')}</span>
                       <select
                         value={currentReportTo || ''}
                         onChange={(e) => setEditMap((prev) => ({
@@ -338,7 +340,7 @@ export default function ReportRelationPage() {
                         }))}
                         className="text-xs border border-slate-200 rounded-md px-2 py-1.5 bg-white min-w-[120px]"
                       >
-                        <option value="">无上级</option>
+                        <option value="">{t('personnel.rotation.report_relation.no_upper')}</option>
                         {employees
                           .filter((e) => e.employeeId !== emp.employeeId)
                           .map((e) => (
@@ -355,7 +357,7 @@ export default function ReportRelationPage() {
                           className="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded hover:bg-emerald-600 disabled:opacity-50 flex items-center gap-1"
                         >
                           <Save size={10} />
-                          保存
+                          {t('personnel.rotation.report_relation.save')}
                         </button>
                       )}
                     </div>
@@ -367,7 +369,7 @@ export default function ReportRelationPage() {
         ) : (
           <div className="p-4">
             {treeData.length === 0 ? (
-              <div className="p-12 text-center text-xs font-bold text-slate-300 italic tracking-widest uppercase">暂无数据</div>
+              <div className="p-12 text-center text-xs font-bold text-slate-300 italic tracking-widest uppercase">{t('common.noData')}</div>
             ) : (
               treeData.map((node) => (
                 <TreeNode key={node.employeeId} node={node} />
@@ -378,23 +380,23 @@ export default function ReportRelationPage() {
       </div>
 
       <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-100">
-        <h3 className="text-xs font-black text-blue-800 mb-2">审批流动态审批人标识说明</h3>
+        <h3 className="text-xs font-black text-blue-800 mb-2">{t('personnel.rotation.report_relation.guide.title')}</h3>
         <div className="grid grid-cols-2 gap-2 text-[10px] text-blue-700">
           <div className="flex items-center gap-2">
             <code className="px-1.5 py-0.5 bg-blue-100 rounded font-mono">reportTo:manager</code>
-            <span>发起人直属上级</span>
+            <span>{t('personnel.rotation.report_relation.guide.manager')}</span>
           </div>
           <div className="flex items-center gap-2">
             <code className="px-1.5 py-0.5 bg-blue-100 rounded font-mono">reportTo:deptLeader</code>
-            <span>发起人部门负责人</span>
+            <span>{t('personnel.rotation.report_relation.guide.dept_leader')}</span>
           </div>
           <div className="flex items-center gap-2">
             <code className="px-1.5 py-0.5 bg-blue-100 rounded font-mono">reportTo:n2</code>
-            <span>发起人上2级上级</span>
+            <span>{t('personnel.rotation.report_relation.guide.n2')}</span>
           </div>
           <div className="flex items-center gap-2">
             <code className="px-1.5 py-0.5 bg-blue-100 rounded font-mono">role:xxx</code>
-            <span>按角色指定（原有）</span>
+            <span>{t('personnel.rotation.report_relation.guide.role')}</span>
           </div>
         </div>
       </div>

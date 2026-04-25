@@ -3,12 +3,12 @@
 @tailwind utilities;
 
 :root {
-  --primary: #313a72;
-  --primary-hover: #262d5e;
-  --primary-soft: rgba(49, 58, 114, 0.1);
-  --accent: #00cc79;
-  --accent-hover: #00b86e;
-  --accent-soft: rgba(0, 204, 121, 0.1);
+  --primary: #00cc79;
+  --primary-hover: #00b86e;
+  --primary-soft: rgba(0, 204, 121, 0.1);
+  --accent: #10b981;
+  --accent-hover: #059669;
+  --accent-soft: rgba(16, 185, 129, 0.1);
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;

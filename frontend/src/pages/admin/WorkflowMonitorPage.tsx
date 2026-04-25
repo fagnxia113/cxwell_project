@@ -1,17 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 
-const t = (key: string): string => {
-  const map: Record<string, string> = {
-    'workflow_monitor.page_title': '工作流监控',
-    'workflow_monitor.page_subtitle': '实时监控工作流运行状态',
-    'workflow_monitor.refresh_data': '刷新数据',
-    'workflow_monitor.tabs.overview': '总览',
-    'workflow_monitor.tabs.instances': '实例',
-    'workflow_monitor.tabs.statistics_tab': '统计',
-  }
-  return map[key] || key
-};
 import { 
   RefreshCw, 
   Activity, 
@@ -36,7 +24,6 @@ import AdminInterventionForm from '../../components/admin/workflow/AdminInterven
  * 核心功能：实时监控、统计分析、人工干预（强制审批/跳转/回滚）
  */
 const WorkflowMonitorPage: React.FC = () => {
-  const { t } = useTranslation();
   const { 
     instances, 
     statistics, 
@@ -79,10 +66,10 @@ const WorkflowMonitorPage: React.FC = () => {
       <div className="bg-white border-b border-slate-100 sticky top-0 z-20">
         <div className="px-8 py-6 max-w-[1600px] mx-auto flex items-center justify-between">
           <div className="space-y-1">
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">{t('workflow_monitor.page_title')}</h1>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">工作流监控</h1>
             <div className="flex items-center gap-2">
                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('workflow_monitor.page_subtitle')}</p>
+               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">实时监控工作流运行状态</p>
             </div>
           </div>
           <button
@@ -91,7 +78,7 @@ const WorkflowMonitorPage: React.FC = () => {
             className="flex items-center px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg active:scale-95 disabled:opacity-50"
           >
             <RefreshCw className={cn("w-3.5 h-3.5 mr-2", loading && "animate-spin")} />
-            {t('workflow_monitor.refresh_data')}
+            刷新数据
           </button>
         </div>
 
@@ -99,9 +86,9 @@ const WorkflowMonitorPage: React.FC = () => {
         <div className="px-8 max-w-[1600px] mx-auto hidden md:block">
           <div className="flex space-x-10">
             {[
-              { key: 'overview', label: t('workflow_monitor.tabs.overview'), icon: Activity },
-              { key: 'instances', label: t('workflow_monitor.tabs.instances'), icon: Play },
-              { key: 'statistics', label: t('workflow_monitor.tabs.statistics_tab'), icon: BarChartIcon }
+              { key: 'overview', label: '总览', icon: Activity },
+              { key: 'instances', label: '实例', icon: Play },
+              { key: 'statistics', label: '统计', icon: BarChartIcon }
             ].map(({ key, label, icon: Icon }) => (
               <button
                 key={key}
@@ -126,7 +113,7 @@ const WorkflowMonitorPage: React.FC = () => {
         {loading && !realtimeData && (
           <div className="flex flex-col items-center justify-center py-32 gap-4">
              <div className="w-12 h-12 border-4 border-slate-100 border-t-blue-500 rounded-full animate-spin" />
-             <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Synchronizing engine data...</p>
+             <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">正在同步引擎数据...</p>
           </div>
         )}
 

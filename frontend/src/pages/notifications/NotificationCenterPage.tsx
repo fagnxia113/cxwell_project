@@ -212,7 +212,7 @@ export default function NotificationCenterPage() {
                           <h4 className={`text-sm font-semibold ${
                             !notification.isRead ? 'text-slate-900' : 'text-slate-600'
                           }`}>
-                            {notification.title}
+                            {t(notification.title)}
                           </h4>
                           {!notification.isRead && (
                             <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded">
@@ -225,7 +225,7 @@ export default function NotificationCenterPage() {
                           {formatDate(notification.createTime)}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{notification.content}</p>
+                      <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{t(notification.content)}</p>
                     </div>
                   </div>
 

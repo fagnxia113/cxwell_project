@@ -103,7 +103,7 @@ export default function EditableField({
           {displayValue}
         </div>
       ) : displayMode === 'detailed' ? (
-        <div className="text-xs font-medium text-slate-600 leading-relaxed whitespace-pre-wrap bg-slate-50/50 p-3 rounded-lg border border-slate-100/50">
+        <div className="text-xs font-medium text-slate-600 leading-relaxed whitespace-pre-wrap bg-slate-50/50 p-3 rounded-lg border border-slate-100/50 overflow-y-auto max-h-32">
           {displayValue}
         </div>
       ) : (

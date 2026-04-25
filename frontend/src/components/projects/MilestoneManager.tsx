@@ -104,14 +104,14 @@ export default function MilestoneManager({
     const isWeightValid = Math.abs(topLevelWeight - 100) < 0.01 || milestones.length === 0
 
     if (milestones.length > 0 && !isWeightValid) {
-      alert(`${t('project.milestone.weight_must_be_100') || 'Total weight must be 100%'} (当前: ${topLevelWeight}%)`)
+      alert(`${t('project.milestone.weight_must_be_100')} (当前: ${topLevelWeight}%)`)
       return
     }
 
     // 2. 日期校验：结束时间不能早于开始时间
     const hasInvalidDates = flatData.some(m => m.planned_end_date && m.planned_start_date && new Date(m.planned_end_date) < new Date(m.planned_start_date))
     if (hasInvalidDates) {
-       alert(t('project.milestone.invalid_dates') || 'End date cannot be earlier than start date. Please check your inputs.')
+       alert(t('project.milestone.invalid_dates'))
        return
     }
 
@@ -368,7 +368,7 @@ function MilestoneEditTable({ milestones, setMilestones, projectId }: any) {
             type="text"
             value={child.description || ''}
             onChange={(e) => handleChildUpdate(parentIdx, childIdx, { description: e.target.value })}
-            placeholder="描述..."
+            placeholder={t('project.fields.description')}
             className="w-full text-xs p-1 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none"
           />
         </td>
@@ -427,7 +427,7 @@ function MilestoneEditTable({ milestones, setMilestones, projectId }: any) {
               type="text"
               value={milestone.description || ''}
               onChange={(e) => handleUpdate(idx, { description: e.target.value })}
-              placeholder="描述..."
+              placeholder={t('project.fields.description')}
               className="w-full text-xs p-1.5 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none"
             />
           </td>
@@ -442,7 +442,7 @@ function MilestoneEditTable({ milestones, setMilestones, projectId }: any) {
                       <span className="px-2 py-1 bg-slate-100 rounded w-auto">{dateRange.start?.split('T')[0] || '-'}</span>
                       <span className="text-slate-300">~</span>
                       <span className="px-2 py-1 bg-slate-100 rounded w-auto">{dateRange.end?.split('T')[0] || '-'}</span>
-                      <span className="text-[9px] text-slate-400 ml-1">自动</span>
+                      <span className="text-[9px] text-slate-400 ml-1">{t('common.autoGenerate')}</span>
                     </div>
                   )
                 }

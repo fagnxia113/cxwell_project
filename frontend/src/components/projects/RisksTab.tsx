@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { 
-  AlertTriangle, Plus, Trash2, User, Clock, Calendar, 
-  LayoutGrid, ShieldCheck, History, MoreVertical, Edit2
+import {
+  AlertTriangle, Plus, Trash2, User, Clock, Calendar,
+  LayoutGrid, ShieldCheck, History, MoreVertical, Edit2,
+  AlertCircle, Activity, CheckCircle
 } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import type { ProjectRisk, Milestone } from '../../types/project'
@@ -20,23 +21,26 @@ interface RisksTabProps {
 }
 
 const severityConfig = {
-  high: { color: 'text-rose-600', bgColor: 'bg-rose-50', borderColor: 'border-rose-100', dot: 'bg-rose-500', label: '高 (High)' },
-  medium: { color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-100', dot: 'bg-amber-500', label: '中 (Medium)' },
-  low: { color: 'text-emerald-600', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-100', dot: 'bg-emerald-500', label: '低 (Low)' },
+  low: { label: 'project.risk.levels.low', color: 'text-blue-500', bgColor: 'bg-blue-50', dot: 'bg-blue-500' },
+  medium: { label: 'project.risk.levels.medium', color: 'text-amber-500', bgColor: 'bg-amber-50', dot: 'bg-amber-500' },
+  high: { label: 'project.risk.levels.high', color: 'text-orange-500', bgColor: 'bg-orange-50', dot: 'bg-orange-500' },
+  critical: { label: 'project.risk.levels.critical', color: 'text-rose-500', bgColor: 'bg-rose-50', dot: 'bg-rose-500' },
 }
 
 const statusConfig = {
-  pending: { label: '未处理', color: 'text-slate-500', bgColor: 'bg-slate-100' },
-  in_progress: { label: '整改中', color: 'text-blue-500', bgColor: 'bg-blue-50' },
-  pending_review: { label: '待复核', color: 'text-amber-500', bgColor: 'bg-amber-50' },
-  closed: { label: '已闭环', color: 'text-emerald-500', bgColor: 'bg-emerald-50' },
-}
+  identified: { label: 'project.risk.status.pending', color: 'text-amber-500', bgColor: 'bg-amber-50', icon: AlertCircle },
+  mitigated: { label: 'project.risk.status.in_progress', color: 'text-blue-500', bgColor: 'bg-blue-50', icon: Activity },
+  closed: { label: 'project.risk.status.closed', color: 'text-emerald-500', bgColor: 'bg-emerald-50', icon: CheckCircle },
+  pending: { label: 'project.risk.status.pending', color: 'text-slate-500', bgColor: 'bg-slate-100', icon: AlertCircle },
+  in_progress: { label: 'project.risk.status.in_progress', color: 'text-blue-500', bgColor: 'bg-blue-50', icon: Activity },
+  pending_review: { label: 'project.risk.status.pending_review', color: 'text-amber-500', bgColor: 'bg-amber-50', icon: AlertCircle }
+};
 
 const categoryOptions = [
-  { value: 'progress', label: '进度风险' },
-  { value: 'quality', label: '质量风险' },
-  { value: 'safety', label: '安全风险' },
-  { value: 'supply_chain', label: '供应链风险' },
+  { value: 'progress', label: 'project.risk.categories.progress' },
+  { value: 'quality', label: 'project.risk.categories.quality' },
+  { value: 'safety', label: 'project.risk.categories.safety' },
+  { value: 'supply_chain', label: 'project.risk.categories.supply_chain' },
 ]
 
 export default function RisksTab({ risks, milestones, onAddRisk, onUpdateRisk, onDeleteRisk, isAdmin, isProjectManager }: RisksTabProps) {
@@ -46,11 +50,11 @@ export default function RisksTab({ risks, milestones, onAddRisk, onUpdateRisk, o
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    level: 'medium' as 'low' | 'medium' | 'high',
+    level: 'medium' as 'low' | 'medium' | 'high' | 'critical',
     category: 'quality',
     milestoneId: '',
     deadline: '',
-    status: 'pending'
+    status: 'identified'
   })
 
   const flattenedMilestones = useMemo(() => flattenMilestones(milestones), [milestones]);
@@ -67,7 +71,7 @@ export default function RisksTab({ risks, milestones, onAddRisk, onUpdateRisk, o
 
     return {
       activeTotal: activeRisks.length,
-      highSeverity: activeRisks.filter(r => r.level === 'high').length,
+      highSeverity: activeRisks.filter(r => r.level === 'high' || r.level === 'critical').length,
       overdueTotal: overdueRisks.length,
       thisWeekClosed: thisWeekClosed.length
     }
@@ -87,7 +91,7 @@ export default function RisksTab({ risks, milestones, onAddRisk, onUpdateRisk, o
       category: 'quality',
       milestoneId: '',
       deadline: '',
-      status: 'pending'
+      status: 'identified'
     })
     setShowAddForm(false)
   }
@@ -99,7 +103,6 @@ export default function RisksTab({ risks, milestones, onAddRisk, onUpdateRisk, o
 
   return (
     <div className="space-y-6">
-      {/* 统计卡片 (保持精美度) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: t('project.risk.stats.active_total'), value: stats.activeTotal, color: 'slate', icon: LayoutGrid },
@@ -122,7 +125,6 @@ export default function RisksTab({ risks, milestones, onAddRisk, onUpdateRisk, o
         ))}
       </div>
 
-      {/* 控制栏 */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex bg-slate-100 p-1 rounded-xl w-fit">
           {(['active', 'closed'] as const).map(tab => (
@@ -142,9 +144,9 @@ export default function RisksTab({ risks, milestones, onAddRisk, onUpdateRisk, o
         <button
           onClick={() => setShowAddForm(true)}
           className="flex items-center gap-2 px-5 py-2 bg-slate-900 text-white rounded-xl text-xs font-black shadow-lg hover:bg-slate-800 transition-all w-fit"
-          style={{ display: isProjectManager ? 'flex' : 'none' }}
+          style={{ display: (isAdmin || isProjectManager) ? 'flex' : 'none' }}
         >
-          <Plus size={16} /> {t('project.risk.add_item')}
+          <Plus size={16} /> {t('project.risk.add')}
         </button>
       </div>
 
@@ -175,7 +177,7 @@ export default function RisksTab({ risks, milestones, onAddRisk, onUpdateRisk, o
                     onChange={e => setFormData({...formData, category: e.target.value})}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:ring-2 focus:ring-slate-900 outline-none transition-all"
                   >
-                    {categoryOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                    {categoryOptions.map(opt => <option key={opt.value} value={opt.value}>{t(opt.label)}</option>)}
                   </select>
                 </div>
               </div>
@@ -188,19 +190,20 @@ export default function RisksTab({ risks, milestones, onAddRisk, onUpdateRisk, o
                     onChange={e => setFormData({...formData, level: e.target.value as any})}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:ring-2 focus:ring-slate-900 outline-none transition-all"
                   >
-                    <option value="low">🟢 低 (Low)</option>
-                    <option value="medium">🟡 中 (Medium)</option>
-                    <option value="high">🔴 高 (High)</option>
+                    <option value="low">🟢 {t('project.risk.levels.low')}</option>
+                    <option value="medium">🟡 {t('project.risk.levels.medium')}</option>
+                    <option value="high">🔴 {t('project.risk.levels.high')}</option>
+                    <option value="critical">🔥 {t('project.risk.levels.critical')}</option>
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">关联阶段</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.milestone.relate') || '关联阶段'}</label>
                   <select 
                     value={formData.milestoneId}
                     onChange={e => setFormData({...formData, milestoneId: e.target.value})}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:ring-2 focus:ring-slate-900 outline-none transition-all"
                   >
-                    <option value="">不关联</option>
+                    <option value="">{t('common.notRelated') || 'Not Related'}</option>
                     {flattenedMilestones.map(m => (
                       <option key={m.id} value={m.id}>{m.displayName}</option>
                     ))}
@@ -218,31 +221,30 @@ export default function RisksTab({ risks, milestones, onAddRisk, onUpdateRisk, o
               </div>
 
               <div className="flex justify-end gap-3 pt-2">
-                <button onClick={() => setShowAddForm(false)} className="px-6 py-2.5 text-xs font-black text-slate-400 hover:text-slate-600">取消</button>
-                <button onClick={handleAdd} className="px-8 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black shadow-lg hover:bg-slate-800 transition-all">确认创建</button>
+                <button onClick={() => setShowAddForm(false)} className="px-6 py-2.5 text-xs font-black text-slate-400 hover:text-slate-600">{t('common.cancel')}</button>
+                <button onClick={handleAdd} className="px-8 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black shadow-lg hover:bg-slate-800 transition-all">{t('common.confirmCreate') || 'Confirm Create'}</button>
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* 表格视图 */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
                 <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-24">{t('project.risk.risk_no')}</th>
-                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">风险描述</th>
-                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-28">关联阶段</th>
+                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.risk.description')}</th>
+                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-28">{t('project.milestone.relate') || '关联阶段'}</th>
                 <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-28">{t('project.risk.category')}</th>
                 <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-32">{t('project.risk.severity')}</th>
                 <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-32">
                   {activeTab === 'active' ? t('project.risk.deadline') : t('project.risk.actual_closed_at')}
                 </th>
-                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-32">更新时间</th>
-                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-28">状态</th>
-                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-24 text-right">操作</th>
+                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-32">{t('project.risk.update_time')}</th>
+                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-28">{t('project.risk.status_label')}</th>
+                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-24 text-right">{t('common.action')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -251,15 +253,16 @@ export default function RisksTab({ risks, milestones, onAddRisk, onUpdateRisk, o
                   <td colSpan={8} className="py-20 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <ShieldCheck size={40} className="text-slate-100" />
-                      <p className="text-slate-300 font-bold uppercase tracking-widest text-[9px]">暂无匹配的风险数据</p>
+                      <p className="text-slate-300 font-bold uppercase tracking-widest text-[9px]">{t('project.risk.empty')}</p>
                     </div>
                   </td>
                 </tr>
               ) : (
                 filteredRisks.map(risk => {
                   const overdue = isOverdue(risk);
-                  const severity = severityConfig[risk.level] || severityConfig.medium;
-                  const status = statusConfig[risk.status] || statusConfig.pending;
+                  const sevInfo = severityConfig[risk.level] || severityConfig.medium;
+                  const statusInfo = statusConfig[risk.status as keyof typeof statusConfig] || statusConfig.identified;
+                  const StatusIcon = statusInfo.icon;
                   
                   return (
                     <tr 
@@ -293,13 +296,13 @@ export default function RisksTab({ risks, milestones, onAddRisk, onUpdateRisk, o
                       </td>
                       <td className="px-4 py-4">
                         <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                          {categoryOptions.find(o => o.value === risk.category)?.label || '未分类'}
+                          {t(categoryOptions.find(o => o.value === risk.category)?.label || 'project.risk.categories.progress')}
                         </span>
                       </td>
                       <td className="px-4 py-4">
-                        <div className={cn("flex items-center gap-2 text-[10px] font-black", severity.color)}>
-                          <span className={cn("w-1.5 h-1.5 rounded-full", severity.dot)} />
-                          {severity.label}
+                        <div className={cn("flex items-center gap-2 text-[10px] font-black", sevInfo.color)}>
+                          <span className={cn("w-1.5 h-1.5 rounded-full", sevInfo.dot)} />
+                          {t(sevInfo.label)}
                         </div>
                       </td>
                       <td className="px-4 py-4">
@@ -335,10 +338,10 @@ export default function RisksTab({ risks, milestones, onAddRisk, onUpdateRisk, o
                             status.bgColor, status.color
                           )}
                         >
-                          <option value="pending">未处理</option>
-                          <option value="in_progress">整改中</option>
-                          <option value="pending_review">待复核</option>
-                          <option value="closed">确认闭环</option>
+                          <option value="pending">{t('project.risk.status.pending')}</option>
+                          <option value="in_progress">{t('project.risk.status.in_progress')}</option>
+                          <option value="pending_review">{t('project.risk.status.pending_review')}</option>
+                          <option value="closed">{t('project.risk.status.closed')}</option>
                         </select>
                       </td>
                       <td className="px-4 py-4 text-right">

@@ -325,14 +325,14 @@ export default function MilestoneGantt({ milestones, onProgressClick, title }: M
           <button
             onClick={handleZoomOut}
             className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all"
-            title="Zoom Out"
+            title={t('common.zoom_out') || 'Zoom Out'}
           >
             <ZoomOut size={16} />
           </button>
           <button
             onClick={handleZoomIn}
             className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all"
-            title="Zoom In"
+            title={t('common.zoom_in') || 'Zoom In'}
           >
             <ZoomIn size={16} />
           </button>

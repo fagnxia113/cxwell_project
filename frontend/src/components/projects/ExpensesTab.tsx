@@ -41,11 +41,11 @@ export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteE
   const getCategoryColor = (cat: string) => {
     const colors: Record<string, string> = {
       equipment: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-      labor: 'bg-blue-50 text-blue-600 border-blue-100',
+      labor: 'bg-teal-50 text-teal-600 border-teal-100',
       travel: 'bg-amber-50 text-amber-600 border-amber-100',
       meal: 'bg-orange-50 text-orange-600 border-orange-100',
-      transportation: 'bg-sky-50 text-sky-600 border-sky-100',
-      accommodation: 'bg-indigo-50 text-indigo-600 border-indigo-100',
+      transportation: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+      accommodation: 'bg-cyan-50 text-cyan-600 border-cyan-100',
       material: 'bg-purple-50 text-purple-600 border-purple-100',
       other: 'bg-slate-50 text-slate-600 border-slate-100',
     }
@@ -58,7 +58,7 @@ export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteE
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">预算使用</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('project.stats.budget_usage')}</span>
             <span className={cn(
               "text-sm font-black tabular-nums",
               utilization > 90 ? "text-rose-500" : utilization > 70 ? "text-amber-500" : "text-emerald-600"
@@ -68,18 +68,18 @@ export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteE
           </div>
           <div className="w-px h-4 bg-slate-200" />
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">已支出</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('project.stats.spent')}</span>
             <span className="text-sm font-black text-slate-900 tabular-nums">
               {totalSpentInWan.toFixed(2)}
-              <span className="text-[9px] ml-0.5 text-slate-400">万元</span>
+              <span className="text-[9px] ml-0.5 text-slate-400">{t('common.unit_ten_thousand')}</span>
             </span>
           </div>
           <div className="w-px h-4 bg-slate-200" />
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">预算余额</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('project.stats.budget_balance')}</span>
             <span className="text-sm font-black text-emerald-600 tabular-nums">
               {(budgetInWan - totalSpentInWan).toFixed(2)}
-              <span className="text-[9px] ml-0.5 text-slate-400">万元</span>
+              <span className="text-[9px] ml-0.5 text-slate-400">{t('common.unit_ten_thousand')}</span>
             </span>
           </div>
         </div>
@@ -124,7 +124,7 @@ export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteE
               </select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('project.expense.amount')} (元)</label>
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('project.expense.amount')} ({t('common.currency_symbol')})</label>
               <input
                 type="number"
                 value={newExpense.amount}
@@ -148,7 +148,7 @@ export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteE
                 value={newExpense.notes}
                 onChange={e => setNewExpense({...newExpense, notes: e.target.value})}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
-                placeholder="用途说明..."
+                placeholder={t('project.expense.notes_placeholder')}
               />
             </div>
           </div>
@@ -164,10 +164,10 @@ export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteE
         <table className="min-w-full divide-y divide-slate-50">
           <thead className="bg-slate-50/80">
             <tr>
-              <th className="px-4 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">类别</th>
-              <th className="px-4 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">日期</th>
-              <th className="px-4 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">用途</th>
-              <th className="px-4 py-3 text-right text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">金额</th>
+              <th className="px-4 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('project.expense.category')}</th>
+              <th className="px-4 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('project.expense.date')}</th>
+              <th className="px-4 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('project.expense.notes')}</th>
+              <th className="px-4 py-3 text-right text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('project.expense.amount')}</th>
               <th className="px-4 py-3 w-10"></th>
             </tr>
           </thead>
@@ -175,7 +175,7 @@ export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteE
             {expenses.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-12 text-center">
-                  <p className="text-slate-300 font-bold text-[10px] uppercase tracking-widest">暂无费用记录</p>
+                  <p className="text-slate-300 font-bold text-[10px] uppercase tracking-widest">{t('project.expense.no_records')}</p>
                 </td>
               </tr>
             ) : (

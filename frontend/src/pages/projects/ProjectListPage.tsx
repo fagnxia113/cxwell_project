@@ -56,7 +56,7 @@ export default function ProjectListPage() {
             </div>
             {t('project.list_title')}
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5">{t('project.fields.list_subtitle')}</p>
+          <p className="text-slate-500 text-sm mt-0.5">{t('project.list_subtitle')}</p>
         </div>
 
         <div className="flex items-center gap-2.5">
@@ -107,7 +107,7 @@ export default function ProjectListPage() {
       {/* 2. 统计看板组件 */}
       <ProjectStatsHeader stats={stats} />
 
-      {/* 3. 搜索�?*/}
+      {/* 3. 搜索栏 */}
       <div className="premium-card p-4">
         <div className="relative group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
@@ -129,7 +129,9 @@ export default function ProjectListPage() {
         </div>
       ) : projects.length === 0 ? (
         <div className="py-32 flex flex-col items-center text-center px-4 premium-card bg-white">
-          <Briefcase size={40} className="text-slate-200 mb-6" />
+          <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+            <Briefcase size={32} className="text-slate-200" />
+          </div>
           <h3 className="text-xl font-black text-slate-900 mb-2">{t('project.empty.title')}</h3>
           <p className="text-slate-400 max-w-sm font-medium">{t('project.empty.desc')}</p>
         </div>

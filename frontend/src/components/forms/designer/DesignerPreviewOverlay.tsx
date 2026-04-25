@@ -101,7 +101,7 @@ export default function DesignerPreviewOverlay({
             )}>
               {value && <CheckCircle2 size={14} strokeWidth={3} />}
             </div>
-            <span className="text-sm font-black uppercase tracking-tight">{field.label} Check</span>
+            <span className="text-sm font-black uppercase tracking-tight">{field.label} 确认</span>
           </button>
         );
       case 'date':
@@ -136,13 +136,13 @@ export default function DesignerPreviewOverlay({
               <div className="flex items-center gap-3">
                  <div className="px-4 py-1.5 bg-indigo-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-xl shadow-indigo-500/20">
                     <Play size={10} fill="currentColor" />
-                    Live Simulation
+                    实时预览
                  </div>
                  <div className="px-4 py-1.5 bg-white border border-slate-100 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    Environment: Runtime Alpha
+                    运行环境: 实时演示
                  </div>
               </div>
-              <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none uppercase">Interactive Preview</h1>
+              <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none uppercase">交互式预览</h1>
            </div>
            
            <button 
@@ -181,7 +181,7 @@ export default function DesignerPreviewOverlay({
                 {fields.length === 0 && (
                    <div className="col-span-full py-40 text-center space-y-4 opacity-30">
                       <Info size={48} className="mx-auto text-slate-300" />
-                      <p className="text-xs font-black uppercase tracking-widest text-slate-400 italic">No nodes available for simulation</p>
+                      <p className="text-xs font-black uppercase tracking-widest text-slate-400 italic">暂无可用于预览的节点</p>
                    </div>
                 )}
               </div>
@@ -191,14 +191,14 @@ export default function DesignerPreviewOverlay({
            <div className="w-[320px] bg-slate-900 flex flex-col">
               <div className="p-8 border-b border-white/5 flex items-center gap-3">
                  <Terminal size={18} className="text-emerald-400" />
-                 <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Data Stream (IO)</span>
+                 <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">数据流 (IO)</span>
               </div>
               <div className="flex-1 p-8 overflow-y-auto custom-scrollbar font-mono text-[11px]">
                  <pre className="text-emerald-500/80 leading-relaxed">
                     {JSON.stringify(previewData, null, 2)}
                  </pre>
                  <div className="mt-8 text-slate-600 uppercase text-[9px] font-black tracking-widest">
-                    Last activity: {new Date().toLocaleTimeString()}
+                    最后活动时间: {new Date().toLocaleTimeString()}
                  </div>
               </div>
            </div>
@@ -209,7 +209,7 @@ export default function DesignerPreviewOverlay({
              onClick={onClose}
              className="px-12 py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-slate-900/10 hover:bg-black transition-all active:scale-95"
            >
-              Terminate Session
+              结束预览
            </button>
         </div>
       </div>

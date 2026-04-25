@@ -265,7 +265,7 @@ export default function UserManagementPage() {
                           </div>
                           <div>
                             <div className="text-[13px] font-bold text-slate-800 group-hover:text-indigo-600 transition-colors tracking-tight">{user.userName}</div>
-                            <div className="text-[9px] font-bold text-slate-400 font-mono uppercase">ID: {user.loginName}</div>
+                            <div className="text-[9px] font-bold text-slate-400 font-mono uppercase">账号: {user.loginName}</div>
                           </div>
                         </div>
                       </td>
@@ -341,7 +341,7 @@ export default function UserManagementPage() {
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-3">
             <div className="p-2 bg-orange-100 text-orange-600 rounded-lg"><FileKey size={18} /></div>
             <div>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest lh-none">Target</p>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest lh-none">目标用户</p>
               <h4 className="text-base font-black text-slate-900 leading-none mt-0.5">{resetPwdUser?.userName}</h4>
             </div>
           </div>
@@ -379,7 +379,7 @@ export default function UserManagementPage() {
                   onChange={(e) => setFormData({ ...formData, loginName: e.target.value })}
                   disabled={!!editingUser}
                   className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:border-indigo-500 disabled:bg-slate-50 outline-none transition-all text-xs font-bold shadow-inner"
-                  placeholder="ID"
+                  placeholder="账号"
                   required
                 />
               </div>

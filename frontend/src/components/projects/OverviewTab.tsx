@@ -59,14 +59,14 @@ export default function OverviewTab({
                   placeholder={t('project.placeholder.description')}
                 />
               ) : (
-                <p className="text-sm font-bold text-slate-700 leading-relaxed whitespace-pre-wrap italic">
+                <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
                   {project.description || t('project.empty.no_desc')}
                 </p>
               )}
             </div>
 
             <div className="lg:col-span-4 space-y-6 bg-slate-50/50 p-6 rounded-xl border border-slate-100">
-              <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-4">{t('project.sections.base_info') || 'Core Info'}</h4>
+              <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-4">{t('project.sections.base_info')}</h4>
               <div className="space-y-4">
                 <EditableField
                   label={t('project.fields.customer')}
@@ -133,7 +133,7 @@ export default function OverviewTab({
           { key: 'it_capacity', label: t('project.fields.it_capacity'), icon: TrendingUp, unit: 'kW' },
           { key: 'cabinet_count', label: t('project.fields.cabinet_count'), icon: List, unit: t('common.unit_piece') },
           { key: 'cabinet_power', label: t('project.fields.cabinet_power'), icon: DollarSign, unit: 'kW / R' },
-          { key: 'budget', label: t('project.fields.budget'), icon: DollarSign },
+          { key: 'budget', label: t('project.fields.budget'), icon: DollarSign, unit: t('common.unit_ten_thousand') },
         ].map(spec => (
           <div key={spec.key} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
             <EditableField
@@ -154,7 +154,7 @@ export default function OverviewTab({
       {/* 阶段 1.5: Technical Architecture Grid (新板块) */}
       <div className="bg-white p-6 lg:p-8 rounded-xl border border-slate-100 shadow-sm relative overflow-hidden">
         <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-           <span className="w-1.5 h-4 bg-emerald-500 rounded-full" /> {t('project.sections.specs') || 'Technical Architecture'}
+           <span className="w-1.5 h-4 bg-emerald-500 rounded-full" /> {t('project.sections.specs')}
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -167,7 +167,7 @@ export default function OverviewTab({
             editValue={editForm.power_architecture || ''}
             onChange={v => onEditFormChange({ power_architecture: String(v) })}
             displayMode="detailed"
-            placeholder="e.g. 2N UPS Redundancy, Dual Feed from separate substations..."
+            placeholder={t('project.placeholder.power_architecture')}
           />
           <EditableField
             label={t('project.fields.hvac_architecture')}
@@ -178,7 +178,7 @@ export default function OverviewTab({
             editValue={editForm.hvac_architecture || ''}
             onChange={v => onEditFormChange({ hvac_architecture: String(v) })}
             displayMode="detailed"
-            placeholder="e.g. Chilled Water System, N+2 CRAH Configuration..."
+            placeholder={t('project.placeholder.hvac_architecture')}
           />
           <EditableField
             label={t('project.fields.fire_architecture')}
@@ -189,7 +189,7 @@ export default function OverviewTab({
             editValue={editForm.fire_architecture || ''}
             onChange={v => onEditFormChange({ fire_architecture: String(v) })}
             displayMode="detailed"
-            placeholder="e.g. Very Early Smoke Detection (VESDA), FM200 Gas Suppression..."
+            placeholder={t('project.placeholder.fire_architecture')}
           />
           <EditableField
             label={t('project.fields.weak_electric_architecture')}
@@ -200,26 +200,26 @@ export default function OverviewTab({
             editValue={editForm.weak_electric_architecture || ''}
             onChange={v => onEditFormChange({ weak_electric_architecture: String(v) })}
             displayMode="detailed"
-            placeholder="e.g. Spine-Leaf Architecture, Cat6A Copper & Single Mode Fiber..."
+            placeholder={t('project.placeholder.weak_electric_architecture')}
           />
         </div>
       </div>
 
-      {/* 阶段 2: Report Progress Block (报告血槽) */}
-      <div className="bg-white p-6 lg:p-8 rounded-xl border border-slate-100 shadow-sm">
+      {/* 阶段 2: Report Progress Block (报告血槽) - 暂时隐藏 */}
+      {/* <div className="bg-white p-6 lg:p-8 rounded-xl border border-slate-100 shadow-sm">
         <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
-             <span className="w-1.5 h-4 bg-indigo-500 rounded-full" /> {t('project.tabs.reports') || 'Reports Documentation'}
+             <span className="w-1.5 h-4 bg-indigo-500 rounded-full" /> {t('project.tabs.reports')}
           </div>
-          <span className="text-[10px] font-bold text-slate-400 normal-case">{simulatedCompletedReports} / {estimatedTotalReports} Submitted</span>
+          <span className="text-[10px] font-bold text-slate-400 normal-case">{simulatedCompletedReports} / {estimatedTotalReports} {t('project.report.status.submitted')}</span>
         </h3>
-        <ProgressBar 
-          label={t('dashboard.compliance_daily_report_rate') || 'Report Compliance Rate'} 
-          progress={project.progress > 0 ? Math.round((simulatedCompletedReports / estimatedTotalReports) * 100) : 0} 
-          icon={ClipboardList} 
-          colorClass="indigo" 
+        <ProgressBar
+          label={t('dashboard.compliance_daily_report_rate')}
+          progress={project.progress > 0 ? Math.round((simulatedCompletedReports / estimatedTotalReports) * 100) : 0}
+          icon={ClipboardList}
+          colorClass="indigo"
         />
-      </div>
+      </div> */}
 
       {/* 阶段 3: Milestone Timeline (鱼骨图) */}
       <MilestoneTimeline milestones={milestones} projectStatus={project.status} />

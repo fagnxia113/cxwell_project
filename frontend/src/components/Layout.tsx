@@ -56,6 +56,8 @@ const getPathName = (path: string | undefined, t: any): string => {
     'knowledge': t('sidebar.knowledge'),
     'settings': t('sidebar.settings'),
     'admin': t('sidebar.systemAdmin'),
+    'organization': t('sidebar.organization'),
+    'customers': t('sidebar.customers'),
     // ... potentially add more specific ones to locale files later
   }
   return pathMap[path || ''] || path || ''
@@ -73,6 +75,7 @@ const getSubPathName = (parentPath: string | undefined, subPath: string | undefi
     'projects': {
       'create': t('common.create'),
       'list': t('common.list'),
+      'board': t('sidebar.taskBoard'),
       'completion': t('sidebar.completed'),
       'detail': t('common.detail')
     },
@@ -147,7 +150,7 @@ const getMenus = (t: any): MenuItem[] => [
     permission: 'menu:project',
     children: [
       { key: 'project-list', label: t('common.list'), path: '/projects', permission: 'menu:project' },
-      { key: 'project-board', label: t('sidebar.taskBoard'), path: '/tasks/board', permission: 'menu:project' },
+      { key: 'project-board', label: t('sidebar.taskBoard'), path: '/projects/board', permission: 'menu:project' },
     ]
   },
 
@@ -169,7 +172,7 @@ const getMenus = (t: any): MenuItem[] => [
     children: [
       { key: 'person-list', label: t('common.list'), path: '/personnel', permission: 'menu:personnel' },
       { key: 'person-attendance', label: t('sidebar.attendance'), path: '/personnel/attendance', permission: 'personnel:attendance:view' },
-      { key: 'person-report-relation', label: '汇报关系', path: '/personnel/report-relation', permission: 'menu:personnel' },
+      { key: 'person-report-relation', label: t('sidebar.reportRelation'), path: '/personnel/report-relation', permission: 'menu:personnel' },
       { key: 'person-rotation', label: t('sidebar.rotationReport'), path: '/personnel/rotation-report', permission: 'personnel:rotation:view' },
       { key: 'person-overview', label: t('sidebar.attendanceOverview'), path: '/personnel/attendance-overview', permission: 'personnel:attendance-overview:view' },
     ]
@@ -192,17 +195,16 @@ const getMenus = (t: any): MenuItem[] => [
   // 7. 系统管理
   {
     key: 'admin',
-    label: t('sidebar.systemAdmin'),
+    label: '系统管理',
     icon: 'shield',
     permission: 'menu:admin',
     children: [
-      { key: 'admin-monitor', label: t('sidebar.monitoring'), path: '/admin/workflow-monitor', permission: 'menu:admin' },
-      { key: 'admin-def', label: t('sidebar.definitions'), path: '/workflow/definitions', permission: 'menu:admin' },
-      { key: 'admin-form', label: t('sidebar.designer'), path: '/forms/templates', permission: 'menu:admin' },
-      { key: 'admin-user', label: t('sidebar.users'), path: '/admin/users', permission: 'menu:admin' },
-      { key: 'admin-role', label: t('sidebar.roles'), path: '/admin/roles', permission: 'menu:admin' },
-      { key: 'admin-meta', label: t('sidebar.metadata'), path: '/settings/metadata', permission: 'menu:admin' },
-      { key: 'admin-set', label: t('sidebar.settings'), path: '/settings', permission: 'menu:admin' },
+      { key: 'admin-monitor', label: '流程监控', path: '/admin/workflow-monitor', permission: 'menu:admin' },
+      { key: 'admin-def', label: '流程定义', path: '/workflow/definitions', permission: 'menu:admin' },
+      { key: 'admin-form', label: '表单设计', path: '/forms/templates', permission: 'menu:admin' },
+      { key: 'admin-user', label: '用户管理', path: '/admin/users', permission: 'menu:admin' },
+      { key: 'admin-role', label: '角色管理', path: '/admin/roles', permission: 'menu:admin' },
+      { key: 'admin-set', label: '系统设置', path: '/settings', permission: 'menu:admin' },
     ]
   },
 
@@ -366,7 +368,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                     <div className="flex items-center gap-3">
                       <div className={`p-1.5 rounded-lg transition-colors ${expanded[item.key] ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-500 group-hover:text-slate-300'}`}>
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon ? icons[item.icon] : ''} />
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon ? icons[item.icon] : ''} />
                         </svg>
                       </div>
                       <span className="text-sm font-semibold tracking-tight">{item.label}</span>

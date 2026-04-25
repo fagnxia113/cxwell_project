@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
+
 import { 
   BarChart,
   Bar,
@@ -17,8 +17,21 @@ interface MonitorStatisticsViewProps {
   statistics: Statistics;
 }
 
+const t = (key: string): string => {
+  const map: Record<string, string> = {
+    'workflow_monitor.process_type_stats': '各类型流程运行统计',
+    'workflow_monitor.total': '总计',
+    'workflow_monitor.status_map.running': '运行中',
+    'workflow_monitor.status_map.completed': '已完成',
+    'workflow_monitor.approval_rate': '审批通过率',
+    'workflow_monitor.overall_rate': '整体通过率',
+    'workflow_monitor.approved': '通过',
+    'workflow_monitor.rejected': '驳回'
+  };
+  return map[key] || key;
+};
+
 export default function MonitorStatisticsView({ statistics }: MonitorStatisticsViewProps) {
-  const { t } = useTranslation();
 
   const processTypeData = statistics.byProcessKey ? Object.entries(statistics.byProcessKey).map(([key, data]) => ({
     name: key,

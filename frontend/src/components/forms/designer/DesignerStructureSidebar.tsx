@@ -77,7 +77,7 @@ export default function DesignerStructureSidebar({
                   )}
                 >
                   <Columns size={12} strokeWidth={3} />
-                  <span className="text-[10px] font-black">{cols} Col</span>
+                  <span className="text-[10px] font-black">{cols} 列</span>
                 </button>
               ))}
             </div>
@@ -95,7 +95,7 @@ export default function DesignerStructureSidebar({
           <button
             onClick={onAddField}
             className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/20 hover:scale-105 active:scale-95 transition-all"
-            title="Add Node"
+            title="添加节点"
           >
             <Plus size={16} strokeWidth={3} />
           </button>
@@ -164,13 +164,13 @@ export default function DesignerStructureSidebar({
             <div className="text-center py-16 px-6 bg-slate-100/30 rounded-[32px] border-2 border-dashed border-slate-200 grayscale opacity-40">
               <Plus className="mx-auto text-slate-300 mb-4" size={40} />
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">
-                Initial State <br/> No active nodes
+                初始状态 <br/> 尚无可用节点
               </p>
               <button
                 onClick={onAddField}
                 className="mt-6 text-xs font-black text-indigo-600 uppercase tracking-widest hover:underline"
               >
-                Initialize Schema
+                初始化架构
               </button>
             </div>
           )}

@@ -164,11 +164,11 @@ export default function TeamTab({
         is_enabled: true
       })
       if (res && res.success) {
-        success('考勤配置保存成功')
+        success(t('attendance.save_config'))
         setShowConfigModal(false)
       }
     } catch (e) {
-      showError('考勤配置保存失败')
+      showError(t('attendance.sync_failed'))
     } finally {
       setSavingConfig(false)
     }
@@ -267,7 +267,7 @@ export default function TeamTab({
             activeView === 'list' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
           )}
         >
-          成员列表
+          {t('project.team.members')}
         </button>
         <button
           onClick={() => setActiveView('schedule')}
@@ -276,7 +276,7 @@ export default function TeamTab({
             activeView === 'schedule' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
           )}
         >
-          预计出勤
+          {t('project.team.scheduled_attendance')}
         </button>
         <button
           onClick={() => setActiveView('attendance')}
@@ -285,7 +285,7 @@ export default function TeamTab({
             activeView === 'attendance' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
           )}
         >
-          实际出勤
+          {t('project.team.actual_attendance')}
         </button>
       </div>
 
@@ -350,19 +350,19 @@ export default function TeamTab({
               <div className="hidden sm:flex gap-4 border-l border-slate-200 pl-4">
                 <div className="flex items-center gap-1.5">
                   <div className="w-3 h-3 rounded bg-blue-500"></div>
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">本项目工作中</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('project.team.on_duty_current')}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-3 h-3 rounded bg-indigo-400"></div>
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">其他项目工作中</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('project.team.on_duty_other')}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-3 h-3 rounded bg-emerald-500"></div>
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">回国休假</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('project.team.home_rest')}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-3 h-3 rounded bg-amber-500"></div>
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">本地休息</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('project.team.local_rest')}</span>
                 </div>
               </div>
             </div>
@@ -432,22 +432,22 @@ export default function TeamTab({
               <button onClick={() => setCurrentMonth(dayjs(currentMonth).subtract(1, 'month').format('YYYY-MM'))} className="p-1 hover:bg-slate-100 rounded-lg transition-colors">
                 <ChevronLeft size={18} className="text-slate-400" />
               </button>
-              <span className="text-sm font-black text-slate-900 min-w-[80px] text-center">{dayjs(currentMonth + '-01').format('YYYY年M月')}</span>
+              <span className="text-sm font-black text-slate-900 min-w-[80px] text-center">{dayjs(currentMonth + '-01').format('YYYY-MM')}</span>
               <button onClick={() => setCurrentMonth(dayjs(currentMonth).add(1, 'month').format('YYYY-MM'))} className="p-1 hover:bg-slate-100 rounded-lg transition-colors">
                 <ChevronRight size={18} className="text-slate-400" />
               </button>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-4 text-[10px]">
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-emerald-500"></span> 已打卡</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-slate-100"></span> 未打卡</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-emerald-500"></span> {t('project.attendance.clocked_in')}</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-slate-100"></span> {t('project.attendance.not_clocked_in')}</span>
               </div>
               <button
                 onClick={openConfigModal}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors"
               >
                 <Settings size={12} />
-                考勤配置
+                {t('project.attendance.config')}
               </button>
             </div>
           </div>
@@ -459,7 +459,7 @@ export default function TeamTab({
                 <thead>
                   <tr className="bg-slate-50/50">
                     <th className="sticky left-0 z-10 bg-slate-50/50 px-4 py-3 text-left border-r border-slate-100">
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">成员</span>
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('project.team.member')}</span>
                     </th>
                     {days.map(day => (
                       <th key={`th-${day.format('YYYY-MM-DD')}`} className={cn(
@@ -474,9 +474,9 @@ export default function TeamTab({
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   {loadingAttendance ? (
-                    <tr><td colSpan={daysInMonth + 1} className="py-10 text-center text-[10px] font-bold text-slate-400 italic tracking-widest uppercase">加载中...</td></tr>
+                    <tr><td colSpan={daysInMonth + 1} className="py-10 text-center text-[10px] font-bold text-slate-400 italic tracking-widest uppercase">{t('common.loading')}</td></tr>
                   ) : attendanceData.length === 0 ? (
-                    <tr><td colSpan={daysInMonth + 1} className="py-10 text-center text-[10px] font-bold text-slate-300 italic tracking-widest uppercase text-xs">暂无打卡记录</td></tr>
+                    <tr><td colSpan={daysInMonth + 1} className="py-10 text-center text-[10px] font-bold text-slate-300 italic tracking-widest uppercase text-xs">{t('personnel.rotation.no_data')}</td></tr>
                   ) : (
                     attendanceData.map((record: any) => (
                       <tr key={record.employeeId} className="hover:bg-slate-50/50 transition-colors group">
@@ -516,30 +516,30 @@ export default function TeamTab({
       <ModalDialog
         isOpen={showConfigModal}
         onClose={() => setShowConfigModal(false)}
-        title="钉钉考勤组配置"
+        title={t('project.attendance.dingtalk_config')}
         size="md"
       >
         <div className="space-y-4">
           <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-[10px] text-blue-600">
-            请先在钉钉管理后台创建考勤组，然后将考勤组 ID 填写到下方。
+            {t('common.attendance_config_tip') || 'Please create an attendance group in DingTalk backend first, then enter the ID below.'}
           </div>
           <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">钉钉考勤组 ID</label>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.attendance.dingtalk_group_id')}</label>
             <input
               type="text"
               value={dingtalkGroupId}
               onChange={e => setDingtalkGroupId(e.target.value)}
-              placeholder="请输入钉钉考勤组 ID"
+              placeholder={t('project.attendance.dingtalk_group_id')}
               className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-medium focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">考勤组名称（选填）</label>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.attendance.dingtalk_group_name')}</label>
             <input
               type="text"
               value={dingtalkGroupName}
               onChange={e => setDingtalkGroupName(e.target.value)}
-              placeholder="如：A项目考勤组"
+              placeholder={t('project.attendance.dingtalk_group_name')}
               className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-medium focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
             />
           </div>
@@ -549,7 +549,7 @@ export default function TeamTab({
               className="px-4 py-2 text-[11px] font-bold text-slate-400 hover:text-slate-600"
               disabled={savingConfig}
             >
-              取消
+              {t('common.cancel')}
             </button>
             <button
               onClick={saveAttendanceConfig}
@@ -557,7 +557,7 @@ export default function TeamTab({
               className="px-5 py-2 bg-emerald-500 text-white rounded-lg text-[11px] font-bold hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {savingConfig && <Loader2 size={12} className="animate-spin" />}
-              保存配置
+              {t('project.attendance.save_config')}
             </button>
           </div>
         </div>

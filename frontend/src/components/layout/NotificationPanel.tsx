@@ -48,8 +48,8 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
         }}
         className={`relative w-10 h-10 flex items-center justify-center rounded-lg transition-all ${
           showDropdown
-            ? 'bg-indigo-600 text-white'
-            : 'bg-white border border-slate-200 text-slate-500 hover:text-indigo-600 hover:border-indigo-200'
+            ? 'bg-emerald-500 text-white'
+            : 'bg-white border border-slate-200 text-slate-500 hover:text-emerald-500 hover:border-emerald-200'
         }`}
       >
         <Bell className="w-5 h-5" />
@@ -75,7 +75,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
           <div className="max-h-[360px] overflow-y-auto">
             {loading ? (
               <div className="p-8 text-center">
-                <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
                 <p className="text-[10px] text-slate-400">{t('notification.loading')}</p>
               </div>
             ) : notifications.length === 0 ? (
@@ -96,7 +96,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
                     <div className="flex gap-3">
                       <div className="mt-0.5">
                         {!item.isRead ? (
-                          <div className="w-2 h-2 rounded-full bg-indigo-600"></div>
+                          <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
                         ) : (
                           <CheckCircle2 className="w-4 h-4 text-slate-300" />
                         )}
@@ -106,10 +106,10 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
                           <h4 className={`text-[13px] font-medium truncate pr-2 ${
                             !item.isRead ? 'text-slate-900 font-semibold' : 'text-slate-600'
                           }`}>
-                            {item.title}
+                            {t(item.title)}
                           </h4>
                         </div>
-                        <p className="text-[11px] text-slate-400 line-clamp-1">{item.content}</p>
+                        <p className="text-[11px] text-slate-400 line-clamp-1">{t(item.content)}</p>
                         <div className="flex items-center justify-between mt-2">
                           <span className="text-[10px] text-slate-400 flex items-center gap-1">
                             <Clock className="w-3 h-3" />
@@ -121,7 +121,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
                                 e.stopPropagation()
                                 onMarkAsRead(item.id, e)
                               }}
-                              className="text-[10px] text-indigo-600 hover:text-indigo-700 font-medium"
+                              className="text-[10px] text-emerald-500 hover:text-emerald-600 font-medium"
                             >
                               {t('notification.mark_read')}
                             </button>
@@ -135,17 +135,26 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
             )}
           </div>
 
-          <div className="px-4 py-3 border-t border-slate-100 bg-slate-50/50">
+          <div className="px-4 py-3 border-t border-slate-100 bg-slate-50/50 space-y-2">
             <button
               onClick={() => {
                 setShowDropdown(false)
                 navigate('/approvals/center')
               }}
-              className="w-full py-2.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2.5 bg-white border border-emerald-500 text-emerald-600 text-xs font-bold rounded-lg hover:bg-emerald-50 transition-colors flex items-center justify-center gap-2"
             >
               {t('notification.go_to_approvals')}
-              {pendingCount > 0 && <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px]">{pendingCount}</span>}
+              {pendingCount > 0 && <span className="bg-emerald-100 px-1.5 py-0.5 rounded text-[10px]">{pendingCount}</span>}
               <ArrowRight className="w-3 h-3" />
+            </button>
+            <button
+              onClick={() => {
+                setShowDropdown(false)
+                navigate('/notifications')
+              }}
+              className="w-full py-2.5 bg-emerald-500 text-white text-xs font-bold rounded-lg hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2 shadow-sm shadow-emerald-200"
+            >
+              {t('notification.view_all')}
             </button>
           </div>
         </div>

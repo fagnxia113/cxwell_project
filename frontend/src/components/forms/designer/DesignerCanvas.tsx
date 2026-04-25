@@ -33,12 +33,12 @@ const FieldPlaceholder = ({ field, isSelected }: { field: FormField, isSelected:
             )} />
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{field.label} {field.required && '*'}</span>
          </div>
-         <span className="text-[9px] font-bold text-slate-300 uppercase tracking-tighter opacity-0 group-hover:opacity-100 transition-opacity">Type: {field.type}</span>
+         <span className="text-[9px] font-bold text-slate-300 uppercase tracking-tighter opacity-0 group-hover:opacity-100 transition-opacity">类型: {field.type}</span>
       </div>
       
       <div className="h-10 bg-slate-50/50 rounded-xl border border-slate-100/50 flex items-center px-4">
         <span className="text-xs text-slate-300 italic">
-          {field.placeholder || 'Simulation data sequence...'}
+          {field.placeholder || '模拟数据序列...'}
         </span>
       </div>
     </div>
@@ -61,7 +61,7 @@ export default function DesignerCanvas({
       <div className="bg-white/60 backdrop-blur-xl px-6 py-2.5 rounded-full border border-white shadow-xl shadow-slate-900/5 flex items-center gap-6 mb-12 animate-in slide-in-from-top-4 duration-700">
          <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-[9px] font-black uppercase tracking-widest">
             <MousePointer2 size={12} strokeWidth={3} />
-            Edit Mode
+            编辑模式
          </div>
          <div className="w-px h-4 bg-slate-200" />
          <div className="flex gap-4 text-slate-400">
@@ -78,10 +78,10 @@ export default function DesignerCanvas({
         {layoutType !== 'single' && (
           <div className="flex gap-6 mb-12 border-b border-slate-100 px-4">
              <div className="px-6 py-4 border-b-2 border-indigo-600">
-                <span className="text-xs font-black text-indigo-600 uppercase tracking-[0.2em]">{layoutType === 'tabs' ? 'Active Tab' : 'Step 01'}</span>
+                <span className="text-xs font-black text-indigo-600 uppercase tracking-[0.2em]">{layoutType === 'tabs' ? '活动页签' : '第 01 步'}</span>
              </div>
              <div className="px-6 py-4 opacity-20 grayscale pointer-events-none">
-                <span className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">{layoutType === 'tabs' ? 'Tab 02' : 'Step 02'}</span>
+                <span className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">{layoutType === 'tabs' ? '页签 02' : '第 02 步'}</span>
              </div>
           </div>
         )}
@@ -114,8 +114,8 @@ export default function DesignerCanvas({
                <div className="w-32 h-32 bg-white/50 rounded-full flex items-center justify-center mb-8 border-2 border-dashed border-slate-100 animate-pulse">
                   <Layout size={48} className="text-slate-200" />
                </div>
-               <h3 className="text-xl font-black text-slate-300 uppercase tracking-[0.3em]">Canvas Empty</h3>
-               <p className="text-[10px] text-slate-400 font-bold mt-4 uppercase tracking-[0.2em]">Start by adding structural nodes from the sidebar</p>
+               <h3 className="text-xl font-black text-slate-300 uppercase tracking-[0.3em]">画布为空</h3>
+               <p className="text-[10px] text-slate-400 font-bold mt-4 uppercase tracking-[0.2em]">请从侧边栏添加结构节点</p>
             </div>
           )}
         </div>
@@ -125,15 +125,15 @@ export default function DesignerCanvas({
       <div className="mt-12 text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] flex items-center gap-8">
          <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
-            Standard
+            标准
          </div>
          <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-            Required
+            必填
          </div>
          <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-            Selected
+            已选中
          </div>
       </div>
     </div>

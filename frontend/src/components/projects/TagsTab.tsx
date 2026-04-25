@@ -30,18 +30,18 @@ interface TagsTabProps {
 }
 
 const tagTypeConfig = {
-  red: { label: '红标', color: 'text-rose-500', bgColor: 'bg-rose-50', dotColor: 'bg-rose-500', borderColor: 'border-rose-200' },
-  yellow: { label: '黄标', color: 'text-amber-500', bgColor: 'bg-amber-50', dotColor: 'bg-amber-500', borderColor: 'border-amber-200' },
-  green: { label: '绿标', color: 'text-emerald-500', bgColor: 'bg-emerald-50', dotColor: 'bg-emerald-500', borderColor: 'border-emerald-200' },
-  blue: { label: '蓝标', color: 'text-blue-500', bgColor: 'bg-blue-50', dotColor: 'bg-blue-500', borderColor: 'border-blue-200' },
-  white: { label: '白标', color: 'text-slate-400', bgColor: 'bg-white', dotColor: 'bg-slate-300', borderColor: 'border-slate-200' },
+  red: { label: 'project.tag.types.red', color: 'text-rose-500', bgColor: 'bg-rose-50', dotColor: 'bg-rose-500', borderColor: 'border-rose-200' },
+  yellow: { label: 'project.tag.types.yellow', color: 'text-amber-500', bgColor: 'bg-amber-50', dotColor: 'bg-amber-500', borderColor: 'border-amber-200' },
+  green: { label: 'project.tag.types.green', color: 'text-emerald-500', bgColor: 'bg-emerald-50', dotColor: 'bg-emerald-500', borderColor: 'border-emerald-200' },
+  blue: { label: 'project.tag.types.blue', color: 'text-blue-500', bgColor: 'bg-blue-50', dotColor: 'bg-blue-500', borderColor: 'border-blue-200' },
+  white: { label: 'project.tag.types.white', color: 'text-slate-400', bgColor: 'bg-white', dotColor: 'bg-slate-300', borderColor: 'border-slate-200' },
 }
 
 const statusConfig = {
-  pending: { label: '待挂牌', color: 'text-slate-500', bgColor: 'bg-slate-100', icon: Clock },
-  tagging: { label: '挂牌中', color: 'text-amber-500', bgColor: 'bg-amber-50', icon: AlertCircle },
-  verifying: { label: '核验中', color: 'text-blue-500', bgColor: 'bg-blue-50', icon: AlertCircle },
-  completed: { label: '已完成', color: 'text-emerald-500', bgColor: 'bg-emerald-50', icon: CheckCircle },
+  pending: { label: 'project.tag.status_labels.pending', color: 'text-slate-500', bgColor: 'bg-slate-100', icon: Clock },
+  tagging: { label: 'project.tag.status_labels.tagging', color: 'text-amber-500', bgColor: 'bg-amber-50', icon: AlertCircle },
+  verifying: { label: 'project.tag.status_labels.verifying', color: 'text-blue-500', bgColor: 'bg-blue-50', icon: AlertCircle },
+  completed: { label: 'project.tag.status_labels.completed', color: 'text-emerald-500', bgColor: 'bg-emerald-50', icon: CheckCircle },
 }
 
 // 移除 systemTypeOptions，改为手输
@@ -272,7 +272,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
             className="flex items-center gap-1.5 px-3 py-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg text-xs font-bold transition-colors"
           >
             <RefreshCw size={14} />
-            刷新
+            {t('project.report.refresh')}
           </button>
           <button
             onClick={() => handleOpenModal()}
@@ -280,26 +280,26 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
             style={{ display: isProjectManager ? 'flex' : 'none' }}
           >
             <Plus size={14} />
-            新建记录
+            {t('project.tag.add_record')}
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-4 gap-3">
         <div className="bg-white rounded-xl border border-slate-100 p-3 shadow-sm">
-          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">应挂牌总数</div>
+          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('project.stats.tag_required')}</div>
           <div className="text-xl font-black text-slate-900">{totalStats.required}</div>
         </div>
         <div className="bg-amber-50 rounded-xl border border-amber-100 p-3 shadow-sm">
-          <div className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">已挂牌数量</div>
+          <div className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">{t('project.stats.tag_tagged')}</div>
           <div className="text-xl font-black text-amber-600">{totalStats.tagged}</div>
         </div>
         <div className="bg-emerald-50 rounded-xl border border-emerald-100 p-3 shadow-sm">
-          <div className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">已核验数量</div>
+          <div className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">{t('project.stats.tag_verified')}</div>
           <div className="text-xl font-black text-emerald-600">{totalStats.verified}</div>
         </div>
         <div className="bg-rose-50 rounded-xl border border-rose-100 p-3 shadow-sm">
-          <div className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">异常/摘牌数量</div>
+          <div className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">{t('project.stats.tag_abnormal')}</div>
           <div className="text-xl font-black text-rose-600">{totalStats.abnormal}</div>
         </div>
       </div>
@@ -309,16 +309,16 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
           <table className="w-full">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">里程碑</th>
-                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">标签名称</th>
-                <th className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">标签类型</th>
-                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">应挂牌</th>
-                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">已挂牌</th>
-                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">已核验</th>
-                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">异常</th>
-                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">核验进度</th>
-                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">状态</th>
-                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">操作</th>
+                <th className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.tabs.milestones')}</th>
+                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.tag.name')}</th>
+                <th className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.tag.type')}</th>
+                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.tag.required')}</th>
+                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.tag.tagged')}</th>
+                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.tag.verified')}</th>
+                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.tag.abnormal')}</th>
+                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.stats.tag_progress')}</th>
+                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.tag.status')}</th>
+                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('common.action')}</th>
               </tr>
             </thead>
             <tbody>
@@ -333,7 +333,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
                   <td colSpan={10} className="px-4 py-12 text-center">
                     <div className="flex flex-col items-center">
                       <TagIcon size={40} className="text-slate-300 mb-2" />
-                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">暂无标签记录</p>
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{t('project.tag.no_records') || '暂无标签记录'}</p>
                     </div>
                   </td>
                 </tr>
@@ -352,7 +352,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
                           <div className="flex items-center gap-2" style={{ paddingLeft: `${m.level * 16}px` }}>
                             {!m.isLeaf && <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />}
                             <span className={`text-xs ${m.isLeaf ? 'font-bold text-slate-600' : 'font-black text-slate-900'}`}>
-                              {m.name} {!m.isLeaf && <span className="text-[10px] font-normal text-slate-400 ml-2">(汇总)</span>}
+                              {m.name} {!m.isLeaf && <span className="text-[10px] font-normal text-slate-400 ml-2">({t('project.tag.summary')})</span>}
                             </span>
                           </div>
                         </td>
@@ -360,7 +360,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
                           <>
                             <td className="px-4 py-2 text-center">-</td>
                             <td className="px-4 py-2">
-                              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">节点记录</span>
+                              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t('project.tag.node_record')}</span>
                             </td>
                           </>
                         ) : null}
@@ -382,7 +382,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
                         <td className="px-4 py-2 text-center">
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest ${mStatusInfo.bgColor} ${mStatusInfo.color}`}>
                             <MStatusIcon size={10} />
-                            {mStatusInfo.label}
+                            {t(mStatusInfo.label)}
                           </span>
                         </td>
                         <td className="px-4 py-2 text-center">-</td>
@@ -407,7 +407,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
                                 <span className={`w-2 h-2 rounded-full ${tagInfo.dotColor}`}></span>
-                                <span className={`text-xs font-bold ${tagInfo.color}`}>{tagInfo.label}</span>
+                                <span className={`text-xs font-bold ${tagInfo.color}`}>{t(tagInfo.label)}</span>
                               </div>
                             </td>
                             <td className="px-4 py-3 text-center">
@@ -436,7 +436,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
                             <td className="px-4 py-3 text-center">
                               <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest ${statusInfo.bgColor} ${statusInfo.color}`}>
                                 <StatusIcon size={10} />
-                                {statusInfo.label}
+                                {t(statusInfo.label)}
                               </span>
                             </td>
                             <td className="px-4 py-3">
@@ -490,7 +490,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
             >
               <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                 <h3 className="font-bold text-slate-900">
-                  {editingRecord ? '编辑标签记录' : '新建标签记录'}
+                  {editingRecord ? t('project.tag.edit_record') : t('project.tag.add_record')}
                 </h3>
                 <button onClick={handleCloseModal} className="text-slate-400 hover:text-slate-600">
                   <X size={20} />
@@ -547,7 +547,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
                           }`}
                         >
                           <span className={`w-2 h-2 rounded-full ${config.dotColor}`}></span>
-                          {config.label}
+                          {t(config.label)}
                         </button>
                       )
                     })}
@@ -572,7 +572,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
                   disabled={!formData.milestone_id}
                   className="flex-1 py-2.5 bg-emerald-500 text-white rounded-lg text-xs font-bold hover:bg-emerald-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  {editingRecord ? '保存修改' : '创建记录'}
+                  {editingRecord ? t('common.save') : t('common.create')}
                 </button>
                 <button
                   onClick={handleCloseModal}
@@ -597,7 +597,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
               onClick={e => e.stopPropagation()}
             >
               <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                <h3 className="font-bold text-slate-900">更新进展</h3>
+                <h3 className="font-bold text-slate-900">{t('project.tag.update_progress')}</h3>
                 <button onClick={handleCloseProgressModal} className="text-slate-400 hover:text-slate-600">
                   <X size={20} />
                 </button>
@@ -607,7 +607,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
                 <div className="bg-slate-50 rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <span className={`w-2 h-2 rounded-full ${tagTypeConfig[progressRecord.tag_type].dotColor}`}></span>
-                    <span className="text-xs font-bold text-slate-700">{tagTypeConfig[progressRecord.tag_type].label}</span>
+                    <span className="text-xs font-bold text-slate-700">{t(tagTypeConfig[progressRecord.tag_type].label)}</span>
                   </div>
                   <p className="text-[10px] text-slate-400">应挂牌: {progressRecord.required_count} 台</p>
                 </div>
@@ -651,7 +651,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
                   onClick={handleSaveProgress}
                   className="flex-1 py-2.5 bg-emerald-500 text-white rounded-lg text-xs font-bold hover:bg-emerald-600 transition-colors"
                 >
-                  保存进展
+                  {t('common.save')}
                 </button>
                 <button
                   onClick={handleCloseProgressModal}

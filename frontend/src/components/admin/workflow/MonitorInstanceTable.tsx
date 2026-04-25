@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
+
 import { 
   Search, 
   Play, 
@@ -24,6 +24,27 @@ interface MonitorInstanceTableProps {
   formatDuration: (seconds?: number) => string;
 }
 
+const t = (key: string): string => {
+  const map: Record<string, string> = {
+    'workflow_monitor.search_placeholder': '搜索实例名称或发起人...',
+    'workflow_monitor.all_status': '所有状态',
+    'workflow_monitor.status_map.running': '运行中',
+    'workflow_monitor.status_map.completed': '已完成',
+    'workflow_monitor.status_map.terminated': '已终止',
+    'workflow_monitor.status_map.suspended': '已挂起',
+    'workflow_monitor.process_title': '流程标题',
+    'workflow_monitor.type': '类型',
+    'workflow_monitor.initiator': '发起人',
+    'workflow_monitor.status': '状态',
+    'workflow_monitor.duration': '耗时',
+    'workflow_monitor.actions': '操作',
+    'workflow_monitor.no_instances': '暂无流程实例',
+    'workflow_monitor.view': '查看详情',
+    'workflow_monitor.intervene': '管理干预'
+  };
+  return map[key] || key;
+};
+
 export default function MonitorInstanceTable({
   instances,
   searchQuery,
@@ -34,7 +55,6 @@ export default function MonitorInstanceTable({
   onIntervene,
   formatDuration
 }: MonitorInstanceTableProps) {
-  const { t } = useTranslation();
 
   const getStatusStyle = (status: string) => {
     switch (status) {

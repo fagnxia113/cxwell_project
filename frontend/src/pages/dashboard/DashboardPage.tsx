@@ -1,324 +1,410 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import ReactECharts from 'echarts-for-react'
+import * as echarts from 'echarts'
+import { apiClient } from '../../utils/apiClient'
 import { 
-  BarChart3, 
+  Globe, 
   Activity, 
-  Package, 
   CheckCircle2, 
   AlertCircle, 
-  ArrowUpRight, 
   RefreshCcw,
   Briefcase,
-  Layers,
-  FileSearch,
-  Zap,
-  ChevronRight
+  MapPin,
+  ChevronLeft,
+  ChevronRight,
+  ShieldCheck,
+  Target
 } from 'lucide-react'
 import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  ResponsiveContainer,
+  Tooltip as RechartsTooltip
 } from 'recharts'
-import { dashboardApi } from '../../api/dashboardApi'
-import { projectApi } from '../../api/projectApi'
 import { cn } from '../../utils/cn'
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+const COLORS = ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
-const StatCard = ({ title, value, subValue, icon: Icon, color, index }: any) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: index * 0.1 }}
-    className="bg-white p-6 rounded-lg border border-slate-100/80 shadow-sm relative overflow-hidden group cursor-pointer"
-  >
-    <div className={cn(
-      "absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-[0.03]",
-      color === 'emerald' ? 'bg-emerald-500' : color === 'orange' ? 'bg-orange-500' : color === 'indigo' ? 'bg-indigo-500' : 'bg-slate-500'
-    )} />
-    <div className="flex items-center gap-5 relative z-10">
-      <div className={cn(
-        "p-4 rounded-2xl",
-        color === 'emerald' ? 'bg-emerald-500 text-white' :
-        color === 'orange' ? 'bg-orange-500 text-white' :
-        color === 'indigo' ? 'bg-indigo-600 text-white' :
-        'bg-slate-900 text-white'
-      )}>
-        <Icon size={24} strokeWidth={2.5} />
-      </div>
-      <div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1.5">{title}</p>
-        <h3 className="text-3xl font-black text-slate-900 tracking-tighter leading-none">{value}</h3>
-        {subValue && <p className="text-xs text-slate-400 mt-1">{subValue}</p>}
-      </div>
-    </div>
-  </motion.div>
-)
+// Project Coordinates mapping
+const ProjectCoords: Record<string, number[]> = {
+  'China': [116.40, 39.90],
+  'Vietnam': [105.83, 21.02],
+  'Singapore': [103.81, 1.35],
+  'Thailand': [100.50, 13.75],
+  'Malaysia': [101.68, 3.13],
+  'Philippines': [120.98, 14.59],
+  'Indonesia': [106.84, -6.20],
+  'Japan': [139.69, 35.68],
+  'USA': [-77.03, 38.90],
+  'Global': [0, 0]
+};
 
-export default function DashboardPage() {
-  const { t } = useTranslation()
-  const navigate = useNavigate()
-  const [loading, setLoading] = useState(true)
-  const [data, setData] = useState<any>(null)
-  const [recentProjects, setRecentProjects] = useState<any[]>([])
+const ProfessionalMap = ({ projects }: { projects: any[] }) => {
+  const { t, i18n } = useTranslation();
+  const [view, setView] = useState<'world' | 'china' | 'sea'>('world');
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const chartRef = useRef<any>(null);
 
   useEffect(() => {
-    loadDashboardData()
-  }, [])
+    let isMounted = true;
+    const loadMaps = async () => {
+      try {
+        const results = await Promise.all([
+          echarts.getMap('world') ? Promise.resolve(null) : fetch('https://fastly.jsdelivr.net/npm/echarts@4.9.0/map/json/world.json').then(res => res.json()),
+          echarts.getMap('china') ? Promise.resolve(null) : fetch('https://fastly.jsdelivr.net/npm/echarts@4.9.0/map/json/china.json').then(res => res.json())
+        ]);
+        
+        if (results[0]) echarts.registerMap('world', results[0]);
+        if (results[1]) echarts.registerMap('china', results[1]);
+        
+        if (isMounted) setMapLoaded(true);
+      } catch (err) {
+        console.error('Failed to load map data:', err);
+      }
+    };
+    loadMaps();
+    return () => { isMounted = false; };
+  }, []); 
+
+  const getMarkers = (region: string) => {
+    return projects
+      .filter(p => {
+        const addr = (p.country || p.address || '').toLowerCase();
+        if (region === 'china') return addr.includes('china') || addr.includes('中国');
+        if (region === 'sea') return ['vietnam', 'singapore', 'thailand', 'malaysia', 'southeast'].some(k => addr.includes(k));
+        return true;
+      })
+      .map(p => {
+        const coord = ProjectCoords[p.country] || [110 + Math.random() * 20, 20 + Math.random() * 20];
+        return {
+          name: p.projectName || p.name,
+          value: [...coord, p.progress || 0, p.id]
+        };
+      });
+  };
+
+  const option = useMemo(() => {
+    if (!mapLoaded) return {};
+    return {
+      backgroundColor: 'transparent',
+      title: {
+        text: view === 'world' ? t('dashboard.global_operations') : t('dashboard.region_operations', { name: view.toUpperCase() }),
+        left: 'center',
+        top: 20,
+        textStyle: { color: '#1e293b', fontSize: 14, fontWeight: 'bold' }
+      },
+      tooltip: {
+        trigger: 'item',
+        formatter: (params: any) => {
+          if (params.componentType === 'series' && params.seriesType === 'effectScatter') {
+            return `<div class="p-2">
+              <div class="font-bold text-slate-800 mb-1">${params.name}</div>
+              <div class="text-xs text-emerald-500 font-bold">${t('common.progress')}: ${params.value[2]}%</div>
+            </div>`;
+          }
+          return params.name;
+        },
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderColor: '#e2e8f0',
+        borderWidth: 1,
+        padding: 0,
+        extraCssText: 'box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border-radius: 8px;'
+      },
+      geo: {
+        map: view === 'world' ? 'world' : 'china',
+        roam: true,
+        nameMap: i18n.language === 'zh' ? {
+          'China': '中国',
+          'Vietnam': '越南',
+          'Singapore': '新加坡',
+          'Thailand': '泰国',
+          'Malaysia': '马来西亚',
+          'Philippines': '菲律宾',
+          'Indonesia': '印度尼西亚',
+          'Japan': '日本',
+          'United States': '美国',
+          'Russia': '俄罗斯'
+        } : undefined,
+        emphasis: {
+          label: { show: false },
+          itemStyle: { areaColor: '#ecfdf5' }
+        },
+        itemStyle: {
+          areaColor: '#f8fafc',
+          borderColor: '#e2e8f0',
+          borderWidth: 1
+        }
+      },
+      legend: {
+        show: true,
+        bottom: 20,
+        left: 'center',
+        data: [t('dashboard.project_site')],
+        textStyle: { color: '#64748b', fontSize: 10 }
+      },
+      series: [
+        {
+          name: t('dashboard.project_site'),
+          type: 'effectScatter',
+          coordinateSystem: 'geo',
+          data: getMarkers(view),
+          symbolSize: (val: any) => Math.max(8, val[2] / 5),
+          showEffectOn: 'render',
+          rippleEffect: { brushType: 'stroke', scale: 3 },
+          emphasis: { scale: true },
+          label: {
+            formatter: '{b}',
+            position: 'right',
+            show: false
+          },
+          itemStyle: {
+            color: '#00cc79',
+            shadowBlur: 10,
+            shadowColor: '#00cc79'
+          },
+          zlevel: 1
+        }
+      ]
+    };
+  }, [view, projects, mapLoaded, i18n.language, t]);
+
+  const onChartClick = (params: any) => {
+    if (view === 'world') {
+      if (params.name === 'China') setView('china');
+      else if (['Vietnam', 'Singapore', 'Thailand', 'Malaysia'].includes(params.name)) setView('sea');
+    }
+  };
+
+  return (
+    <div className="relative w-full h-[500px] bg-white rounded-lg border border-slate-100/80 shadow-sm overflow-hidden group">
+      {!mapLoaded ? (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm z-10 rounded-3xl">
+           <div className="flex flex-col items-center gap-2">
+             <RefreshCcw className="w-6 h-6 text-emerald-500 animate-spin" />
+             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('dashboard.initialising_map')}</span>
+           </div>
+        </div>
+      ) : (
+        <>
+          <div className="absolute top-6 left-6 z-10">
+            <div className="flex items-center gap-2 mb-2">
+              <Globe size={16} className="text-emerald-500" />
+              <span className="text-sm font-bold text-slate-800">{t('dashboard.global_command')}</span>
+            </div>
+          <AnimatePresence>
+            {view !== 'world' && (
+              <motion.button 
+                initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}
+                onClick={() => setView('world')}
+                className="flex items-center gap-1 text-[10px] font-bold text-sky-500 uppercase tracking-widest"
+              >
+                <ChevronLeft size={12} /> {t('dashboard.back_to_world')}
+              </motion.button>
+            )}
+          </AnimatePresence>
+        </div>
+
+        <ReactECharts 
+          option={option} 
+          style={{ height: '100%', width: '100%' }}
+          onEvents={{ 'click': onChartClick }}
+          ref={chartRef}
+        />
+      </>
+      )}
+
+      <div className="absolute bottom-6 right-6 flex items-center gap-4 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-slate-100 shadow-sm">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-[10px] font-bold text-slate-500 uppercase">{t('dashboard.project_site')}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const StatCard = ({ title, value, icon: Icon, color, delay }: any) => {
+  const bg = color === 'emerald' ? 'bg-emerald-500' : color === 'amber' ? 'bg-amber-500' : color === 'indigo' ? 'bg-indigo-500' : color === 'rose' ? 'bg-rose-500' : 'bg-emerald-600';
+  return (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }} className="bg-white p-6 rounded-lg border border-slate-100/80 shadow-sm relative overflow-hidden group">
+      <div className={cn("absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-[0.03]", bg)} />
+      <div className="flex items-center gap-5 relative z-10">
+        <div className={cn("p-4 rounded-2xl", bg)}>
+          <Icon size={24} strokeWidth={2.5} className="text-white" />
+        </div>
+        <div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1.5">{title}</p>
+          <h3 className="text-3xl font-black text-slate-900 tracking-tighter leading-none">{value}</h3>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+export default function DashboardPage() {
+  const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
+  const [loading, setLoading] = useState(true)
+  const [data, setData] = useState<any>({
+    stats: {
+      projects: { total: 0, inProgress: 0, completed: 0 },
+      approvals: { pending: 0, total: 0 },
+      dailyReports: { submitted: 0, total: 0, submissionRate: 0 }
+    }
+  })
+  const [projects, setProjects] = useState<any[]>([])
+  const [risks, setRisks] = useState<any[]>([])
+
+  // Dynamic distribution calculation to support language switching
+  const distribution = useMemo(() => {
+    const stats = data.stats;
+    return [
+      { name: t('dashboard.active'), value: stats?.projects?.inProgress || 0 },
+      { name: t('dashboard.completed'), value: stats?.projects?.completed || 0 },
+      { name: t('dashboard.pending'), value: (stats?.projects?.total || 0) - (stats?.projects?.inProgress || 0) - (stats?.projects?.completed || 0) }
+    ];
+  }, [data.stats, t, i18n.language]);
+
+  useEffect(() => { loadDashboardData() }, [])
 
   const loadDashboardData = async () => {
     setLoading(true)
     try {
-      const [overRes, projRes] = await Promise.all([
-        dashboardApi.getOverview(),
-        projectApi.getProjects({ pageSize: 5 })
-      ])
-      
-      // console.log('Dashboard Data Raw:', { overRes, projRes });
-
-      if (overRes && overRes.data) {
-        setData(overRes.data)
-      } else if (overRes && overRes.success && overRes.distribution) {
-        // 兼容直接返回数据格式
-        setData(overRes)
+      const res = await apiClient.get<any>('/api/project/task-board');
+      if (res && res.success && res.data) {
+        const { stats, projects: projectList } = res.data;
+        setData({ stats: stats || data.stats });
+        setProjects(projectList || []);
+        
+        const allRisks = (projectList || []).flatMap((p: any) => 
+          (p.risks || []).map((r: any) => ({ 
+            ...r, 
+            projectName: p.name || p.projectName 
+          }))
+        );
+        setRisks(allRisks.slice(0, 5));
       }
-
-      if (projRes && projRes.data) {
-        setRecentProjects(projRes.data.list || projRes.data || [])
-      } else if (projRes && Array.isArray(projRes)) {
-        setRecentProjects(projRes)
-      }
-    } catch (error) {
-      console.error('Failed to load dashboard:', error)
-    } finally {
-      setLoading(false)
+    } catch (error) { 
+      console.error('Failed to load dashboard data:', error);
+    } finally { 
+      setLoading(false);
     }
   }
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[70vh] gap-4">
-        <div className="w-12 h-12 border-4 border-slate-100 border-t-indigo-600 rounded-full animate-spin" />
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('dashboard.loading_indicator') || 'Syncing...'}</p>
+        <div className="w-12 h-12 border-4 border-slate-100 border-t-emerald-500 rounded-full animate-spin" />
+        <p className="text-xs font-bold text-slate-400 tracking-widest uppercase">{t('dashboard.loading_indicator')}</p>
       </div>
     )
   }
 
-  const { stats, trend, distribution } = data
-
   return (
     <div className="min-h-screen bg-mesh p-4 lg:p-6 space-y-4 animate-fade-in custom-scrollbar">
-      {/* Visual Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
           <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
-            <div className="p-2 bg-slate-900 rounded-lg text-white">
-              <Zap size={20} strokeWidth={2.5} />
+            <div className="p-2 bg-emerald-500 rounded-lg text-white">
+              <Globe size={20} strokeWidth={2.5} />
             </div>
-            {t('dashboard.digital_command_center')}
+            {t('dashboard.global_command')}
           </h1>
           <p className="text-slate-500 text-sm mt-0.5">{t('dashboard.realtime_insights')}</p>
         </motion.div>
-
-        <button
-          onClick={loadDashboardData}
-          className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-500 hover:text-indigo-600 shadow-sm transition-all text-sm font-medium flex items-center gap-2 hover:brightness-110"
-        >
+        <button onClick={loadDashboardData} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg shadow-sm transition-all text-sm font-medium flex items-center gap-2 hover:bg-slate-50">
           <RefreshCcw size={14} className={loading ? "animate-spin" : ""} />
           <span>{t('dashboard.refresh')}</span>
         </button>
       </div>
 
-      {/* Hero Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <StatCard
-          index={0}
-          title={t('dashboard.active_projects')}
-          value={stats.projects.inProgress}
-          subValue={`${t('dashboard.total')}: ${stats.projects.total}`}
-          icon={Briefcase}
-          color="emerald"
-        />
-        <StatCard
-          index={1}
-          title={t('dashboard.pending_processes')}
-          value={stats.approvals.pending}
-          subValue={`${t('dashboard.today_completed')}: ${stats.approvals.todayApproved}`}
-          icon={CheckCircle2}
-          color="orange"
-        />
-        <StatCard
-          index={2}
-          title={t('dashboard.compliance_rate')}
-          value={`${stats.dailyReports.submissionRate}%`}
-          subValue={`${t('dashboard.pending_submit')}: ${stats.dailyReports.unsubmitted}`}
-          icon={FileSearch}
-          color="emerald"
-        />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard delay={0.1} title={t('dashboard.active')} value={data.stats.projects.inProgress} icon={Briefcase} color="emerald" />
+        <StatCard delay={0.2} title={t('dashboard.pending')} value={data.stats.approvals.pending} icon={CheckCircle2} color="amber" />
+        <StatCard delay={0.3} title={t('dashboard.milestone_completion')} value={`${data.stats.dailyReports.submissionRate}%`} icon={Target} color="emerald" />
+        <StatCard delay={0.4} title={t('dashboard.risk_alert')} value={risks.length} icon={AlertCircle} color="rose" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Trend & Projects */}
-        <div className="lg:col-span-8 space-y-4">
-            <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm min-h-[360px] flex flex-col min-w-0">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-sm font-bold text-slate-800">{t('dashboard.delivery_trend')}</h2>
-                  <p className="text-[10px] text-slate-400 mt-0.5">{t('dashboard.delivery_trend_desc')}</p>
-                </div>
-              </div>
-              <div className="w-full h-[300px] relative min-w-0">
-                {trend && trend.length > 0 && (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={trend}>
-                      <defs>
-                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
-                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis
-                        dataKey="name"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 600}}
-                      />
-                      <YAxis hide />
-                      <Tooltip
-                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', padding: '8px 12px' }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="value"
-                        stroke="#6366f1"
-                        strokeWidth={3}
-                        fillOpacity={1}
-                        fill="url(#colorValue)"
-                        animationDuration={2500}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
-           </div>
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
+        <div className="xl:col-span-8 space-y-4">
+          <ProfessionalMap projects={projects} />
+          
+          <div className="flex items-center justify-between px-1 pt-2">
+            <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <Target size={16} className="text-emerald-500" />
+              {t('dashboard.projects_overview')}
+            </h2>
+            <button onClick={() => navigate('/projects')} className="text-[10px] font-bold text-emerald-500 hover:underline uppercase tracking-widest">{t('dashboard.view_all')}</button>
+          </div>
 
-           <div className="space-y-3">
-              <div className="flex items-center justify-between px-1">
-                <h2 className="text-sm font-bold text-slate-800">{t('dashboard.projects_overview')}</h2>
-                <button onClick={() => navigate('/projects')} className="text-[10px] font-semibold text-indigo-600 hover:bg-indigo-50 px-2.5 py-1 rounded-lg transition-all border border-indigo-100">
-                  {t('dashboard.view_all')}
-                </button>
-              </div>
-              <div className="grid grid-cols-1 gap-4">
-                 {recentProjects.map((project, i) => (
-                   <motion.div
-                     key={project.id}
-                     initial={{ opacity: 0, x: -20 }}
-                     animate={{ opacity: 1, x: 0 }}
-                     transition={{ delay: i * 0.1 }}
-                     onClick={() => navigate(`/projects/${project.id}`)}
-                     className="bg-white p-5 rounded-xl border border-slate-100 shadow-md shadow-slate-200/20 group cursor-pointer flex flex-col sm:flex-row items-center gap-5 hover:border-indigo-500/20 hover:bg-slate-50/50 transition-all"
-                   >
-                      <div className="w-12 h-12 shrink-0 rounded-xl bg-slate-900 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-slate-900/10 group-hover:bg-indigo-600 transition-all">
-                        {(project.name || project.projectName || '?').charAt(0)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                         <div className="flex items-baseline gap-2">
-                           <h3 className="text-[13px] font-black text-slate-800 truncate uppercase tracking-tight">{project.name || project.projectName || t('dashboard.unnamed_project')}</h3>
-                           <span className="text-[9px] font-mono text-slate-400 bg-slate-100 px-1 py-0.5 rounded uppercase tracking-tighter">ID: {project.id.toString().substring(0,8)}</span>
-                         </div>
-                         <div className="flex items-center gap-4 mt-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                            <span className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md"><Activity size={10}/> {t('dashboard.in_progress')}</span>
-                            <span className="flex items-center gap-1"><Layers size={10}/> {t('dashboard.energy_infra') || '能源基建'}</span>
-                         </div>
-                      </div>
-                      <div className="w-full sm:w-40">
-                         <div className="flex justify-between text-[9px] font-black text-slate-400 mb-1.5 uppercase tracking-widest">
-                           <span>{t('dashboard.construction_progress')}</span>
-                           <span className="text-slate-800">75%</span>
-                         </div>
-                         <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-indigo-600 rounded-full w-3/4" />
-                         </div>
-                      </div>
-                   </motion.div>
-                 ))}
-              </div>
-           </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+             {projects.slice(0, 6).map((p) => (
+               <motion.div key={p.id} whileHover={{ y: -2 }} onClick={() => navigate(`/projects/${p.id}`)} className="p-4 bg-white border border-slate-100 rounded-xl hover:shadow-md hover:border-emerald-200 transition-all cursor-pointer group flex items-center gap-4">
+                 <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black">{(p.projectName || p.name || '?').charAt(0).toUpperCase()}</div>
+                 <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-bold text-slate-800 truncate">{p.projectName || p.name}</h3>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-slate-400">
+                      <span className="flex items-center gap-1"><MapPin size={10} /> {p.country || 'Global'}</span>
+                      <span className="text-emerald-500 font-bold">{p.progress || 0}%</span>
+                    </div>
+                 </div>
+                 <ChevronRight size={14} className="text-slate-300 group-hover:text-emerald-500 transition-colors" />
+               </motion.div>
+             ))}
+          </div>
         </div>
 
-        {/* Alerts & Distribution */}
-        <div className="lg:col-span-4 space-y-6">
-           <div className="bg-slate-900 p-6 rounded-2xl text-white shadow-xl shadow-slate-900/20">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
-                  </span>
-                  {t('dashboard.risk_alert')}
-                </h2>
+        <div className="xl:col-span-4 space-y-4">
+           <div className="bg-white p-6 rounded-lg border border-slate-100/80 shadow-sm min-h-[350px]">
+              <div className="flex items-center gap-3 mb-6">
+                 <div className="p-2 bg-rose-50 text-rose-600 rounded-lg"><AlertCircle size={18} /></div>
+                 <h2 className="text-sm font-bold text-slate-800">{t('dashboard.risk_alert')}</h2>
               </div>
               <div className="space-y-3">
-                 {[
-                   { level: 'High', title: t('dashboard.alert_title') || 'Xuzhou Phase 2 Delay Risk', desc: t('dashboard.alert_desc') || 'Node [Earthwork] exceeded by 48h, manual intervention required.' }
-                 ].map((w, i) => (
-                   <div key={i} className="p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all cursor-pointer group">
-                      <div className="flex items-center gap-2 mb-1.5">
-                         <span className={cn("text-[8px] font-black uppercase tracking-[0.2em] px-1.5 py-0.5 rounded-md", 
-                           w.level === 'High' ? 'bg-rose-500 text-white' : 'bg-amber-500 text-white'
-                         )}>Risk {w.level}</span>
+                 {risks.length > 0 ? risks.map((r, i) => (
+                   <motion.div key={i} className="p-3 bg-slate-50 rounded-xl border border-transparent hover:border-rose-100 transition-all cursor-pointer group">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={cn("text-[8px] font-black px-1.5 py-0.5 rounded uppercase", r.level === 'high' || r.level === '1' ? "bg-rose-500 text-white" : "bg-amber-500 text-white")}>
+                          {r.level === 'high' || r.level === '1' ? t('dashboard.high_risk') : t('dashboard.normal_risk')}
+                        </span>
+                        <span className="text-[9px] text-slate-400 font-mono truncate max-w-[120px]">{r.projectName}</span>
                       </div>
-                      <h4 className="text-[12px] font-black mb-1 uppercase tracking-tight">{w.title}</h4>
-                      <p className="text-[10px] text-slate-400 leading-relaxed italic">{w.desc}</p>
+                      <h4 className="text-[11px] font-bold text-slate-700 mt-1">{r.title || r.riskDescription}</h4>
+                      <div className="flex items-center justify-between mt-2">
+                        <p className="text-[10px] text-slate-400 italic">{t('common.date')}: {r.deadline || 'ASAP'}</p>
+                        <ChevronRight size={10} className="text-slate-300 group-hover:text-rose-500" />
+                      </div>
+                   </motion.div>
+                 )) : (
+                   <div className="py-10 text-center flex flex-col items-center gap-2">
+                      <div className="p-3 bg-emerald-50 rounded-full text-emerald-500"><CheckCircle2 size={24} /></div>
+                      <p className="text-xs text-slate-400 font-medium">{t('dashboard.no_critical_risks')}</p>
                    </div>
-                 ))}
-                 <button className="w-full mt-2 py-2.5 bg-white/5 hover:bg-white/10 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all text-slate-500 hover:text-white border border-white/5">
-                   {t('dashboard.view_all_alerts')}
-                 </button>
+                 )}
               </div>
            </div>
 
-           <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-lg shadow-slate-200/30">
-              <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">{t('dashboard.business_distribution')}</h2>
-              <div className="h-[200px] w-full relative min-w-0">
-                {distribution && distribution.length > 0 && (
-                  <ResponsiveContainer width="100%" height={200}>
-                    <PieChart>
-                      <Pie
-                        data={distribution}
-                        innerRadius={50}
-                        outerRadius={70}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {distribution.map((entry: any, index: number) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                         contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
+           <div className="bg-white p-6 rounded-lg border border-slate-100/80 shadow-sm">
+              <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6">{t('dashboard.business_distribution')}</h2>
+              <div className="h-[200px] w-full">
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie data={distribution} innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="value" stroke="none">
+                      {distribution.map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-              <div className="grid grid-cols-2 gap-3 mt-4">
+              <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-slate-50">
                  {distribution.map((d: any, i: number) => (
-                   <div key={i} className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-tight">{d.name}: {d.value}</span>
-                   </div>
+                    <div key={i} className="flex items-center gap-2">
+                       <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                       <span className="text-[10px] font-bold text-slate-500 uppercase truncate">{d.name}</span>
+                    </div>
                  ))}
               </div>
            </div>

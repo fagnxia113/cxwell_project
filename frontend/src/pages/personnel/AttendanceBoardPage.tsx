@@ -79,7 +79,7 @@ export default function AttendanceBoardPage() {
         }
       }
     } catch (err: any) {
-      showError('加载失败: ' + err.message)
+      showError(t('personnel.attendance.load_failed') + ': ' + err.message)
     } finally {
       setLoading(false)
     }
@@ -90,13 +90,13 @@ export default function AttendanceBoardPage() {
       setSyncing(true)
       const res = await apiClient.post<any>('/api/personnel/attendance/sync/dingtalk', {})
       if (res.success) {
-        success('同步成功，共 ' + res.count + ' 条记录')
+        success(t('personnel.attendance.sync_success', { count: res.count }))
         loadData()
       } else {
-        showError(res.message || '同步失败')
+        showError(res.message || t('personnel.attendance.sync_failed'))
       }
     } catch (err: any) {
-      showError('同步失败: ' + err.message)
+      showError(t('personnel.attendance.sync_failed') + ': ' + err.message)
     } finally {
       setSyncing(false)
     }
@@ -112,7 +112,7 @@ export default function AttendanceBoardPage() {
 
   const getWeekdayLabel = (day: number) => {
     const date = dayjs(`${currentMonth}-${String(day).padStart(2, '0')}`)
-    const weekdays = ['日', '一', '二', '三', '四', '五', '六']
+    const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
     return weekdays[date.day()]
   }
 
@@ -121,8 +121,8 @@ export default function AttendanceBoardPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-black text-slate-900">考勤统计</h1>
-          <p className="text-xs text-slate-400 mt-1">统计每月员工出勤情况</p>
+          <h1 className="text-xl font-black text-slate-900">{t('personnel.attendance.title')}</h1>
+          <p className="text-xs text-slate-400 mt-1">{t('personnel.attendance.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -131,7 +131,7 @@ export default function AttendanceBoardPage() {
             className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg text-xs font-bold hover:bg-emerald-600 transition-colors disabled:opacity-50"
           >
             <RefreshCw size={14} className={syncing ? 'animate-spin' : ''} />
-            同步钉钉
+            {syncing ? t('personnel.attendance.syncing') : t('personnel.attendance.sync_dingtalk')}
           </button>
         </div>
       </div>
@@ -147,7 +147,7 @@ export default function AttendanceBoardPage() {
             )}
           >
             <BarChart3 size={12} />
-            汇总
+            {t('personnel.attendance.view_mode.summary')}
           </button>
           <button
             onClick={() => setViewMode('calendar')}
@@ -157,7 +157,7 @@ export default function AttendanceBoardPage() {
             )}
           >
             <Calendar size={12} />
-            按月
+            {t('personnel.attendance.view_mode.calendar')}
           </button>
         </div>
 
@@ -168,7 +168,7 @@ export default function AttendanceBoardPage() {
               type="text"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              placeholder="搜索员工..."
+              placeholder={t('personnel.attendance.search_placeholder')}
               className="pl-9 pr-4 py-2 bg-white border border-slate-100 rounded-lg text-xs font-medium focus:ring-2 focus:ring-emerald-500 outline-none w-48"
             />
           </div>
@@ -181,7 +181,9 @@ export default function AttendanceBoardPage() {
               <ChevronLeft size={16} className="text-slate-400" />
             </button>
             <span className="text-sm font-black text-slate-900 min-w-[80px] text-center">
-              {dayjs(currentMonth + '-01').format('YYYY年M月')}
+              {dayjs(currentMonth + '-01').format('YYYY') === dayjs().format('YYYY') 
+                ? dayjs(currentMonth + '-01').format('MMMM')
+                : dayjs(currentMonth + '-01').format('MMM YYYY')}
             </span>
             <button
               onClick={() => setCurrentMonth(dayjs(currentMonth).add(1, 'month').format('YYYY-MM'))}
@@ -197,22 +199,22 @@ export default function AttendanceBoardPage() {
       {viewMode === 'summary' && (
         <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
           {loading ? (
-            <div className="p-12 text-center text-xs font-bold text-slate-400 italic tracking-widest uppercase">加载中...</div>
+            <div className="p-12 text-center text-xs font-bold text-slate-400 italic tracking-widest uppercase">{t('common.loading')}</div>
           ) : (
             <table className="min-w-full divide-y divide-slate-100">
               <thead className="bg-slate-50/80">
                 <tr>
-                  <th className="px-4 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">员工</th>
-                  <th className="px-4 py-3 text-center text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">出勤天数</th>
-                  <th className="px-4 py-3 text-center text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">应勤天数</th>
-                  <th className="px-4 py-3 text-center text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">出勤率</th>
-                  <th className="px-4 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">所属项目</th>
+                  <th className="px-4 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('personnel.attendance.columns.employee')}</th>
+                  <th className="px-4 py-3 text-center text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('personnel.attendance.columns.worked_days')}</th>
+                  <th className="px-4 py-3 text-center text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('personnel.attendance.columns.expected_days')}</th>
+                  <th className="px-4 py-3 text-center text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('personnel.attendance.columns.attendance_rate')}</th>
+                  <th className="px-4 py-3 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('personnel.attendance.columns.projects')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {filteredSummary.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-12 text-center text-xs font-bold text-slate-300 italic tracking-widest uppercase">暂无数据</td>
+                    <td colSpan={5} className="px-4 py-12 text-center text-xs font-bold text-slate-300 italic tracking-widest uppercase">{t('common.no_data')}</td>
                   </tr>
                 ) : (
                   filteredSummary.map(emp => (
@@ -282,28 +284,32 @@ export default function AttendanceBoardPage() {
       {viewMode === 'calendar' && (
         <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
           {loading ? (
-            <div className="p-12 text-center text-xs font-bold text-slate-400 italic tracking-widest uppercase">加载中...</div>
+            <div className="p-12 text-center text-xs font-bold text-slate-400 italic tracking-widest uppercase">{t('common.loading')}</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-slate-100">
                 <thead className="bg-slate-50/80">
                   <tr>
-                    <th className="px-3 py-2 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] sticky left-0 bg-slate-50/80 z-10">员工</th>
-                    {calendarData && calendarData.days.map(day => (
-                      <th key={day} className={cn(
-                        "px-1 py-2 text-center text-[8px] font-black w-8",
-                        getWeekdayLabel(day) === '六' || getWeekdayLabel(day) === '日' ? "text-rose-400" : "text-slate-400"
-                      )}>
-                        <div>{day}</div>
-                        <div className="text-[7px] font-normal">{getWeekdayLabel(day)}</div>
-                      </th>
-                    ))}
+                    <th className="px-3 py-2 text-left text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] sticky left-0 bg-slate-50/80 z-10">{t('personnel.attendance.columns.employee')}</th>
+                    {calendarData && calendarData.days.map(day => {
+                      const date = dayjs(`${currentMonth}-${String(day).padStart(2, '0')}`);
+                      const isWeekend = date.day() === 0 || date.day() === 6;
+                      return (
+                        <th key={day} className={cn(
+                          "px-1 py-2 text-center text-[8px] font-black w-8",
+                          isWeekend ? "text-rose-400" : "text-slate-400"
+                        )}>
+                          <div>{day}</div>
+                          <div className="text-[7px] font-normal">{getWeekdayLabel(day)}</div>
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   {!calendarData || filteredCalendar.length === 0 ? (
                     <tr>
-                      <td colSpan={35} className="px-4 py-12 text-center text-xs font-bold text-slate-300 italic tracking-widest uppercase">暂无数据</td>
+                      <td colSpan={35} className="px-4 py-12 text-center text-xs font-bold text-slate-300 italic tracking-widest uppercase">{t('common.no_data')}</td>
                     </tr>
                   ) : (
                     filteredCalendar.map(emp => (
@@ -318,8 +324,9 @@ export default function AttendanceBoardPage() {
                         </td>
                         {calendarData && calendarData.days.map(day => {
                           const dateStr = `${currentMonth}-${String(day).padStart(2, '0')}`
+                          const date = dayjs(dateStr)
                           const record = emp.calendar[dateStr]
-                          const isWeekend = getWeekdayLabel(day) === '六' || getWeekdayLabel(day) === '日'
+                          const isWeekend = date.day() === 0 || date.day() === 6
 
                           return (
                             <td key={day} className={cn(
@@ -346,8 +353,8 @@ export default function AttendanceBoardPage() {
             </div>
           )}
           <div className="px-4 py-3 bg-slate-50/50 border-t border-slate-100 flex items-center gap-4 text-[10px]">
-            <span className="flex items-center gap-1"><span className="w-4 h-4 rounded bg-emerald-500 text-white flex items-center justify-center text-[9px]">●</span> 已出勤</span>
-            <span className="flex items-center gap-1"><span className="w-4 h-4 rounded bg-slate-100 text-slate-300 flex items-center justify-center">-</span> 未出勤</span>
+            <span className="flex items-center gap-1"><span className="w-4 h-4 rounded bg-emerald-500 text-white flex items-center justify-center text-[9px]">●</span> {t('personnel.attendance.status.present')}</span>
+            <span className="flex items-center gap-1"><span className="w-4 h-4 rounded bg-slate-100 text-slate-300 flex items-center justify-center">-</span> {t('personnel.attendance.status.absent')}</span>
           </div>
         </div>
       )}

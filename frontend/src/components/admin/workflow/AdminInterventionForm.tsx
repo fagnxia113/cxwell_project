@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+
 import { 
   X, 
   CheckCircle, 
@@ -21,13 +21,34 @@ interface AdminInterventionFormProps {
   onClose: () => void;
 }
 
+const t = (key: string): string => {
+  const map: Record<string, string> = {
+    'workflow_monitor.force_approve_reject': '强制通过/驳回',
+    'workflow_monitor.jump_to_node': '节点跳转',
+    'workflow_monitor.rollback': '回退',
+    'workflow_monitor.reassign': '重新指派',
+    'workflow_monitor.force_close': '强制结束',
+    'workflow_monitor.select_reason': '请输入干预原因',
+    'workflow_monitor.admin_intervention': '行政干预',
+    'workflow_monitor.admin_intervention_desc': '最高权限介入流程流转',
+    'workflow_monitor.intervention_type': '干预类型',
+    'workflow_monitor.select_task': '目标任务',
+    'workflow_monitor.target_assignee': '新处理人',
+    'workflow_monitor.handle_result': '处理结果',
+    'workflow_monitor.intervention_reason': '干预原因',
+    'workflow_monitor.reason_placeholder': '请提供干预原因，将记录在审计日志中...',
+    'common.cancel': '取消',
+    'workflow_monitor.confirm_operation': '确认执行'
+  };
+  return map[key] || key;
+};
+
 export default function AdminInterventionForm({
   instance,
   initialTask,
   onConfirm,
   onClose
 }: AdminInterventionFormProps) {
-  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [type, setType] = useState<'jump' | 'rollback' | 'force' | 'close' | 'reassign'>(initialTask ? 'force' : 'force');
   const [reason, setReason] = useState('');
@@ -122,7 +143,7 @@ export default function AdminInterventionForm({
                      }}
                      className="w-full bg-slate-50 border-2 border-transparent focus:border-blue-500 px-5 py-4 rounded-2xl outline-none text-sm font-black text-slate-800 transition-all appearance-none cursor-pointer"
                    >
-                      <option value="">-- Choose active task --</option>
+                      <option value="">-- 选择活动任务 --</option>
                       {/* Note: Tasks would ideally be passed or managed by parent context or hook */}
                       {(instance as any).tasks?.map((t: Task) => (
                          <option key={t.id} value={t.id}>{t.name} ({t.assignee_name || 'No Assignee'})</option>
@@ -141,13 +162,13 @@ export default function AdminInterventionForm({
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">{t('workflow_monitor.target_assignee') || 'New Assignee'}</label>
                 <div className="grid grid-cols-2 gap-4">
                    <input 
-                     placeholder="User ID"
+                     placeholder="用户账号"
                      value={newAssignee.id}
                      onChange={(e) => setNewAssignee({...newAssignee, id: e.target.value})}
                      className="bg-slate-50 border-2 border-transparent focus:border-indigo-500 px-5 py-4 rounded-2xl outline-none text-sm font-black text-slate-800 transition-all"
                    />
                    <input 
-                     placeholder="User Name"
+                     placeholder="用户姓名"
                      value={newAssignee.name}
                      onChange={(e) => setNewAssignee({...newAssignee, name: e.target.value})}
                      className="bg-slate-50 border-2 border-transparent focus:border-indigo-500 px-5 py-4 rounded-2xl outline-none text-sm font-black text-slate-800 transition-all"
@@ -168,7 +189,7 @@ export default function AdminInterventionForm({
                        actionResult === 'approved' ? "bg-emerald-50 border-emerald-500 text-emerald-600" : "bg-slate-50 border-transparent text-slate-300"
                      )}
                    >
-                      Force Approve
+                      强制同意
                    </button>
                    <button 
                      onClick={() => setActionResult('rejected')}
@@ -177,7 +198,7 @@ export default function AdminInterventionForm({
                        actionResult === 'rejected' ? "bg-rose-50 border-rose-500 text-rose-600" : "bg-slate-50 border-transparent text-slate-300"
                      )}
                    >
-                      Force Reject
+                      强制驳回
                    </button>
                 </div>
              </div>
@@ -191,7 +212,7 @@ export default function AdminInterventionForm({
              </div>
              <textarea 
                required
-               placeholder={t('workflow_monitor.reason_placeholder') || 'Provide diagnostic reason for audit log...'}
+               placeholder={t('workflow_monitor.reason_placeholder') || '请提供干预原因，将记录在审计日志中...'}
                value={reason}
                onChange={(e) => setReason(e.target.value)}
                className="w-full bg-slate-50 border-2 border-transparent focus:border-slate-800 px-5 py-5 rounded-3xl outline-none text-sm font-bold text-slate-700 transition-all min-h-[120px] shadow-inner resize-none placeholder:text-slate-200"
@@ -216,7 +237,7 @@ export default function AdminInterventionForm({
              )}
            >
               {loading ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <Terminal size={18} />}
-              {t('workflow_monitor.confirm_operation') || 'Execute Intervention'}
+              {t('workflow_monitor.confirm_operation') || '执行行政干预'}
            </button>
         </div>
       </div>

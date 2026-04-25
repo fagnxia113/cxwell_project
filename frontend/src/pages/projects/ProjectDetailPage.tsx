@@ -73,7 +73,7 @@ export default function ProjectDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600"></div>
         <p className="text-xs font-black text-slate-400 uppercase tracking-wider">{t('common.loading')}</p>
       </div>
     )
@@ -130,7 +130,7 @@ export default function ProjectDetailPage() {
                       setTimeout(() => {
                         window.print();
                         window.close();
-                      }, 500);
+                        }, 500);
                     };
                   </script>
                 </body>
@@ -154,11 +154,11 @@ export default function ProjectDetailPage() {
         </div>
 
         <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 min-w-[200px]">
-          <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 shadow-sm">
+          <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 shadow-sm">
             <DollarSign size={20} />
           </div>
           <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{t('project.fields.budget_progress') || 'Budget Execution'}</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{t('project.fields.budget_progress')}</p>
             {(() => {
               const totalSpentInYuan = (expenses || []).reduce((sum, exp) => sum + Number(exp.amount), 0);
               const totalSpentInWan = totalSpentInYuan / 10000;
@@ -175,7 +175,7 @@ export default function ProjectDetailPage() {
             <CheckCircle size={20} />
           </div>
           <div>
-            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest leading-none mb-1">{t('project.milestone.completed_count') || 'Milestones Completed'}</p>
+            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest leading-none mb-1">{t('project.milestone.completed_count')}</p>
             <p className="text-lg font-black text-emerald-900 leading-none">
               {milestones.filter(m => m.status === 'completed').length} <span className="text-[10px] text-emerald-400">/ {milestones.length}</span>
             </p>
@@ -187,9 +187,9 @@ export default function ProjectDetailPage() {
             <Users size={20} />
           </div>
           <div>
-            <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest leading-none mb-1">已占用人天</p>
+            <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest leading-none mb-1">{t('project.stats.occupied_man_days')}</p>
             <p className="text-lg font-black text-amber-900 leading-none">
-              {usedManDays} <span className="text-[10px] text-amber-400">人天</span>
+              {usedManDays} <span className="text-[10px] text-amber-400">{t('project.stats.man_days_unit')}</span>
             </p>
           </div>
         </div>

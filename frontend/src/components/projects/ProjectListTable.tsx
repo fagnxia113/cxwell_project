@@ -7,7 +7,12 @@ import {
   Database, 
   FileEdit, 
   Trash2,
-  Users
+  Users,
+  Hash,
+  Activity,
+  TrendingUp,
+  Settings,
+  Layout
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Project } from '../../types/project'
@@ -33,70 +38,83 @@ export default function ProjectListTable({ projects, onDelete, onManageTeam }: P
             <tr>
               <th className="px-4 py-2.5 text-left text-[9px] font-semibold text-slate-400 uppercase tracking-wider">{t('project.fields.basic')}</th>
               <th className="px-4 py-2.5 text-left text-[9px] font-semibold text-slate-400 uppercase tracking-wider">{t('common.status')}</th>
-              <th className="px-4 py-2.5 text-left text-[9px] font-semibold text-slate-400 uppercase tracking-wider">{t('project.fields.performance') || 'Performance'}</th>
-              <th className="px-4 py-2.5 text-left text-[9px] font-semibold text-slate-400 uppercase tracking-wider">{t('project.fields.specs') || 'Specs'}</th>
+              <th className="px-4 py-2.5 text-left text-[9px] font-semibold text-slate-400 uppercase tracking-wider">{t('project.fields.performance')}</th>
+              <th className="px-4 py-2.5 text-left text-[9px] font-semibold text-slate-400 uppercase tracking-wider">{t('project.fields.specs')}</th>
               <th className="px-4 py-2.5 text-left text-[9px] font-semibold text-slate-400 uppercase tracking-wider">{t('project.fields.location')}</th>
-              <th className="px-4 py-2.5 text-right text-[9px] font-semibold text-blue-600 uppercase tracking-wider">{t('common.action')}</th>
+              <th className="px-4 py-2.5 text-right text-[9px] font-semibold text-slate-400 uppercase tracking-wider">{t('common.action')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             <AnimatePresence mode="popLayout">
               {projects.map((project, i) => (
-                <motion.tr
+                <motion.tr 
                   key={project.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
                   transition={{ delay: i * 0.02 }}
-                  className="group hover:bg-slate-50/50 transition-all cursor-pointer"
+                  className="hover:bg-slate-50/50 transition-colors cursor-pointer group"
                   onClick={() => navigate(`/projects/${project.id}`)}
                 >
-                  <td className="px-4 py-2.5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-md bg-slate-50 border border-slate-100 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all">
+                  <td className="px-4 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all">
                         <ProjectTypeIcon type={project.status === 'foreign' ? 'foreign' : 'domestic'} />
                       </div>
                       <div>
-                        <div className="text-[11px] font-bold text-slate-800 group-hover:text-blue-600 transition-colors uppercase">{project.name}</div>
-                        <div className="text-[8px] font-medium text-slate-400 mt-0.5 font-mono">ID: {project.id.slice(0, 8)}</div>
+                        <div className="text-sm font-bold text-slate-800 group-hover:text-blue-600 transition-colors">{project.name}</div>
+                        <div className="text-[10px] font-bold text-slate-400 font-mono flex items-center gap-1 mt-0.5">
+                          <Hash size={10} /> {project.id.slice(0, 8).toUpperCase()}
+                        </div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-2.5">
+                  <td className="px-4 py-4">
                     <StatusBadge status={project.status} />
                   </td>
-                  <td className="px-4 py-2.5">
-                    <div className="flex items-center gap-2 min-w-[80px]">
-                      <div className="flex-1 bg-slate-100 h-1 rounded-full overflow-hidden">
-                        <div
-                          className={cn(
-                            "h-full transition-all duration-1000",
-                            project.status === 'completed' ? "bg-emerald-500" : "bg-blue-500"
-                          )}
-                          style={{ width: `${project.progress}%` }}
+                  <td className="px-4 py-4">
+                    <div className="space-y-1.5 min-w-[120px]">
+                      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-tighter">
+                        <span className="text-slate-400">{t('common.progress')}</span>
+                        <span className="text-blue-600">{project.progress}%</span>
+                      </div>
+                      <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${project.progress}%` }}
+                          className="h-full bg-blue-500"
                         />
                       </div>
-                      <span className="text-[9px] font-semibold text-slate-900 tabular-nums">{project.progress}%</span>
                     </div>
                   </td>
-                  <td className="px-4 py-2.5">
+                  <td className="px-4 py-4">
+                    <div className="flex items-center gap-4">
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-1 text-slate-400" title={t('project.fields.it_capacity')}>
+                          <Zap size={10} />
+                          <span className="text-[8px] font-black">CAP</span>
+                        </div>
+                        <span className="text-xs font-bold text-slate-600">{project.it_capacity || '-'} kW</span>
+                      </div>
+                      <div className="w-px h-6 bg-slate-100" />
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-1 text-slate-400" title={t('project.fields.cabinet_count')}>
+                          <Database size={10} />
+                          <span className="text-[8px] font-black">RACK</span>
+                        </div>
+                        <span className="text-xs font-bold text-slate-600">{project.cabinet_count || '-'}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4">
                     <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1 text-slate-400" title="IT Capacity">
-                        <Zap size={10} />
-                        <span className="text-[9px] font-semibold text-slate-600">{project.it_capacity || '-'}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-slate-400" title="Cabinet Count">
-                        <Database size={10} />
-                        <span className="text-[9px] font-semibold text-slate-600">{project.cabinet_count || '-'}</span>
-                      </div>
+                      <Globe size={14} className="text-slate-300" />
+                      <span className="text-xs font-bold text-slate-600">
+                        {t(`countries.${project.country}`, { defaultValue: project.country })}
+                      </span>
                     </div>
                   </td>
-                  <td className="px-4 py-2.5">
-                    <div className="flex items-center gap-1 text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
-                      <Globe size={10} className="text-slate-300" />
-                      {project.country}
-                    </div>
-                  </td>
-                  <td className="px-4 py-2.5 text-right">
+                  <td className="px-4 py-4 text-right">
                     <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all">
                       <button
                         onClick={(e) => {
@@ -107,22 +125,24 @@ export default function ProjectListTable({ projects, onDelete, onManageTeam }: P
                             navigate(`/projects/${project.id}#team`);
                           }
                         }}
-                        className="p-1 bg-white text-slate-400 hover:text-emerald-600 border border-slate-100 hover:border-emerald-200 rounded-md transition-all"
+                        className="p-1.5 bg-white text-slate-400 hover:text-emerald-600 border border-slate-100 hover:border-emerald-200 rounded-md transition-all shadow-sm"
                         title={t('project.tabs.team')}
                       >
-                        <Users size={12} />
+                        <Users size={14} />
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); navigate(`/projects/${project.id}/edit`) }}
-                        className="p-1 bg-white text-slate-400 hover:text-blue-600 border border-slate-100 hover:border-blue-200 rounded-md transition-all"
+                        className="p-1.5 bg-white text-slate-400 hover:text-blue-600 border border-slate-100 hover:border-blue-200 rounded-md transition-all shadow-sm"
+                        title={t('common.edit')}
                       >
-                        <FileEdit size={12} />
+                        <FileEdit size={14} />
                       </button>
                       <button
                         onClick={(e) => onDelete(project.id, e)}
-                        className="p-1 bg-white text-slate-300 hover:text-rose-600 border border-slate-100 hover:border-rose-200 rounded-md transition-all"
+                        className="p-1.5 bg-white text-slate-300 hover:text-rose-600 border border-slate-100 hover:border-rose-200 rounded-md transition-all shadow-sm"
+                        title={t('common.delete')}
                       >
-                        <Trash2 size={12} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </td>

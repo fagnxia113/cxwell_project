@@ -23,10 +23,6 @@ export class KnowledgeController {
 
   @Put(':id')
   async update(@Param('id') id: string, @Body() data, @Request() req) {
-    // 如果包含权限数据，单独处理
-    if (data.permissions) {
-      await this.knowledgeService.updatePermissions(BigInt(id), data.permissions);
-    }
     return this.knowledgeService.update(id, data, req.user.sub);
   }
 
@@ -60,11 +56,32 @@ export class KnowledgeController {
       isFolder: false,
       parentId: parentId || null
     };
+    // 文件不设独立权限，继承父目录
     return this.knowledgeService.create(data, req.user.sub);
   }
 
+  /**
+   * 获取节点的权限配置
+   */
   @Get(':id/permissions')
   async getPermissions(@Param('id') id: string) {
-    // 实现略，直接通过 Prisma 获取
+    return this.knowledgeService.getPermissions(id);
+  }
+
+  /**
+   * 更新节点的权限配置
+   */
+  @Put(':id/permissions')
+  async updatePermissions(
+    @Param('id') id: string,
+    @Body() body: { visibilityType: string; permissions: any[] },
+    @Request() req,
+  ) {
+    return this.knowledgeService.updatePermissions(
+      BigInt(id),
+      body.visibilityType,
+      body.permissions || [],
+      req.user.sub,
+    );
   }
 }

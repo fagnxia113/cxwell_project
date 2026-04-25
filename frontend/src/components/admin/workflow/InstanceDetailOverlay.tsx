@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
+
 import { 
   X, 
   Clock, 
@@ -20,6 +20,26 @@ interface InstanceDetailOverlayProps {
   onIntervene: (task?: Task) => void;
 }
 
+const t = (key: string): string => {
+  const map: Record<string, string> = {
+    'workflow_monitor.process_detail': '流程详情',
+    'workflow_monitor.process_id': '流程ID',
+    'workflow_monitor.initiator': '发起人',
+    'workflow_monitor.status': '状态',
+    'workflow_monitor.start_time': '开始时间',
+    'workflow_monitor.task_list': '任务列表',
+    'workflow_monitor.unassigned': '未分配',
+    'workflow_monitor.force_handle': '强制干预',
+    'workflow_monitor.no_tasks': '暂无任务',
+    'workflow_monitor.operation_history': '操作历史',
+    'workflow_monitor.intervention_reason': '干预原因',
+    'workflow_monitor.no_history': '暂无历史记录',
+    'workflow_monitor.admin_intervention': '全局干预',
+    'workflow_monitor.close': '关闭'
+  };
+  return map[key] || key;
+};
+
 export default function InstanceDetailOverlay({
   instance,
   tasks,
@@ -27,7 +47,6 @@ export default function InstanceDetailOverlay({
   onClose,
   onIntervene
 }: InstanceDetailOverlayProps) {
-  const { t } = useTranslation();
 
   const getStatusColor = (status: string) => {
     switch (status) {

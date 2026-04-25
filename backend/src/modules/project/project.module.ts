@@ -7,10 +7,11 @@ import { ReportsModule } from './reports/reports.module';
 import { TagsModule } from './tags/tags.module';
 import { MilestoneService } from './milestone.service';
 import { MilestoneController } from './milestone.controller';
+import { TaskBoardController } from './task-board.controller';
 
 @Module({
   imports: [ReportsModule, TagsModule],
   providers: [ProjectService, ProjectExtensionService, MilestoneService],
-  controllers: [ProjectController, PersonnelMgmtController, ProjectExtensionController, MilestoneController]
+  controllers: [TaskBoardController, ProjectController, PersonnelMgmtController, ProjectExtensionController, MilestoneController]
 })
 export class ProjectModule {}

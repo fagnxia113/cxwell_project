@@ -25,6 +25,7 @@ import { orgApi } from '../../api/orgApi'
 import { useOrgStore } from '../../store/useOrgStore'
 import { useConfirm } from '../../hooks/useConfirm'
 import { useMessage } from '../../hooks/useMessage'
+import { useTranslation } from 'react-i18next'
 import { cn } from '../../utils/cn'
 
 interface Position {
@@ -75,6 +76,7 @@ const StatCard = ({ title, value, icon: Icon, color, delay }: any) => (
 )
 
 const PositionPage: React.FC = () => {
+  const { t } = useTranslation()
   const { confirm } = useConfirm()
   const { success, error: showError } = useMessage()
 
@@ -115,7 +117,7 @@ const PositionPage: React.FC = () => {
         setPositions(res.data.list || [])
       }
     } catch (err: any) {
-      showError('组织架构同步中断')
+      showError(t('common.load_failed'))
     } finally {
       setLoading(false)
     }
@@ -150,7 +152,7 @@ const PositionPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.name) return showError('请定义岗位协议标识')
+    if (!formData.name) return showError(t('organization.pos.name_label'))
 
     try {
       const res = editingPos
@@ -158,30 +160,30 @@ const PositionPage: React.FC = () => {
         : await orgApi.createPosition(formData)
 
       if (res.success) {
-        success('协议同步成功')
+        success(t('common.success'))
         setShowModal(false)
         loadData()
       }
     } catch (err: any) {
-      showError(err.message || '指令执行失败')
+      showError(err.message || t('common.error'))
     }
   }
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
     const confirmed = await confirm({
-      title: '移除岗位确认',
-      content: '确定要从组织架构中永久移除该岗位吗？该操作不可撤销。',
+      title: t('organization.pos.delete_confirm_title'),
+      content: t('organization.pos.delete_confirm_content'),
       type: 'danger'
     })
     if (confirmed) {
       try {
         const res = await orgApi.deletePosition(id)
         if (res.success) {
-          success('岗位已移除')
+          success(t('common.success'))
           loadData()
         }
-      } catch (err) { showError('移除操作被拒绝') }
+      } catch (err) { showError(t('common.error')) }
     }
   }
 
@@ -219,7 +221,7 @@ const PositionPage: React.FC = () => {
       if (sortBy === 'level') return b.level - a.level
       return a.sortOrder - b.sortOrder
     })
-  }, [positions, sortBy]) // Simplified filter for now
+  }, [positions, sortBy, filterDept, searchTerm])
 
   return (
     <div className="min-h-screen bg-mesh p-4 lg:p-6 space-y-4 animate-fade-in custom-scrollbar">
@@ -230,9 +232,9 @@ const PositionPage: React.FC = () => {
             <div className="p-2 bg-emerald-500 rounded-lg text-white">
               <Briefcase size={20} strokeWidth={2.5} />
             </div>
-            岗位管理
+            {t('organization.pos.page_title')}
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5">管理职位体系与职责</p>
+          <p className="text-slate-500 text-sm mt-0.5">{t('organization.pos.page_subtitle')}</p>
         </motion.div>
 
         <button
@@ -240,16 +242,16 @@ const PositionPage: React.FC = () => {
           className="px-4 py-2 bg-emerald-500 text-white rounded-lg shadow-sm transition-all text-sm font-medium flex items-center gap-2 hover:bg-emerald-600"
         >
           <Plus size={14} />
-          <span>新增岗位</span>
+          <span>{t('organization.pos.add_pos')}</span>
         </button>
       </div>
 
       {/* Analytics Dashboard */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard title="岗位总数" value={stats.total} icon={Layers} color="emerald" delay={0.1} />
-        <StatCard title="在职人数" value={stats.active} icon={CheckCircle2} color="blue" delay={0.2} />
-        <StatCard title="管理层级" value={stats.mgmt} icon={UserCheck} color="amber" delay={0.3} />
-        <StatCard title="部门数量" value={stats.depts} icon={Building2} color="indigo" delay={0.4} />
+        <StatCard title={t('organization.pos.total_count')} value={stats.total} icon={Layers} color="emerald" delay={0.1} />
+        <StatCard title={t('organization.pos.active_count')} value={stats.active} icon={CheckCircle2} color="blue" delay={0.2} />
+        <StatCard title={t('organization.pos.mgmt_count')} value={stats.mgmt} icon={UserCheck} color="amber" delay={0.3} />
+        <StatCard title={t('organization.pos.dept_count')} value={stats.depts} icon={Building2} color="indigo" delay={0.4} />
       </div>
 
       {/* Intelligence Filter Bar */}
@@ -258,7 +260,7 @@ const PositionPage: React.FC = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors" size={14} />
           <input
             type="text"
-            placeholder="搜索岗位..."
+            placeholder={t('organization.pos.search_placeholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="input-standard pl-9 !py-2 text-sm bg-white/50 border-white focus:bg-white !rounded-lg w-full"
@@ -270,13 +272,13 @@ const PositionPage: React.FC = () => {
           value={filterDept}
           onChange={(e) => setFilterDept(e.target.value)}
         >
-          <option value="">全部部门</option>
+          <option value="">{t('organization.pos.all_depts')}</option>
           {flatDepartments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
         </select>
 
         <div className="flex items-center gap-1 bg-slate-100/50 p-1 rounded-lg">
-          <button onClick={() => setSortBy('sort_order')} className={cn("px-3 py-1.5 rounded-md text-xs font-medium transition-all", sortBy === 'sort_order' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}>排序</button>
-          <button onClick={() => setSortBy('level')} className={cn("px-3 py-1.5 rounded-md text-xs font-medium transition-all", sortBy === 'level' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}>层级</button>
+          <button onClick={() => setSortBy('sort_order')} className={cn("px-3 py-1.5 rounded-md text-xs font-medium transition-all", sortBy === 'sort_order' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}>{t('organization.dept.sort_label')}</button>
+          <button onClick={() => setSortBy('level')} className={cn("px-3 py-1.5 rounded-md text-xs font-medium transition-all", sortBy === 'level' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}>{t('organization.pos.col_level')}</button>
         </div>
       </div>
 
@@ -284,12 +286,12 @@ const PositionPage: React.FC = () => {
       <div className="space-y-2">
         {/* Table Header */}
         <div className="grid grid-cols-12 gap-3 px-4 py-2 text-xs font-medium text-slate-400">
-          <div className="col-span-1">编号</div>
-          <div className="col-span-4">岗位</div>
-          <div className="col-span-2">部门</div>
-          <div className="col-span-1">层级</div>
-          <div className="col-span-2">类型</div>
-          <div className="col-span-1 text-center">人数</div>
+          <div className="col-span-1">{t('organization.pos.col_code')}</div>
+          <div className="col-span-4">{t('organization.pos.col_name')}</div>
+          <div className="col-span-2">{t('organization.pos.col_dept')}</div>
+          <div className="col-span-1">{t('organization.pos.col_level')}</div>
+          <div className="col-span-2">{t('organization.pos.col_type')}</div>
+          <div className="col-span-1 text-center">{t('organization.pos.col_staff')}</div>
           <div className="col-span-1"></div>
         </div>
 
@@ -303,7 +305,7 @@ const PositionPage: React.FC = () => {
               <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-300">
                 <Briefcase size={48} />
               </div>
-              <p className="text-slate-400 font-black uppercase tracking-[0.3em] text-sm">未检索到任何职位协议</p>
+              <p className="text-slate-400 font-black uppercase tracking-[0.3em] text-sm">{t('organization.pos.no_results')}</p>
             </motion.div>
           ) : (
             filteredPositions.map((pos, idx) => (
@@ -334,7 +336,7 @@ const PositionPage: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="text-sm font-black text-slate-900 tracking-tight leading-none mb-1 group-hover:text-blue-600">{pos.name}</h4>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{pos.category} protocol</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t(`organization.pos.cat_${pos.category === 'management' ? 'mgmt' : pos.category === 'technical' ? 'tech' : pos.category}`)}</p>
                   </div>
                 </div>
 
@@ -360,22 +362,22 @@ const PositionPage: React.FC = () => {
                     pos.status === 'active' ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-100 text-slate-400 border-slate-200"
                   )}>
                     <div className={cn("w-1.5 h-1.5 rounded-full", pos.status === 'active' ? "bg-emerald-500 animate-pulse" : "bg-slate-400")} />
-                    {pos.status}
+                    {pos.status === 'active' ? t('organization.pos.status_active') : t('organization.pos.status_inactive')}
                   </div>
                 </div>
 
                 {/* Staff */}
                 <div className="col-span-1 text-center">
                   <div className="flex items-center justify-center -space-x-2">
-                    {Array.from({ length: Math.min(pos.employee_count || 0, 3) }).map((_, i) => (
+                    {Array.from({ length: Math.min(pos.employeeCount || 0, 3) }).map((_, i) => (
                       <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-slate-200" />
                     ))}
-                    {(pos.employee_count || 0) > 3 && (
+                    {(pos.employeeCount || 0) > 3 && (
                       <div className="w-6 h-6 rounded-full border-2 border-white bg-slate-900 flex items-center justify-center text-[7px] font-black text-white">
-                        +{(pos.employee_count || 0) - 3}
+                        +{(pos.employeeCount || 0) - 3}
                       </div>
                     )}
-                    {(pos.employee_count || 0) === 0 && (
+                    {(pos.employeeCount || 0) === 0 && (
                       <span className="text-[10px] font-black text-slate-300">0</span>
                     )}
                   </div>
@@ -407,11 +409,11 @@ const PositionPage: React.FC = () => {
               <div className="px-8 py-6 flex justify-between items-center bg-slate-50 border-b border-slate-100 relative">
                 <div className="relative z-10">
                   <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                    {editingPos ? '编辑岗位' : '新增岗位'}
+                    {editingPos ? t('organization.pos.edit_title') : t('organization.pos.add_pos')}
                   </h2>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1 flex items-center gap-2">
                     <ShieldCheck size={14} className="text-emerald-600" />
-                    {editingPos?.code || '新岗位建档'}
+                    {editingPos?.code || t('organization.pos.new_code')}
                   </p>
                 </div>
                 <button onClick={() => setShowModal(false)} className="w-10 h-10 flex items-center justify-center bg-white shadow-sm border border-slate-100 hover:bg-rose-50 hover:border-rose-100 group rounded-lg transition-all relative z-10">
@@ -421,7 +423,7 @@ const PositionPage: React.FC = () => {
 
               <form onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
                 <div className="space-y-2.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">岗位名称</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">{t('organization.pos.name_label')}</label>
                   <input
                     type="text"
                     value={formData.name}
@@ -434,33 +436,33 @@ const PositionPage: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">所属部门</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">{t('organization.pos.dept_label')}</label>
                     <select
                       value={formData.deptId}
                       onChange={(e) => setFormData({ ...formData, deptId: e.target.value })}
                       className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-bold focus:ring-4 focus:ring-emerald-600/5 appearance-none"
                     >
-                      <option value="">（全局架构）</option>
+                      <option value="">{t('organization.pos.global_arch')}</option>
                       {flatDepartments.map(dept => <option key={dept.id} value={dept.id}>{dept.name}</option>)}
                     </select>
                   </div>
 
                   <div className="space-y-2.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">职能分类</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">{t('organization.pos.category_label')}</label>
                     <select
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
                       className="w-full bg-slate-50 border-none rounded-xl px-5 py-3.5 text-sm font-bold focus:ring-4 focus:ring-emerald-600/5 appearance-none"
                     >
-                      <option value="management">管理岗</option>
-                      <option value="technical">技术岗</option>
-                      <option value="sales">市场岗</option>
-                      <option value="support">后勤岗</option>
+                      <option value="management">{t('organization.pos.cat_mgmt')}</option>
+                      <option value="technical">{t('organization.pos.cat_tech')}</option>
+                      <option value="sales">{t('organization.pos.cat_sales')}</option>
+                      <option value="support">{t('organization.pos.cat_support')}</option>
                     </select>
                   </div>
 
                   <div className="space-y-2.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">职级层级</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">{t('organization.pos.level_label')}</label>
                     <div className="relative">
                       <Hash className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
                       <input
@@ -474,7 +476,7 @@ const PositionPage: React.FC = () => {
                   </div>
 
                   <div className="space-y-2.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">排序权重</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">{t('organization.pos.sort_label')}</label>
                     <div className="relative">
                       <ArrowUpDown className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
                       <input
@@ -488,24 +490,24 @@ const PositionPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-2.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">状态</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">{t('organization.pos.status_label')}</label>
                   <div className="grid grid-cols-2 gap-4">
                     <button type="button" onClick={() => setFormData({ ...formData, status: 'active' })}
                       className={cn("py-3.5 rounded-xl font-bold text-xs transition-all border-2",
                         formData.status === 'active' ? "bg-emerald-600 border-emerald-600 text-white shadow-lg" : "bg-white border-slate-100 text-slate-400 hover:border-slate-300")}>
-                      启用
+                      {t('organization.pos.status_active')}
                     </button>
                     <button type="button" onClick={() => setFormData({ ...formData, status: 'inactive' })}
                       className={cn("py-3.5 rounded-xl font-bold text-xs transition-all border-2",
                         formData.status === 'inactive' ? "bg-rose-600 border-rose-600 text-white shadow-lg" : "bg-white border-slate-100 text-slate-400 hover:border-slate-300")}>
-                      停用
+                      {t('organization.pos.status_inactive')}
                     </button>
                   </div>
                 </div>
 
                 <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
-                  <button type="button" onClick={() => setShowModal(false)} className="px-6 py-2.5 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-colors">取消</button>
-                  <button type="submit" className="px-10 py-2.5 bg-emerald-600 text-white rounded-xl font-bold shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all">保存设置</button>
+                  <button type="button" onClick={() => setShowModal(false)} className="px-6 py-2.5 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-colors">{t('common.cancel')}</button>
+                  <button type="submit" className="px-10 py-2.5 bg-emerald-600 text-white rounded-xl font-bold shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all">{t('common.save')}</button>
                 </div>
               </form>
             </motion.div>

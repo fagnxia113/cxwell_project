@@ -31,11 +31,11 @@ interface ReportsTabProps {
 }
 
 const statusConfig = {
-  pending: { label: '待提交', color: 'text-slate-500', bgColor: 'bg-slate-100', icon: Clock },
-  submitted: { label: '已提交', color: 'text-amber-500', bgColor: 'bg-amber-50', icon: AlertCircle },
-  verified: { label: '已审核', color: 'text-emerald-500', bgColor: 'bg-emerald-50', icon: CheckCircle },
-  rejected: { label: '已驳回', color: 'text-rose-500', bgColor: 'bg-rose-50', icon: XCircle },
-  partial: { label: '部分提交', color: 'text-blue-500', bgColor: 'bg-blue-50', icon: AlertCircle },
+  pending: { label: 'project.report.status.pending', color: 'text-slate-500', bgColor: 'bg-slate-100', icon: Clock },
+  submitted: { label: 'project.report.status.submitted', color: 'text-amber-500', bgColor: 'bg-amber-50', icon: AlertCircle },
+  verified: { label: 'project.report.status.verified', color: 'text-emerald-500', bgColor: 'bg-emerald-50', icon: CheckCircle },
+  rejected: { label: 'project.report.status.rejected', color: 'text-rose-500', bgColor: 'bg-rose-50', icon: XCircle },
+  partial: { label: 'project.report.status.partial', color: 'text-blue-500', bgColor: 'bg-blue-50', icon: AlertCircle },
 }
 
 export default function ReportsTab({ projectId, milestones, isProjectManager }: ReportsTabProps) {
@@ -237,10 +237,6 @@ export default function ReportsTab({ projectId, milestones, isProjectManager }: 
     }
   }
 
-  const getMilestoneName = (milestoneId: string) => {
-    return milestones.find(m => m.id === milestoneId)?.name || '-'
-  }
-
   const totalStats = {
     required: reports.reduce((sum, r) => sum + r.required_count, 0),
     submitted: reports.reduce((sum, r) => sum + r.submitted_count, 0),
@@ -251,14 +247,14 @@ export default function ReportsTab({ projectId, milestones, isProjectManager }: 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-slate-900">{t('project.reports.title') || '报告管理'}</h3>
+        <h3 className="text-sm font-bold text-slate-900">{t('project.reports.title')}</h3>
         <div className="flex items-center gap-2">
           <button
             onClick={() => fetchReports()}
             className="flex items-center gap-1.5 px-3 py-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg text-xs font-bold transition-colors"
           >
             <RefreshCw size={14} />
-            刷新
+            {t('project.report.refresh')}
           </button>
           <button
             onClick={() => handleOpenModal()}
@@ -266,26 +262,26 @@ export default function ReportsTab({ projectId, milestones, isProjectManager }: 
             style={{ display: isProjectManager ? 'flex' : 'none' }}
           >
             <Plus size={14} />
-            {t('project.reports.add') || '新建报告'}
+            {t('project.reports.add')}
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-4 gap-3">
         <div className="bg-white rounded-xl border border-slate-100 p-3 shadow-sm">
-          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">应提交总数</div>
+          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('project.stats.required_total')}</div>
           <div className="text-xl font-black text-slate-900">{totalStats.required}</div>
         </div>
         <div className="bg-amber-50 rounded-xl border border-amber-100 p-3 shadow-sm">
-          <div className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">已提交数量</div>
+          <div className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">{t('project.stats.submitted_count')}</div>
           <div className="text-xl font-black text-amber-600">{totalStats.submitted}</div>
         </div>
         <div className="bg-emerald-50 rounded-xl border border-emerald-100 p-3 shadow-sm">
-          <div className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">已审核数量</div>
+          <div className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">{t('project.stats.verified_count')}</div>
           <div className="text-xl font-black text-emerald-600">{totalStats.verified}</div>
         </div>
         <div className="bg-rose-50 rounded-xl border border-rose-100 p-3 shadow-sm">
-          <div className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">已驳回数量</div>
+          <div className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">{t('project.stats.rejected_count')}</div>
           <div className="text-xl font-black text-rose-600">{totalStats.rejected}</div>
         </div>
       </div>
@@ -295,16 +291,16 @@ export default function ReportsTab({ projectId, milestones, isProjectManager }: 
           <table className="w-full">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">里程碑</th>
-                <th className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">报告名称</th>
-                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">应提交</th>
-                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">已提交</th>
-                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">已审核</th>
-                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">已驳回</th>
-                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">进度</th>
-                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">状态</th>
-                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">最后更新</th>
-                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">操作</th>
+                <th className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.tabs.milestones')}</th>
+                <th className="px-4 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.report.name')}</th>
+                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.report.required')}</th>
+                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.report.submitted')}</th>
+                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.stats.verified_count')}</th>
+                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.stats.rejected_count')}</th>
+                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.tag.update_progress')}</th>
+                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.tag.status')}</th>
+                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.report.last_update')}</th>
+                <th className="px-4 py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('common.action')}</th>
               </tr>
             </thead>
             <tbody>
@@ -334,13 +330,12 @@ export default function ReportsTab({ projectId, milestones, isProjectManager }: 
 
                   return (
                     <React.Fragment key={m.id}>
-                      {/* 里程碑行（父级显示汇总，叶子显示标题） */}
                       <tr className={`${m.isLeaf ? 'bg-slate-50/30' : 'bg-slate-100/50'} border-b border-slate-100`}>
                         <td className="px-4 py-2" colSpan={m.isLeaf ? 1 : 2}>
                           <div className="flex items-center gap-2" style={{ paddingLeft: `${m.level * 16}px` }}>
                             {!m.isLeaf && <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />}
                             <span className={`text-xs ${m.isLeaf ? 'font-bold text-slate-600' : 'font-black text-slate-900'}`}>
-                              {m.name} {!m.isLeaf && <span className="text-[10px] font-normal text-slate-400 ml-2">(汇总)</span>}
+                              {m.name} {!m.isLeaf && <span className="text-[10px] font-normal text-slate-400 ml-2">({t('project.tag.summary')})</span>}
                             </span>
                           </div>
                         </td>
@@ -367,14 +362,13 @@ export default function ReportsTab({ projectId, milestones, isProjectManager }: 
                         <td className="px-4 py-2 text-center">
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest ${mStatusInfo.bgColor} ${mStatusInfo.color}`}>
                             <MStatusIcon size={10} />
-                            {mStatusInfo.label}
+                            {t(mStatusInfo.label)}
                           </span>
                         </td>
                         <td className="px-4 py-2 text-center">-</td>
                         <td className="px-4 py-2 text-center">-</td>
                       </tr>
 
-                      {/* 具体的报告行 */}
                       {milestoneReports.map(record => {
                         const statusInfo = statusConfig[record.status] || statusConfig.pending
                         const StatusIcon = statusInfo.icon
@@ -416,7 +410,7 @@ export default function ReportsTab({ projectId, milestones, isProjectManager }: 
                             <td className="px-4 py-3 text-center">
                               <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest ${statusInfo.bgColor} ${statusInfo.color}`}>
                                 <StatusIcon size={10} />
-                                {statusInfo.label}
+                                {t(statusInfo.label)}
                               </span>
                             </td>
                             <td className="px-4 py-3 text-center">
@@ -429,7 +423,7 @@ export default function ReportsTab({ projectId, milestones, isProjectManager }: 
                                 <button
                                   onClick={(e) => handleOpenProgressEdit(e, record)}
                                   className="p-1.5 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-all"
-                                  title="更新进展"
+                                  title={t('project.reports.update_progress')}
                                 >
                                   <Save size={14} />
                                 </button>
@@ -476,7 +470,7 @@ export default function ReportsTab({ projectId, milestones, isProjectManager }: 
             >
               <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                 <h3 className="font-bold text-slate-900">
-                  {editingRecord ? '编辑报告' : '新建报告'}
+                  {editingRecord ? t('project.reports.edit') : t('project.reports.add')}
                 </h3>
                 <button
                   onClick={handleCloseModal}
@@ -488,13 +482,13 @@ export default function ReportsTab({ projectId, milestones, isProjectManager }: 
 
               <div className="p-6 space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1.5">里程碑名称</label>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5">{t('project.milestone.relate')}</label>
                   <select
                     value={formData.milestone_id}
                     onChange={(e) => setFormData({ ...formData, milestone_id: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none"
                   >
-                    <option value="">选择里程碑</option>
+                    <option value="">{t('common.select')}</option>
                     {flattenedMilestones.map(m => (
                       <option 
                         key={m.id} 
@@ -502,25 +496,25 @@ export default function ReportsTab({ projectId, milestones, isProjectManager }: 
                         disabled={!m.isLeaf}
                         className={!m.isLeaf ? 'bg-slate-100 text-slate-400 font-bold' : ''}
                       >
-                        {m.displayName} {!m.isLeaf ? '(父级不可选)' : ''}
+                        {m.displayName} {!m.isLeaf ? `(${t('common.parentNotSelectable') || 'Parent not selectable'})` : ''}
                       </option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1.5">报告名称</label>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5">{t('project.report.name')}</label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none"
-                    placeholder="如：设计图纸，施工照片、检测报告等"
+                    placeholder={t('project.report.name')}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1.5">应提交数量</label>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5">{t('project.report.required')}</label>
                   <input
                     type="number"
                     min={1}
@@ -531,13 +525,13 @@ export default function ReportsTab({ projectId, milestones, isProjectManager }: 
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1.5">备注</label>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5">{t('project.team.remark')}</label>
                   <textarea
                     value={formData.remarks}
                     onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none resize-none"
                     rows={3}
-                    placeholder="备注信息..."
+                    placeholder={t('project.team.remark')}
                   />
                 </div>
               </div>
@@ -548,13 +542,13 @@ export default function ReportsTab({ projectId, milestones, isProjectManager }: 
                   disabled={!formData.milestone_id || !formData.name}
                   className="flex-1 py-2.5 bg-emerald-500 text-white rounded-lg text-xs font-bold hover:bg-emerald-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  {editingRecord ? '保存修改' : '创建报告'}
+                  {editingRecord ? t('common.save') : t('common.create')}
                 </button>
                 <button
                   onClick={handleCloseModal}
                   className="flex-1 py-2.5 bg-white text-slate-500 rounded-lg text-xs font-bold hover:bg-slate-100 transition-colors border border-slate-200"
                 >
-                  取消
+                  {t('common.cancel')}
                 </button>
               </div>
             </motion.div>
@@ -573,7 +567,7 @@ export default function ReportsTab({ projectId, milestones, isProjectManager }: 
               onClick={e => e.stopPropagation()}
             >
               <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                <h3 className="font-bold text-slate-900">更新报告进展</h3>
+                <h3 className="font-bold text-slate-900">{t('project.reports.update_progress')}</h3>
                 <button
                   onClick={handleCloseProgressEdit}
                   className="text-slate-400 hover:text-slate-600"
@@ -585,11 +579,11 @@ export default function ReportsTab({ projectId, milestones, isProjectManager }: 
               <div className="p-6 space-y-4">
                 <div className="bg-slate-50 rounded-lg p-3">
                   <p className="text-xs font-bold text-slate-700 mb-1">{editingProgress.name}</p>
-                  <p className="text-[10px] text-slate-400">应提交: {editingProgress.required_count}</p>
+                  <p className="text-[10px] text-slate-400">{t('project.report.required')}: {editingProgress.required_count}</p>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-amber-500 mb-1.5">已提交数量</label>
+                  <label className="block text-xs font-bold text-amber-500 mb-1.5">{t('project.report.submitted')}</label>
                   <input
                     type="number"
                     min={0}
@@ -600,7 +594,7 @@ export default function ReportsTab({ projectId, milestones, isProjectManager }: 
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-emerald-500 mb-1.5">已审核数量</label>
+                  <label className="block text-xs font-bold text-emerald-500 mb-1.5">{t('project.stats.verified_count')}</label>
                   <input
                     type="number"
                     min={0}
@@ -611,7 +605,7 @@ export default function ReportsTab({ projectId, milestones, isProjectManager }: 
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-rose-500 mb-1.5">已驳回数量</label>
+                  <label className="block text-xs font-bold text-rose-500 mb-1.5">{t('project.stats.rejected_count')}</label>
                   <input
                     type="number"
                     min={0}
@@ -627,13 +621,13 @@ export default function ReportsTab({ projectId, milestones, isProjectManager }: 
                   onClick={handleSaveProgress}
                   className="flex-1 py-2.5 bg-emerald-500 text-white rounded-lg text-xs font-bold hover:bg-emerald-600 transition-colors"
                 >
-                  保存进展
+                  {t('common.save')}
                 </button>
                 <button
                   onClick={handleCloseProgressEdit}
                   className="flex-1 py-2.5 bg-white text-slate-500 rounded-lg text-xs font-bold hover:bg-slate-100 transition-colors border border-slate-200"
                 >
-                  取消
+                  {t('common.cancel')}
                 </button>
               </div>
             </motion.div>

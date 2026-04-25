@@ -137,8 +137,8 @@ export default function ProjectAttendanceOverview() {
 
       {/* 状态图例 */}
       <div className="flex flex-wrap gap-6 px-6 py-4 bg-white/60 backdrop-blur-xl rounded-[24px] border border-white shadow-sm items-center">
-        <LegendItem icon={<Briefcase size={14} />} label={t('personnel.rotation.on_duty_current') || '本项目工作中'} color="bg-blue-500" />
-        <LegendItem icon={<Briefcase size={14} />} label={t('personnel.rotation.on_duty_other') || '其他项目工作中'} color="bg-indigo-400" />
+        <LegendItem icon={<Briefcase size={14} />} label={t('personnel.rotation.on_duty_current')} color="bg-blue-500" />
+        <LegendItem icon={<Briefcase size={14} />} label={t('personnel.rotation.on_duty_other')} color="bg-indigo-400" />
         <LegendItem icon={<Plane size={14} />} label={t('personnel.rotation.home_rest')} color="bg-emerald-500" />
         <LegendItem icon={<Home size={14} />} label={t('personnel.rotation.local_rest')} color="bg-amber-500" />
         <LegendItem icon={<span className="text-[10px]">?</span>} label={t('personnel.rotation.not_reported')} color="bg-slate-100" />
@@ -189,14 +189,14 @@ export default function ProjectAttendanceOverview() {
                    <td colSpan={daysInMonth + 1} className="py-24 text-center">
                       <div className="flex flex-col items-center gap-4">
                         <div className="w-10 h-10 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
-                        <span className="text-xs font-bold text-slate-400 italic">Aggregating schedule data...</span>
+                        <span className="text-xs font-bold text-slate-400 italic">{t('personnel.rotation.loading_data')}</span>
                       </div>
                    </td>
                 </tr>
               ) : filteredData.length === 0 ? (
                 <tr>
                    <td colSpan={daysInMonth + 1} className="py-24 text-center text-slate-300 font-black uppercase text-xs tracking-widest">
-                     No personnel schedules found for this project
+                     {t('personnel.rotation.no_data')}
                    </td>
                 </tr>
               ) : (

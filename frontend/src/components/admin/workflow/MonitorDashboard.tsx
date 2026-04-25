@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
+
 import { 
   Activity, 
   Clock, 
@@ -23,17 +23,16 @@ interface MonitorDashboardProps {
 }
 
 export default function MonitorDashboard({ realtimeData, statistics, formatDuration }: MonitorDashboardProps) {
-  const { t } = useTranslation();
 
   const statusData = statistics ? [
-    { name: t('workflow_monitor.status_map.running'), value: statistics.runningInstances, color: '#3B82F6' },
-    { name: t('workflow_monitor.status_map.completed'), value: statistics.completedInstances, color: '#10B981' },
-    { name: t('workflow_monitor.status_map.terminated'), value: statistics.terminatedInstances, color: '#EF4444' },
+    { name: '运行中', value: statistics.runningInstances, color: '#3B82F6' },
+    { name: '已完成', value: statistics.completedInstances, color: '#10B981' },
+    { name: '已终止', value: statistics.terminatedInstances, color: '#EF4444' },
   ] : [];
 
   const metrics = [
     { 
-      label: t('workflow_monitor.active_flows'), 
+      label: '活跃流程', 
       value: realtimeData.activeInstances, 
       icon: Activity, 
       color: 'blue',
@@ -41,7 +40,7 @@ export default function MonitorDashboard({ realtimeData, statistics, formatDurat
       textColor: 'text-blue-600'
     },
     { 
-      label: t('workflow_monitor.pending_tasks'), 
+      label: '待办任务', 
       value: realtimeData.pendingTasks, 
       icon: Clock, 
       color: 'amber',
@@ -49,7 +48,7 @@ export default function MonitorDashboard({ realtimeData, statistics, formatDurat
       textColor: 'text-amber-600'
     },
     { 
-      label: t('workflow_monitor.overdue_tasks'), 
+      label: '逾期任务', 
       value: realtimeData.overdueTasks, 
       icon: AlertCircle, 
       color: 'rose',
@@ -57,7 +56,7 @@ export default function MonitorDashboard({ realtimeData, statistics, formatDurat
       textColor: 'text-rose-600'
     },
     { 
-      label: t('workflow_monitor.completed_today'), 
+      label: '今日完成', 
       value: realtimeData.todayCompleted, 
       icon: CheckCircle, 
       color: 'emerald',
@@ -92,7 +91,7 @@ export default function MonitorDashboard({ realtimeData, statistics, formatDurat
           <div className="flex items-center justify-between mb-8">
              <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
                 <Activity size={18} className="text-blue-500" />
-                {t('workflow_monitor.status_distribution')}
+                状态分布
              </h3>
           </div>
           <div className="h-[300px] w-full">
@@ -127,9 +126,9 @@ export default function MonitorDashboard({ realtimeData, statistics, formatDurat
           <div className="flex items-center justify-between mb-8">
              <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
                 <Clock size={18} className="text-amber-500" />
-                {t('workflow_monitor.slowest_processes')}
+                处理最慢流程
              </h3>
-             <span className="text-[9px] font-black text-slate-300 uppercase tracking-tighter">Real-time alerts</span>
+             <span className="text-[9px] font-black text-slate-300 uppercase tracking-tighter">实时告警</span>
           </div>
           <div className="space-y-4">
             {realtimeData.topSlowProcesses?.length > 0 ? (
@@ -146,7 +145,7 @@ export default function MonitorDashboard({ realtimeData, statistics, formatDurat
                       <p className="text-sm font-black text-slate-900 leading-tight mb-0.5">{process.title}</p>
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter flex items-center gap-1">
                          <Activity size={10} className="text-slate-300" />
-                         {process.currentNode || 'Finalizing'}
+                         {process.currentNode || '正在完成'}
                       </p>
                     </div>
                   </div>
@@ -160,7 +159,7 @@ export default function MonitorDashboard({ realtimeData, statistics, formatDurat
             ) : (
                 <div className="flex flex-col items-center justify-center py-20 opacity-30 grayscale underline-offset-4 decoration-dotted">
                    <CheckCircle size={48} className="mb-4" />
-                   <p className="text-xs font-black uppercase tracking-widest">{t('workflow_monitor.no_slow_processes') || 'All processes healthy'}</p>
+                   <p className="text-xs font-black uppercase tracking-widest">所有流程运行良好</p>
                 </div>
             )}
           </div>
