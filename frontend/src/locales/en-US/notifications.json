@@ -1,0 +1,24 @@
+{
+  "title": "Notifications",
+  "subtitle": "System and workflow messages",
+  "panel_title": "Notifications",
+  "unread": "unread",
+  "all_read": "All caught up",
+  "empty": "No notifications",
+  "mark_read": "Mark as Read",
+  "mark_all_read": "Mark All Read",
+  "view_all": "View All Notifications",
+  "go_to_approvals": "Go to Approvals",
+  "load_failed": "Load failed",
+  "mark_read_failed": "Mark as read failed",
+  "only_unread": "Unread Only",
+  "syncing": "Syncing...",
+  "new_alert": "New Alert",
+  "todo_hint": "You have {{count}} pending approvals",
+  "priority": {
+    "low": "Low",
+    "normal": "Normal",
+    "high": "High",
+    "urgent": "Urgent"
+  }
+}

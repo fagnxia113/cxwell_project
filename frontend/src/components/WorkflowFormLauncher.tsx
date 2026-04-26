@@ -247,25 +247,25 @@ const WorkflowFormLauncher: React.FC<WorkflowFormLauncherProps> = ({
             <div className="p-1.5 bg-blue-100 rounded-lg">
               <FileText className="w-4 h-4 text-blue-600" />
             </div>
-            {t('workflow.basic_info') || '基本信息'}
+            {t('workflow.form.group.basic_info')}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
               <label className="flex items-center gap-1 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                {t('workflow.fields.title') || '申请标题'} <span className="text-rose-500">*</span>
+                {t('workflow.fields.title')} <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder={t('workflow.placeholder.title') || '请输入申请标题'}
+                placeholder={t('workflow.placeholder.title')}
                 className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 text-sm font-medium transition-all focus:ring-4 focus:ring-primary/10 focus:border-primary hover:border-slate-300 shadow-sm"
               />
             </div>
             <div>
               <label className="flex items-center gap-1 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
                 <Hash className="w-3 h-3" />
-                {t('workflow.fields.document_no') || '单据编号'}
+                {t('workflow.form.field.document_no')}
               </label>
               <input
                 type="text"
@@ -273,12 +273,12 @@ const WorkflowFormLauncher: React.FC<WorkflowFormLauncherProps> = ({
                 disabled
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-lg text-slate-400 text-sm font-mono italic cursor-default shadow-inner"
               />
-              <p className="text-[10px] text-gray-400 mt-1">{t('workflow.hint.auto_generate') || '提交后自动生成'}</p>
+              <p className="text-[10px] text-gray-400 mt-1">{t('workflow.hint.auto_generate')}</p>
             </div>
             <div>
               <label className="flex items-center gap-1 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
                 <Calendar className="w-3 h-3" />
-                {t('workflow.fields.apply_date') || '申请日期'}
+                {t('workflow.form.field.apply_date')}
               </label>
               <input
                 type="text"
@@ -290,11 +290,11 @@ const WorkflowFormLauncher: React.FC<WorkflowFormLauncherProps> = ({
             <div>
               <label className="flex items-center gap-1 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
                 <UserIcon className="w-3 h-3" />
-                {t('workflow.fields.applicant') || '申请人'}
+                {t('workflow.fields.applicant')}
               </label>
               <input
                 type="text"
-                value={localStorage.getItem('userName') || '当前用户'}
+                value={localStorage.getItem('userName') || t('common.system')}
                 disabled
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-lg text-slate-600 text-sm font-medium cursor-default shadow-inner"
               />
@@ -309,7 +309,7 @@ const WorkflowFormLauncher: React.FC<WorkflowFormLauncherProps> = ({
               <div className="p-1.5 bg-emerald-100 rounded-lg">
                 <FileText className="w-4 h-4 text-emerald-600" />
               </div>
-              {t('workflow.application_content') || '申请内容'}
+              {t('workflow.form.group.business_info')}
             </h3>
             <FormTemplateRenderer
               fields={formFields}

@@ -1,0 +1,19 @@
+{
+  "api": {
+    "unauthorized": "Unauthorized, please log in again",
+    "request_failed": "Request Failed",
+    "operation_failed": "Operation Failed",
+    "request_timeout": "Request Timeout",
+    "network_error": "Network Error",
+    "upload_failed": "Upload Failed",
+    "upload_timeout": "Upload Timeout"
+  },
+  "settings": {
+    "general": "General",
+    "notification": "Notification",
+    "smtp": "Mail Service",
+    "integration": "Integrations",
+    "password": "Change Password",
+    "metadata": "Metadata Config"
+  }
+}

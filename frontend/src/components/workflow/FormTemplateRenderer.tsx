@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import { 
   User, Calendar, Type, Hash, FileText, Mail, Phone, 
   Layers, Package, Archive, Info, Search, X, CheckCircle,
-  Briefcase, Upload
+  Briefcase, Upload, DollarSign, GraduationCap, Building
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../../utils/cn'
@@ -43,6 +43,37 @@ interface FormTemplateRendererProps {
 const baseInputClass = "w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 text-sm font-medium transition-all duration-300 focus:ring-4 focus:ring-primary/10 focus:border-primary hover:border-slate-300 placeholder:text-slate-300 shadow-sm"
 const readonlyInputClass = "w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-lg text-slate-600 text-sm font-semibold italic shadow-inner select-none cursor-default"
 const labelClass = "flex items-center gap-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1"
+
+const GROUP_KEY_MAP: Record<string, string> = {
+  '基本信息': 'basic_info',
+  '商务信息': 'business_info',
+  '业务详情': 'business_info',
+  '项目信息': 'project_info',
+  '项目规模': 'project_scale',
+  '技术架构': 'tech_arch',
+  '阶段规划': 'phase_plan',
+  '职位信息': 'job_info',
+  '入职岗位信息': 'job_info',
+  '调动信息': 'transfer_info',
+  '请假信息': 'leave_info',
+  '学历与教育': 'education_info',
+  '补充材料': 'other_info',
+  '其他信息': 'other_info'
+}
+
+const GROUP_ICONS: Record<string, any> = {
+  'basic_info': Info,
+  'business_info': DollarSign,
+  'project_info': Archive,
+  'project_scale': Layers,
+  'tech_arch': Package,
+  'phase_plan': Calendar,
+  'job_info': Briefcase,
+  'transfer_info': User,
+  'leave_info': Calendar,
+  'education_info': GraduationCap,
+  'other_info': Info
+}
 
 const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
   fields,
@@ -88,7 +119,7 @@ const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
 
   const renderFieldInput = (field: FormField) => {
     const val = data[field.name] ?? ''
-    const fieldLabel = t(`workflow_form.field.${field.name}`, { defaultValue: field.label })
+    const fieldLabel = t(`workflow.form.field.${field.name}`, { defaultValue: field.label })
     const fieldPlaceholder = field.placeholder 
       ? (field.placeholder.includes('.') ? t(field.placeholder) : field.placeholder)
       : (['select', 'user', 'department', 'position', 'customer', 'project'].includes(field.type) ? t('common.select') : t('common.inputPlaceholder'))
@@ -252,7 +283,7 @@ const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
     }
     const Icon = iconMap[field.type] || Info
     const isFullWidth = field.layout?.width === 'full' || field.type === 'textarea' || field.type === 'file' || field.type === 'subform'
-    const fieldLabel = t(`workflow_form.field.${field.name}`, { defaultValue: field.label })
+    const fieldLabel = t(`workflow.form.field.${field.name}`, { defaultValue: field.label })
 
     return (
       <motion.div 
@@ -286,19 +317,13 @@ const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
     return Array.from(map.entries()).map(([group, fields]) => ({ group, fields }))
   }, [fields, hasGroups])
 
-  const GROUP_ICONS: Record<string, any> = {
-    '基本信息': Info,
-    '商务信息': Hash,
-    '项目规模': Archive,
-    '技术架构': Layers,
-    '请假信息': Calendar,
-    '补充材料': Upload,
-  }
-
   return (
     <div className="space-y-6">
       {groupedFields.map(({ group, fields: groupFields }) => {
-        const GroupIcon = GROUP_ICONS[group] || Info
+        const groupKey = GROUP_KEY_MAP[group] || group
+        const GroupIcon = GROUP_ICONS[group] || GROUP_ICONS[groupKey] || Info
+        const groupLabel = t(`workflow.form.group.${groupKey}`, { defaultValue: group })
+
         return (
           <div key={group || 'default'}>
             {hasGroups && group && (
@@ -306,7 +331,7 @@ const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
                 <div className="p-1 bg-indigo-50 rounded-lg">
                   <GroupIcon size={12} className="text-indigo-500" />
                 </div>
-                <h4 className="text-xs font-black text-slate-600 uppercase tracking-wider">{group}</h4>
+                <h4 className="text-xs font-black text-slate-600 uppercase tracking-wider">{groupLabel}</h4>
               </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">

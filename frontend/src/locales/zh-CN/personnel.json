@@ -1,0 +1,210 @@
+{
+  "list_title": "人员名单",
+  "list_subtitle": "员工档案与入离职管理",
+  "search_placeholder": "搜索姓名、手机号、部门...",
+  "add_employee": "录入新员工",
+  "sync_dingtalk": "同步钉钉",
+  "stats": {
+    "total": "总人数",
+    "active_count": "在职人数",
+    "on_attendance": "今日出勤",
+    "today_normal": "今日正常",
+    "pending_report": "待报备",
+    "absent": "缺勤"
+  },
+  "action": {
+    "apply_onboarding": "入职申请",
+    "sync_dingtalk": "同步钉钉",
+    "sync_attendance": "同步考勤",
+    "add_to_project": "添加到项目",
+    "confirm_destroy": "确认移除",
+    "destroy_desc": "确定要从系统中移除员工 {{name}} 吗？该操作不可撤回。",
+    "transfer_desc": "修改员工职位与组织架构关系",
+    "edit_employee": "编辑档案",
+    "one_click_remind": "一键催报",
+    "remind_success": "已成功向 {{count}} 人发送提醒",
+    "syncing": "同步中...",
+    "updating": "保存中...",
+    "submit_update": "确认更新"
+  },
+  "status": {
+    "active": "在职",
+    "inactive": "待入职",
+    "resigned": "离职",
+    "leave": "休假",
+    "on_duty": "在岗",
+    "business_trip": "出差",
+    "other": "其他",
+    "probation": "试用期"
+  },
+  "gender": {
+    "male": "男",
+    "female": "女"
+  },
+  "roles": {
+    "admin": "管理员",
+    "project_manager": "项目经理",
+    "hr_manager": "人事经理",
+    "equipment_manager": "资产经理",
+    "implementer": "实施人员",
+    "user": "普通用户"
+  },
+  "sections": {
+    "contact": "联系方式",
+    "professional": "职业信息",
+    "other": "其他信息"
+  },
+  "fields": {
+    "id": "ID",
+    "employee_no": "工号",
+    "info": "基本信息",
+    "name": "姓名",
+    "gender": "性别",
+    "phone": "手机号",
+    "email": "邮箱",
+    "dept": "部门",
+    "position": "岗位",
+    "contact_info": "联系方式",
+    "role": "系统角色",
+    "status": "状态",
+    "hire_date": "入职日期",
+    "hireDate": "入职日期",
+    "remark": "备注",
+    "userId": "用户ID",
+    "dingtalk_user_id": "钉钉用户ID",
+    "dingtalk_dept_id": "钉钉部门ID"
+  },
+  "error": {
+    "load_failed": "加载人员数据失败",
+    "delete_record": "记录已成功删除",
+    "update_success": "员工资料更新成功",
+    "not_found": "员工不存在",
+    "sync_success": "钉钉同步成功"
+  },
+  "empty": {
+    "no_records": "暂无人员记录"
+  },
+  "attendance": {
+    "title": "考勤看板",
+    "board_title": "考勤看板",
+    "subtitle": "全员出勤状态与打卡统计",
+    "sync_dingtalk": "同步钉钉考勤",
+    "load_failed": "考勤加载失败",
+    "sync_success": "成功同步 {{count}} 条考勤记录",
+    "sync_failed": "考勤同步失败",
+    "search_placeholder": "搜索员工姓名...",
+    "view_mode": {
+      "summary": "数据汇总",
+      "calendar": "考勤日历"
+    },
+    "columns": {
+      "employee": "员工",
+      "worked_days": "出勤天数",
+      "expected_days": "应出勤",
+      "attendance_rate": "出勤率",
+      "projects": "所在项目"
+    },
+    "status": {
+      "present": "已打卡",
+      "absent": "未打卡"
+    },
+    "weekdays": ["周日", "周一", "周二", "周三", "周四", "周五", "周六"],
+    "analysis_engine": "考勤分析引擎 v2.0",
+    "legend": {
+      "present": "已出勤",
+      "absent": "未出勤",
+      "holiday": "休息日/节假日"
+    }
+  },
+  "rotation": {
+    "report_title": "月度排班报备",
+    "report_subtitle": "提前报备您的工作与休假计划，便于团队协作与资源调配。",
+    "overview_title": "预计出勤概览",
+    "overview_subtitle": "基于月度报备计划的未来人员可用性视图。",
+    "scheduled_days": "已排班 {{count}} 天",
+    "unsaved_changes": "有未保存的更改",
+    "save_plan": "保存月度计划",
+    "saving": "保存中...",
+    "save_success": "成功保存 {{count}} 条记录",
+    "save_failed": "保存失败",
+    "multi_select": "多选",
+    "exit_multi_select": "退出多选",
+    "types": {
+      "work": "工作中",
+      "home_rest": "回国休假",
+      "rest": "本地休息"
+    },
+    "on_duty_current": "本项目工作中",
+    "on_duty_other": "其他项目工作中",
+    "home_rest": "回国休息",
+    "local_rest": "当地休息",
+    "not_reported": "未报备",
+    "pm_hint": "数据由各项目经理报备生成",
+    "search_placeholder": "搜索人员名称...",
+    "personnel": "人员",
+    "loading_data": "正在汇总排班数据...",
+    "no_data": "该项目暂无人员排班数据",
+    "select_date_hint": "点击日期选择",
+    "ctrl_select_hint": "按住 Ctrl/Cmd 点击可多选日期",
+    "usage_tips": "使用提示",
+    "tip_1": "点击日期选择并设置行程类型",
+    "tip_2": "选择多个日期可批量应用设置",
+    "tip_3": "完成后点击右上角'保存月度计划'",
+    "schedule_type": "行程类型",
+    "select_project": "选择项目...",
+    "apply_to_days": "应用到 {{count}} 天",
+    "delete": "删除",
+    "clear": "清除",
+    "report_relation": {
+      "title": "汇报关系管理",
+      "subtitle": "设置员工直属上级，用于审批流动态审批人解析",
+      "refresh": "刷新",
+      "batch_save": "批量保存 ({{count}})",
+      "list": "列表",
+      "tree": "树形",
+      "search_placeholder": "搜索员工...",
+      "no_upper": "无上级",
+      "dept_leader": "{{deptName}}负责人",
+      "subordinates_count": "下属: {{count}} 人",
+      "direct_upper": "直属上级",
+      "save": "保存",
+      "load_failed": "加载失败",
+      "save_success": "汇报关系更新成功",
+      "save_failed": "更新失败",
+      "batch_save_success": "批量更新成功",
+      "batch_save_failed": "批量更新失败",
+      "no_changes": "没有需要保存的更改",
+      "guide": {
+        "title": "审批流动态审批人标识说明",
+        "manager": "发起人直属上级",
+        "dept_leader": "发起人部门负责人",
+        "n2": "发起人上2级上级",
+        "role": "按角色指定（原有）"
+      },
+      "leaders": "管理岗位",
+      "dept_leaders": "部门负责人",
+      "superior": "直接上级汇报对象",
+      "sub_count": "下属人数",
+      "staff_column": "员工"
+    },
+    "add_segment": "添加时间段",
+    "empty_hint": "准备好规划下个月了吗？点击「添加时间段」开始。",
+    "segments_reported": "个时间段已报备",
+    "submit_plan": "确认并提交月度报备",
+    "guide": {
+      "work": "项目中工作",
+      "work_desc": "选择您在该时间段内具体工作的项目。",
+      "home": "回国休假",
+      "home_desc": "轮换休假期间返回国内的时间段。",
+      "rest": "本地休息",
+      "rest_desc": "在现场周边的周末或当地法定节假日休息。"
+    }
+  },
+  "employee_type_labels": {
+    "regular": "正式",
+    "probation": "试用",
+    "intern": "实习",
+    "contract": "外包",
+    "part_time": "兼职"
+  }
+}

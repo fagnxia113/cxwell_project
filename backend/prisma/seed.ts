@@ -249,9 +249,26 @@ async function main() {
     formSchema: [
       { name: 'employeeName', label: '姓名', type: 'text', required: true, group: '基本信息' },
       { name: 'gender', label: '性别', type: 'select', required: true, options: [{ label: '男', value: 'male' }, { label: '女', value: 'female' }], group: '基本信息' },
+      { name: 'countryCode', label: '国家代码', type: 'select', required: true, options: [
+        { label: '中国 (+86)', value: '+86' },
+        { label: '阿联酋 (+971)', value: '+971' },
+        { label: '沙特 (+966)', value: '+966' },
+        { label: '泰国 (+66)', value: '+66' },
+        { label: '新加坡 (+65)', value: '+65' },
+        { label: '马来西亚 (+60)', value: '+60' },
+        { label: '越南 (+84)', value: '+84' },
+        { label: '印度尼西亚 (+62)', value: '+62' },
+        { label: '菲律宾 (+63)', value: '+63' },
+        { label: '日本 (+81)', value: '+81' },
+        { label: '美国 (+1)', value: '+1' }
+      ], group: '基本信息' },
       { name: 'phone', label: '手机号', type: 'text', required: true, group: '基本信息' },
+      { name: 'email', label: '电子邮箱', type: 'text', required: true, group: '基本信息' },
       { name: 'departmentId', label: '入职部门', type: 'select', required: true, dynamicOptions: 'department', group: '入职岗位信息' },
       { name: 'position', label: '入职岗位', type: 'select', required: true, dynamicOptions: 'post', group: '入职岗位信息' },
+      { name: 'entryDate', label: '入职日期', type: 'date', required: true, group: '入职岗位信息' },
+      { name: 'education', label: '学历', type: 'select', required: true, options: [{ label: '博士', value: 'phd' }, { label: '硕士', value: 'master' }, { label: '本科', value: 'bachelor' }, { label: '大专', value: 'college' }, { label: '高中及以下', value: 'other' }], group: '学历与教育' },
+      { name: 'graduationSchool', label: '毕业院校', type: 'text', required: true, group: '学历与教育' },
     ],
     nodes: [
       { id: 1001n, type: 0, code: 'start', name: '开始', coord: { x: 250, y: 50 } },

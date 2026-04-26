@@ -1,0 +1,19 @@
+{
+  "api": {
+    "unauthorized": "未授权，请重新登录",
+    "request_failed": "请求失败",
+    "operation_failed": "操作失败",
+    "request_timeout": "请求超时",
+    "network_error": "网络连接异常",
+    "upload_failed": "上传失败",
+    "upload_timeout": "上传超时"
+  },
+  "settings": {
+    "general": "常规设置",
+    "notification": "通知设置",
+    "smtp": "邮件服务",
+    "integration": "集成设置",
+    "password": "修改密码",
+    "metadata": "元数据配置"
+  }
+}

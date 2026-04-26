@@ -1,0 +1,99 @@
+{
+  "task_board": {
+    "title": "Project Management Board",
+    "desc": "Cross-project collaboration: Monitor progress, risks, and expenses",
+    "responsible": "Responsible Person",
+    "mark_complete": "Mark Complete",
+    "close_risk": "Close Risk",
+    "no_milestones": "No milestone data",
+    "no_risks": "No risk records",
+    "no_reports": "No report tasks",
+    "no_expenses": "No expense records",
+    "no_tags": "No tag records",
+    "expense_summary": "Expense Summary",
+    "total_spent": "Total Spent",
+    "utilization": "Budget Utilization",
+    "recent_transactions": "Recent Transactions",
+    "no_remarks": "No remarks",
+    "verified": "Verified",
+    "plan": "Plan",
+    "done": "Done"
+  },
+  "list_title": "Projects",
+  "list_subtitle": "Project lifecycle management & monitoring",
+  "loading": "Loading projects...",
+  "action": {
+    "initiate": "Initiate Project",
+    "import": "Import Project"
+  },
+  "tabs": {
+    "overview": "Overview",
+    "milestones": "Milestones",
+    "tasks": "WBS Tasks",
+    "reports": "Reports",
+    "tags": "Tags",
+    "risks": "Risks",
+    "team": "Team",
+    "expenses": "Expenses"
+  },
+  "status": {
+    "proposal": "Proposal",
+    "initiated": "Initiated",
+    "in_progress": "In Progress",
+    "completed": "Completed",
+    "paused": "Paused",
+    "delayed": "Delayed",
+    "pending": "Pending"
+  },
+  "fields": {
+    "project_name": "Project Name",
+    "customer": "Customer",
+    "description": "Description",
+    "manager": "Project Manager",
+    "tech_manager": "Tech Manager",
+    "location": "Location",
+    "period": "Period",
+    "budget": "Budget",
+    "start_date": "Start Date",
+    "end_date": "End Date",
+    "code": "Project Code"
+  },
+  "milestone": {
+    "title": "Project Milestones",
+    "weight": "Weight",
+    "progress": "Progress",
+    "status": "Status",
+    "add_child": "Add Sub-milestone",
+    "save_success": "Milestones saved successfully"
+  },
+  "risk": {
+    "severity": "Severity",
+    "category": "Category",
+    "owner": "Owner",
+    "status": "Status",
+    "add": "Add Risk",
+    "empty": "No active risks detected"
+  },
+  "report": {
+    "title": "Report Management",
+    "add": "Add Report",
+    "submitted": "Submitted",
+    "verified": "Verified"
+  },
+  "stats": {
+    "active": "Active Projects",
+    "completed": "Delivered",
+    "geographies": "Countries Covered",
+    "total_reports": "Total Reports",
+    "occupied_man_days": "Man-days Invested",
+    "man_days_unit": "man-days",
+    "budget_usage": "Budget Usage",
+    "spent": "Spent",
+    "budget_balance": "Remaining Budget",
+    "milestone_completed": "Milestones Progress",
+    "required_total": "Total Required",
+    "submitted_count": "Submitted",
+    "verified_count": "Verified",
+    "rejected_count": "Rejected"
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "center_title": "Approval Center",
+  "center_subtitle": "Workflow Management Hub",
+  "refresh": "Refresh",
+  "search_placeholder": "Search title, initiator...",
+  "total_count": "Total {{count}} records",
+  "no_data": "No Data",
+  "cc": "CC",
+  "todo": "Todo",
+  "pass": "Passed",
+  "reject": "Rejected",
+  "withdraw": "Withdrawn",
+  "back_to_list": "Back to List",
+  "current_node": "Current Node",
+  "loading_task": "Synchronizing task context...",
+  "tabs": {
+    "initiate": "Initiate",
+    "todo": "To-do Tasks",
+    "done": "Processed",
+    "own": "My Submissions",
+    "draft": "Drafts"
+  },
+  "status": {
+    "running": "Running",
+    "finished": "Completed",
+    "completed": "Completed",
+    "suspended": "Suspended",
+    "cancelled": "Cancelled",
+    "rejected": "Rejected",
+    "terminated": "Terminated",
+    "pending": "Pending"
+  },
+  "message": {
+    "pass_success": "Approve success, process moved forward",
+    "reject_success": "Rejected to target node successfully",
+    "withdraw_success": "Request withdrawn successfully",
+    "select_reject_target": "Please select reject target and confirm",
+    "confirm_content": "You are processing node [{{node}}], are you sure to submit your decision?"
+  },
+  "error": {
+    "not_found": "Task not found or already processed",
+    "load_failed": "Failed to load details",
+    "no_tasks": "No pending tasks at the moment"
+  },
+  "action": {
+    "approve": "Approve",
+    "reject": "Reject",
+    "transfer": "Transfer",
+    "cc": "CC",
+    "add_signer": "Add Signer",
+    "cancel": "Withdraw",
+    "submit": "Submit",
+    "save_draft": "Save Draft",
+    "view_detail": "View Details",
+    "pass": "Approve",
+    "reject_action": "Reject",
+    "view_flow": "View Flowchart",
+    "withdraw": "Withdraw Request"
+  },
+  "form": {
+    "comment": "Comment",
+    "comment_placeholder": "Enter your comment...",
+    "opinion": "Decision Opinion",
+    "opinion_placeholder": "Enter your professional approval or rejection comments...",
+    "next_node": "Next Node",
+    "assignee": "Assignee",
+    "cc_users": "CC Users",
+    "attachments": "Attachments",
+    "return_node": "Return Node",
+    "default_previous": "Default (Previous)"
+  },
+  "history": {
+    "title": "History",
+    "node_name": "Node",
+    "handler": "Handler",
+    "action": "Action",
+    "time": "Time",
+    "duration": "Duration"
+  },
+  "draft": {
+    "title": "Draft Box",
+    "subtitle": "Manage process drafts",
+    "total": "Total Drafts",
+    "no_drafts": "No drafts available",
+    "delete_confirm": "Are you sure you want to permanently delete this draft?",
+    "delete_success": "Draft removed"
+  },
+  "completed": {
+    "title": "Processed",
+    "subtitle": "View approval history",
+    "total": "Total Processed",
+    "no_records": "No processed records"
+  }
+}

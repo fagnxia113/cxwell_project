@@ -1,0 +1,42 @@
+{
+  "title": "消息中心",
+  "subtitle": "系统与流程消息通知",
+  "panel_title": "消息中心",
+  "unread": "条未读",
+  "all_read": "暂无未读消息",
+  "empty": "暂无通知消息",
+  "mark_read": "标记已读",
+  "mark_all_read": "全部标记已读",
+  "view_all": "查看全部通知",
+  "go_to_approvals": "处理待办",
+  "load_failed": "加载失败",
+  "mark_read_failed": "标记失败",
+  "only_unread": "只看未读",
+  "syncing": "同步中...",
+  "new_alert": "新通知",
+  "todo_hint": "您有 {{count}} 项待处理审批",
+  "go_to_handle": "前往处理",
+  "priority": {
+    "low": "低",
+    "normal": "中",
+    "high": "高",
+    "urgent": "紧急"
+  },
+  "alerts": {
+    "title": "预警管理",
+    "subtitle": "系统自动检测到的异常与风险预警",
+    "search_placeholder": "搜索预警内容...",
+    "severity": {
+      "low": "低",
+      "medium": "中",
+      "high": "高",
+      "critical": "致命"
+    },
+    "status": {
+      "pending": "待处理",
+      "in_progress": "处理中",
+      "resolved": "已解决",
+      "ignored": "已忽略"
+    }
+  }
+}

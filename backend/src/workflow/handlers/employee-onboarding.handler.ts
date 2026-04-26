@@ -104,7 +104,7 @@ export class EmployeeOnboardingHandler implements IWorkflowHandler {
         email: formData.email || null,
         education,
         university: formData.university || formData.graduation_school || null,
-        hireDate: formData.start_date || formData.startDate ? new Date(formData.start_date || formData.startDate) : new Date()
+        hireDate: formData.entryDate || formData.start_date || formData.startDate ? new Date(formData.entryDate || formData.start_date || formData.startDate) : new Date()
       }
     });
 

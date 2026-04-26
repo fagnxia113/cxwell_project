@@ -148,7 +148,7 @@ const ProcessInitiator: React.FC = () => {
               selectedCategory === null ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
             )}
           >
-            {t('workflow_initiator.all')}
+            {t('workflow.initiator.all')}
           </button>
           {categories.map(cat => (
             <button
@@ -159,7 +159,7 @@ const ProcessInitiator: React.FC = () => {
                 selectedCategory === cat ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
               )}
             >
-              {t(`workflow_initiator.categories.${cat}`)}
+              {t(`workflow.initiator.categories.${cat}`)}
             </button>
           ))}
         </div>
@@ -168,7 +168,7 @@ const ProcessInitiator: React.FC = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors" size={16} />
           <input
             type="text"
-            placeholder={t('workflow_initiator.search_placeholder')}
+            placeholder={t('workflow.initiator.search_placeholder')}
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-transparent rounded-xl text-sm font-bold outline-none focus:bg-white focus:border-indigo-100 transition-all"
@@ -187,7 +187,7 @@ const ProcessInitiator: React.FC = () => {
             <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto text-slate-300 mb-6 shadow-sm">
               <Box size={40} />
             </div>
-            <p className="text-slate-400 font-black text-xs uppercase tracking-widest">{t('workflow_initiator.no_matching')}</p>
+            <p className="text-slate-400 font-black text-xs uppercase tracking-widest">{t('workflow.initiator.no_matching')}</p>
           </div>
         ) : (
           Object.entries(groupedItems).map(([cat, items], idx) => {
@@ -206,7 +206,7 @@ const ProcessInitiator: React.FC = () => {
                     <CategoryIcon size={14} strokeWidth={2.5} />
                   </div>
                   <h2 className="text-xs font-black text-slate-600 uppercase tracking-widest">
-                    {t(`workflow_initiator.categories.${cat}`)}
+                    {t(`workflow.initiator.categories.${cat}`)}
                   </h2>
                   <div className="h-px bg-slate-100 flex-1" />
                 </div>
@@ -215,7 +215,7 @@ const ProcessInitiator: React.FC = () => {
                   {items.map((item) => {
                     const isWorkflow = (item as WorkflowDefinition).key !== undefined
                     const flowCode = isWorkflow ? (item as WorkflowDefinition).key : (PRESET_TO_WORKFLOW_KEY[item.id] || item.id)
-                    const localizedName = t(`workflow_initiator.definitions.${flowCode}`, { defaultValue: item.name })
+                    const localizedName = t(`workflow.initiator.definitions.${flowCode}`, { defaultValue: item.name })
 
                     return (
                       <motion.div
@@ -233,7 +233,7 @@ const ProcessInitiator: React.FC = () => {
                             {localizedName}
                           </h3>
                           <p className="text-[10px] font-medium text-slate-400 truncate mt-0.5">
-                            {item.description || t('workflow_initiator.click_to_start')}
+                            {item.description || t('workflow.initiator.click_to_start')}
                           </p>
                         </div>
                       </motion.div>

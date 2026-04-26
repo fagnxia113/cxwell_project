@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { Search, ChevronDown, CheckCircle, X, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -32,7 +32,8 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
-  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 })
+  const [coords, setCoords] = useState({ top: 0, bottom: 0, left: 0, width: 0 })
+  const [placement, setPlacement] = useState<'top' | 'bottom'>('bottom')
   const containerRef = useRef<HTMLDivElement>(null)
 
   const selectedOption = useMemo(() => 
@@ -52,15 +53,23 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   const updateCoords = useCallback(() => {
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect()
+      const windowHeight = window.innerHeight
+      const dropdownHeight = 350
+      const spaceBelow = windowHeight - rect.bottom
+      
+      const newPlacement = spaceBelow < dropdownHeight && rect.top > dropdownHeight ? 'top' : 'bottom'
+      setPlacement(newPlacement)
+
       setCoords({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
+        top: rect.top,
+        bottom: rect.bottom,
+        left: rect.left,
         width: rect.width
       })
     }
   }, [])
 
-  useEffect(() => {
+  React.useLayoutEffect(() => {
     if (isOpen) {
       updateCoords()
       window.addEventListener('scroll', updateCoords, true)
@@ -124,17 +133,21 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
           onClick={() => setIsOpen(false)}
         >
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: placement === 'bottom' ? -10 : 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            exit={{ opacity: 0, y: placement === 'bottom' ? -10 : 10 }}
             onClick={(e) => e.stopPropagation()}
             style={{
               position: 'absolute',
-              top: coords.top + 8,
+              top: placement === 'bottom' ? coords.bottom + 8 : undefined,
+              bottom: placement === 'top' ? (window.innerHeight - coords.top) + 8 : undefined,
               left: coords.left,
               width: coords.width,
             }}
-            className="bg-white border border-slate-100 rounded-lg shadow-2xl shadow-slate-200/50 overflow-hidden flex flex-col"
+            className={cn(
+              "bg-white border border-slate-100 rounded-lg shadow-2xl shadow-slate-200/50 overflow-hidden flex flex-col",
+              placement === 'top' ? "origin-bottom" : "origin-top"
+            )}
           >
             {/* Search Input Area */}
             <div className="p-3 border-b border-slate-50 bg-slate-50/30 flex items-center gap-2">
