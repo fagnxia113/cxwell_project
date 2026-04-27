@@ -17,6 +17,7 @@ import { ProjectCompletionHandler } from './handlers/project-completion.handler'
 import { ExpenseSyncHandler } from './handlers/expense-sync.handler';
 import { EmployeeResignationHandler } from './handlers/employee-resignation.handler';
 import { LeaveApprovalHandler } from './handlers/leave-approval.handler';
+import { EmployeeInviteHandler } from './handlers/employee-invite.handler';
 
 @Module({
   imports: [MonitorModule, FormModule, NotificationModule, DingtalkModule],
@@ -36,6 +37,7 @@ import { LeaveApprovalHandler } from './handlers/leave-approval.handler';
     ExpenseSyncHandler,
     EmployeeResignationHandler,
     LeaveApprovalHandler,
+    EmployeeInviteHandler,
   ],
   exports: [
     WorkflowEngineService,

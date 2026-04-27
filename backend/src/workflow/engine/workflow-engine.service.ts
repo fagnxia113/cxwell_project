@@ -7,6 +7,7 @@ import { ProjectCompletionHandler } from '../handlers/project-completion.handler
 import { ExpenseSyncHandler } from '../handlers/expense-sync.handler';
 import { EmployeeResignationHandler } from '../handlers/employee-resignation.handler';
 import { LeaveApprovalHandler } from '../handlers/leave-approval.handler';
+import { EmployeeInviteHandler } from '../handlers/employee-invite.handler';
 import { resolveApprovers, resolveToLoginNames, evaluateCondition } from './workflow-util';
 
 @Injectable()
@@ -32,6 +33,7 @@ export class WorkflowEngineService {
     @Optional() private expenseHandler?: ExpenseSyncHandler,
     @Optional() private resignationHandler?: EmployeeResignationHandler,
     @Optional() private leaveHandler?: LeaveApprovalHandler,
+    @Optional() private inviteHandler?: EmployeeInviteHandler,
   ) {
     this.notificationService = notificationService || null;
 
@@ -54,6 +56,8 @@ export class WorkflowEngineService {
       'leave-approval': this.leaveHandler,
       'leave_approval': this.leaveHandler,
       'leave_request': this.leaveHandler,
+      'employee_invite': this.inviteHandler,
+      'dingtalk_invite': this.inviteHandler,
     };
   }
 

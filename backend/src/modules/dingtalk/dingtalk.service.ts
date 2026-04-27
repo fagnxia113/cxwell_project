@@ -45,6 +45,14 @@ export class DingtalkService {
     return this.user.deleteUser(userId);
   }
 
+  async sendActiveInvite(userId: string) {
+    return this.user.sendActiveInvite(userId);
+  }
+
+  async syncAllUnboundUsers() {
+    return this.user.syncAllUnboundUsers();
+  }
+
   async sendMessage(userId: string, content: string) {
     return this.message.sendWorkNotification(userId, content);
   }

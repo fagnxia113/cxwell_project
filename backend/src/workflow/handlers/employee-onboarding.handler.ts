@@ -88,7 +88,7 @@ export class EmployeeOnboardingHandler implements IWorkflowHandler {
 
     const phoneCountryCode = formData.phoneCountryCode || formData.countryCode || '+86';
 
-    await tx.sysEmployee.create({
+    const employee = await tx.sysEmployee.create({
       data: {
         name,
         employeeNo,
@@ -115,11 +115,11 @@ export class EmployeeOnboardingHandler implements IWorkflowHandler {
 
     this.logger.log(`服务节点执行完成：为 ${name} 创建了账号 ${username} 和工号 ${employeeNo}`);
 
-    await this.syncToDingtalk(tx, name, phone, phoneCountryCode, deptId, positionId, formData, employeeNo, reportToId);
+    await this.syncToDingtalk(tx, employee.employeeId, name, phone, phoneCountryCode, deptId, positionId, formData, employeeNo, reportToId);
   }
 
   private async syncToDingtalk(
-    tx: any, name: string, phone: string, phoneCountryCode: string,
+    tx: any, employeeId: bigint, name: string, phone: string, phoneCountryCode: string,
     deptId: string | undefined, positionId: string | undefined,
     formData: any, employeeNo: string, reportToId: string | undefined
   ) {
@@ -163,7 +163,7 @@ export class EmployeeOnboardingHandler implements IWorkflowHandler {
       if (dingtalkResult.success && dingtalkResult.userId) {
         this.logger.log(`入职流程：员工 ${name} 已同步到钉钉，userId: ${dingtalkResult.userId}`);
         await tx.sysEmployee.update({
-          where: { name, phone: phone || undefined },
+          where: { employeeId },
           data: { dingtalkUserId: dingtalkResult.userId }
         });
       } else {

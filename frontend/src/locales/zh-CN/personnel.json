@@ -79,7 +79,8 @@
     "delete_record": "记录已成功删除",
     "update_success": "员工资料更新成功",
     "not_found": "员工不存在",
-    "sync_success": "钉钉同步成功"
+    "sync_success": "钉钉同步成功，共绑定 {{count}} 名员工",
+    "sync_failed": "钉钉同步失败"
   },
   "empty": {
     "no_records": "暂无人员记录"

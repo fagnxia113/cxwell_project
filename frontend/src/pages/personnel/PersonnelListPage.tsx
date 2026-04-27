@@ -241,6 +241,23 @@ export default function PersonnelListPage() {
     } catch (e: any) { showError(e.message) } finally { setSubmitting(false) }
   }
 
+  const handleSyncDingtalk = async () => {
+    try {
+      setSubmitting(true)
+      const res = await apiClient.post('/api/dingtalk/user/syncUnbound')
+      if (res.success) {
+        success(t('personnel.sync_success', { count: res.count }))
+        loadEmployees()
+      } else {
+        showError(res.error || t('personnel.sync_failed'))
+      }
+    } catch (e: any) {
+      showError(e.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-mesh p-4 lg:p-6 space-y-4 animate-fade-in custom-scrollbar">
       {/* Visual Header */}
@@ -256,6 +273,16 @@ export default function PersonnelListPage() {
         </div>
 
         <div className="flex gap-2">
+          {hasButton('personnel:sync') && (
+            <button
+              onClick={handleSyncDingtalk}
+              disabled={submitting}
+              className="px-4 py-2 bg-white text-slate-600 border border-slate-200 rounded-lg shadow-sm transition-all text-sm font-medium flex items-center gap-2 hover:bg-slate-50 disabled:opacity-50"
+            >
+              <RefreshCcw size={14} className={submitting ? "animate-spin" : ""} />
+              <span>{t('personnel.action.sync_dingtalk')}</span>
+            </button>
+          )}
           {hasButton('personnel:create') && (
           <button
             onClick={() => navigate('/approvals/new')}

@@ -62,6 +62,18 @@ export class DingtalkController {
     return this.userService.getUserDetail(body.userId);
   }
 
+  @Post('user/sendInvite')
+  async sendActiveInvite(@Body() body: { userId: string }) {
+    return this.userService.sendActiveInvite(body.userId);
+  }
+
+  @Post('user/syncUnbound')
+  async syncUnbound() {
+    // 这里可以直接调用任务里的逻辑，或者在 service 里实现
+    // 为了简单，我直接在 controller 里调用 service 循环
+    return this.dingtalkService.syncAllUnboundUsers();
+  }
+
   @Post('message/send')
   async sendMessage(@Body() body: { userId: string; content: string }) {
     return this.dingtalkService.sendMessage(body.userId, body.content);

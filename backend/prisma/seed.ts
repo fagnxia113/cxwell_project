@@ -273,13 +273,15 @@ async function main() {
     nodes: [
       { id: 1001n, type: 0, code: 'start', name: '开始', coord: { x: 250, y: 50 } },
       { id: 1002n, type: 1, code: 'gm_approve', name: '总经理审批', flag: 'role:general_manager', coord: { x: 250, y: 150 } },
-      { id: 1003n, type: 1, code: 'hr_approve', name: '人事处理', handlerType: 'service', handlerPath: 'employee-onboarding', coord: { x: 250, y: 250 } },
-      { id: 1004n, type: 2, code: 'end', name: '结束', coord: { x: 250, y: 350 } },
+      { id: 1003n, type: 1, code: 'hr_create_user', name: '创建用户', handlerType: 'service', handlerPath: 'employee-onboarding', coord: { x: 250, y: 250 } },
+      { id: 1005n, type: 1, code: 'dingtalk_invite', name: '发送钉钉邀请', handlerType: 'service', handlerPath: 'dingtalk_invite', coord: { x: 250, y: 350 } },
+      { id: 1004n, type: 2, code: 'end', name: '结束', coord: { x: 250, y: 450 } },
     ],
     skips: [
       { id: 2001n, now: 'start', next: 'gm_approve', name: '提交申请', type: 'pass' },
-      { id: 2002n, now: 'gm_approve', next: 'hr_approve', name: '同意', type: 'pass' },
-      { id: 2003n, now: 'hr_approve', next: 'end', name: '归档', type: 'pass' },
+      { id: 2002n, now: 'gm_approve', next: 'hr_create_user', name: '同意', type: 'pass' },
+      { id: 2003n, now: 'hr_create_user', next: 'dingtalk_invite', name: '创建完成', type: 'pass' },
+      { id: 2004n, now: 'dingtalk_invite', next: 'end', name: '归档', type: 'pass' },
     ]
   });
 
