@@ -42,7 +42,7 @@
     "overview": "概览看板",
     "milestones": "里程碑计划",
     "tasks": "WBS 任务",
-    "reports": "进度汇报",
+    "reports": "报告管理",
     "tags": "标签管理",
     "risks": "风险预警",
     "team": "项目团队",
@@ -130,7 +130,55 @@
     "required_total": "应报总数",
     "submitted_count": "已报数量",
     "verified_count": "已核数量",
-    "rejected_count": "驳回数量"
+    "rejected_count": "驳回数量",
+    "tag_required": "应挂牌",
+    "tag_tagged": "已挂牌",
+    "tag_verified": "已核验",
+    "tag_abnormal": "异常数",
+    "tag_progress": "进度"
+  },
+  "tag": {
+    "name": "标签名称",
+    "type": "类型",
+    "required": "应挂牌",
+    "tagged": "已挂牌",
+    "verified": "已核验",
+    "abnormal": "异常",
+    "status": "状态",
+    "no_records": "暂无标签记录",
+    "add_record": "新增标签",
+    "edit_record": "编辑标签",
+    "update_progress": "更新进展",
+    "summary": "汇总",
+    "node_record": "节点记录",
+    "types": {
+      "red": "红色",
+      "yellow": "黄色",
+      "green": "绿色",
+      "blue": "蓝色",
+      "white": "白色"
+    },
+    "status_labels": {
+      "pending": "待挂牌",
+      "tagging": "挂牌中",
+      "verifying": "核验中",
+      "completed": "已完成"
+    },
+    "delete_record": "删除标签记录",
+    "delete_confirm": "确定要删除这条标签记录吗？",
+    "form": {
+      "milestone_phase": "里程碑/阶段",
+      "select_milestone": "选择里程碑",
+      "tag_name": "标签名称",
+      "enter_tag_name": "请输入标签名称",
+      "tag_type": "标签类型",
+      "required_count": "应挂牌数量 (台)",
+      "cancel": "取消",
+      "tagged_count": "已挂牌数量 (台)",
+      "verified_count": "已核验数量 (台)",
+      "abnormal_count": "异常/摘牌数量 (台)",
+      "parent_not_selectable": "父级不可选"
+    }
   },
   "report": {
     "name": "报告名称",

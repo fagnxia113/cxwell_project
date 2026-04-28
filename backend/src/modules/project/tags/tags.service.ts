@@ -1,9 +1,42 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()
 export class TagsService {
   constructor(private prisma: PrismaService) {}
+
+  private async checkUserProjectRole(projectId: bigint, user: any): Promise<'manager' | 'member' | null> {
+    const userId = user?.sub || user?.userId;
+    if (!userId) return null;
+
+    if (userId === '1' || userId === 1) return 'manager';
+
+    const project = await this.prisma.project.findUnique({
+      where: { projectId },
+      select: { managerId: true }
+    });
+
+    const employee = await this.prisma.sysEmployee.findFirst({
+      where: { userId: BigInt(userId) },
+      select: { employeeId: true }
+    });
+
+    if (project?.managerId && employee && project.managerId.toString() === employee.employeeId.toString()) {
+      return 'manager';
+    }
+
+    if (employee) {
+      const membership = await this.prisma.projectMember.findFirst({
+        where: {
+          projectId,
+          employeeId: employee.employeeId
+        }
+      });
+      if (membership) return 'member';
+    }
+
+    return null;
+  }
 
   async findAll(projectId: bigint) {
     const tags = await this.prisma.projectTag.findMany({
@@ -22,7 +55,12 @@ export class TagsService {
     taggedCount?: number;
     verifiedCount?: number;
     abnormalCount?: number;
-  }) {
+  }, user: any) {
+    const role = await this.checkUserProjectRole(data.projectId, user);
+    if (role !== 'manager') {
+      throw new ForbiddenException('只有项目经理可以创建标签');
+    }
+
     const tag = await this.prisma.projectTag.create({
       data: {
         projectId: data.projectId,
@@ -47,7 +85,15 @@ export class TagsService {
     verifiedCount?: number;
     abnormalCount?: number;
     milestoneId?: bigint;
-  }) {
+  }, user: any) {
+    const tag = await this.prisma.projectTag.findUnique({ where: { id } });
+    if (!tag) return null;
+
+    const role = await this.checkUserProjectRole(tag.projectId, user);
+    if (role !== 'manager') {
+      throw new ForbiddenException('只有项目经理可以编辑标签');
+    }
+
     const updateData: any = { ...data };
     if (data.tagType !== undefined) updateData.tagType = data.tagType;
     if (data.systemType !== undefined) updateData.systemType = data.systemType;
@@ -57,14 +103,22 @@ export class TagsService {
     if (data.abnormalCount !== undefined) updateData.abnormalCount = data.abnormalCount;
     if (data.milestoneId !== undefined) updateData.milestoneId = data.milestoneId;
 
-    const tag = await this.prisma.projectTag.update({
+    const updated = await this.prisma.projectTag.update({
       where: { id },
       data: updateData,
     });
-    return this.mapTag(tag);
+    return this.mapTag(updated);
   }
 
-  async remove(id: bigint) {
+  async remove(id: bigint, user: any) {
+    const tag = await this.prisma.projectTag.findUnique({ where: { id } });
+    if (!tag) return null;
+
+    const role = await this.checkUserProjectRole(tag.projectId, user);
+    if (role !== 'manager') {
+      throw new ForbiddenException('只有项目经理可以删除标签');
+    }
+
     await this.prisma.projectTag.delete({ where: { id } });
     return { success: true };
   }

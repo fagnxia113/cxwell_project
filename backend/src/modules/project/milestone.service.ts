@@ -1,11 +1,48 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class MilestoneService {
   constructor(private prisma: PrismaService) {}
 
+  private async checkUserProjectRole(projectId: bigint, user: any): Promise<'manager' | 'member' | null> {
+    const userId = user?.sub || user?.userId;
+    if (!userId) return null;
+
+    if (userId === '1' || userId === 1) return 'manager';
+
+    const project = await this.prisma.project.findUnique({
+      where: { projectId },
+      select: { managerId: true }
+    });
+
+    const employee = await this.prisma.sysEmployee.findFirst({
+      where: { userId: BigInt(userId) },
+      select: { employeeId: true }
+    });
+
+    if (project?.managerId && employee && project.managerId.toString() === employee.employeeId.toString()) {
+      return 'manager';
+    }
+
+    if (employee) {
+      const membership = await this.prisma.projectMember.findFirst({
+        where: {
+          projectId,
+          employeeId: employee.employeeId
+        }
+      });
+      if (membership) return 'member';
+    }
+
+    return null;
+  }
+
   async saveMilestones(projectId: bigint, milestones: any[], user: any) {
+    const role = await this.checkUserProjectRole(projectId, user);
+    if (role !== 'manager') {
+      throw new ForbiddenException('只有项目经理可以编辑里程碑');
+    }
     // 获取项目当前的里程碑
     const existingMilestones = await this.prisma.projectMilestone.findMany({
       where: { projectId },

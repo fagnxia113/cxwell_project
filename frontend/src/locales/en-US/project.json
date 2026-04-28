@@ -98,6 +98,53 @@
     "required_total": "Total Required",
     "submitted_count": "Submitted",
     "verified_count": "Verified",
-    "rejected_count": "Rejected"
-  }
-}
+    "rejected_count": "Rejected",
+    "tag_required": "Required",
+    "tag_tagged": "Tagged",
+    "tag_verified": "Verified",
+    "tag_abnormal": "Abnormal",
+    "tag_progress": "Progress"
+  },
+  "tag": {
+    "name": "Tag Name",
+    "type": "Type",
+    "required": "Required",
+    "tagged": "Tagged",
+    "verified": "Verified",
+    "abnormal": "Abnormal",
+    "status": "Status",
+    "no_records": "No tag records",
+    "add_record": "Add Tag",
+    "edit_record": "Edit Tag",
+    "update_progress": "Update Progress",
+    "summary": "Summary",
+    "node_record": "Node Record",
+    "types": {
+      "red": "Red",
+      "yellow": "Yellow",
+      "green": "Green",
+      "blue": "Blue",
+      "white": "White"
+    },
+    "status_labels": {
+      "pending": "Pending",
+      "tagging": "Tagging",
+      "verifying": "Verifying",
+      "completed": "Completed"
+    },
+    "delete_record": "Delete Tag Record",
+    "delete_confirm": "Are you sure you want to delete this tag record?",
+    "form": {
+      "milestone_phase": "Milestone/Phase",
+      "select_milestone": "Select Milestone",
+      "tag_name": "Tag Name",
+      "enter_tag_name": "Please enter tag name",
+      "tag_type": "Tag Type",
+      "required_count": "Required Count (pcs)",
+      "cancel": "Cancel",
+      "tagged_count": "Tagged Count (pcs)",
+      "verified_count": "Verified Count (pcs)",
+      "abnormal_count": "Abnormal/Removed Count (pcs)",
+      "parent_not_selectable": "Parent not selectable"
+    }
+  },

@@ -232,8 +232,8 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
     e.stopPropagation()
     setConfirmModal({
       isOpen: true,
-      title: '删除标签记录',
-      message: '确定要删除这条标签记录吗？',
+      title: t('project.tag.delete_record') || '删除标签记录',
+      message: t('project.tag.delete_confirm') || '确定要删除这条标签记录吗？',
       type: 'danger',
       onConfirm: async () => {
         try {
@@ -496,39 +496,39 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
 
               <div className="p-6 space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1.5">里程碑/阶段</label>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5">{t('project.tag.form.milestone_phase')}</label>
                   <select
                     value={formData.milestone_id}
                     onChange={(e) => setFormData({ ...formData, milestone_id: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none"
                   >
-                    <option value="">选择里程碑</option>
+                    <option value="">{t('project.tag.form.select_milestone')}</option>
                     {flattenedMilestones.map(m => (
-                      <option 
-                        key={m.id} 
+                      <option
+                        key={m.id}
                         value={m.id}
                         disabled={!m.isLeaf}
                         className={!m.isLeaf ? 'bg-slate-100 text-slate-400 font-bold' : ''}
                       >
-                        {m.displayName} {!m.isLeaf ? '(父级不可选)' : ''}
+                        {m.displayName} {!m.isLeaf ? '(' + (t('project.tag.form.parent_not_selectable') || '父级不可选') + ')' : ''}
                       </option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1.5">标签名称</label>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5">{t('project.tag.form.tag_name')}</label>
                   <input
                     type="text"
                     value={formData.system_type}
                     onChange={(e) => setFormData({ ...formData, system_type: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none"
-                    placeholder="请输入标签名称"
+                    placeholder={t('project.tag.form.enter_tag_name')}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1.5">标签类型</label>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5">{t('project.tag.form.tag_type')}</label>
                   <div className="grid grid-cols-5 gap-1.5">
                     {(['red', 'yellow', 'green', 'blue', 'white'] as const).map(type => {
                       const config = tagTypeConfig[type]
@@ -552,7 +552,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1.5">应挂牌数量 (台)</label>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5">{t('project.tag.form.required_count')}</label>
                   <input
                     type="number"
                     min={1}
@@ -575,7 +575,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
                   onClick={handleCloseModal}
                   className="flex-1 py-2.5 bg-white text-slate-500 rounded-lg text-xs font-bold hover:bg-slate-100 transition-colors border border-slate-200"
                 >
-                  取消
+                  {t('common.cancel')}
                 </button>
               </div>
             </motion.div>
@@ -606,11 +606,11 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
                     <span className={`w-2 h-2 rounded-full ${tagTypeConfig[progressRecord.tag_type].dotColor}`}></span>
                     <span className="text-xs font-bold text-slate-700">{t(tagTypeConfig[progressRecord.tag_type].label)}</span>
                   </div>
-                  <p className="text-[10px] text-slate-400">应挂牌: {progressRecord.required_count} 台</p>
+                  <p className="text-[10px] text-slate-400">{t('project.tag.form.required_count')}: {progressRecord.required_count} {t('common.unit_piece')}</p>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-amber-500 mb-1.5">已挂牌数量 (台)</label>
+                  <label className="block text-xs font-bold text-amber-500 mb-1.5">{t('project.tag.form.tagged_count')}</label>
                   <input
                     type="number"
                     min={0}
@@ -621,7 +621,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-emerald-500 mb-1.5">已核验数量 (台)</label>
+                  <label className="block text-xs font-bold text-emerald-500 mb-1.5">{t('project.tag.form.verified_count')}</label>
                   <input
                     type="number"
                     min={0}
@@ -632,7 +632,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-rose-500 mb-1.5">异常/摘牌数量 (台)</label>
+                  <label className="block text-xs font-bold text-rose-500 mb-1.5">{t('project.tag.form.abnormal_count')}</label>
                   <input
                     type="number"
                     min={0}
@@ -654,7 +654,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
                   onClick={handleCloseProgressModal}
                   className="flex-1 py-2.5 bg-white text-slate-500 rounded-lg text-xs font-bold hover:bg-slate-100 transition-colors border border-slate-200"
                 >
-                  取消
+                  {t('common.cancel')}
                 </button>
               </div>
             </motion.div>

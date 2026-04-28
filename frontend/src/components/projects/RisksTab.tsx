@@ -28,12 +28,12 @@ const severityConfig = {
 }
 
 const statusConfig = {
-  identified: { label: 'project.risk.status.pending', color: 'text-amber-500', bgColor: 'bg-amber-50', icon: AlertCircle },
-  mitigated: { label: 'project.risk.status.in_progress', color: 'text-blue-500', bgColor: 'bg-blue-50', icon: Activity },
-  closed: { label: 'project.risk.status.closed', color: 'text-emerald-500', bgColor: 'bg-emerald-50', icon: CheckCircle },
-  pending: { label: 'project.risk.status.pending', color: 'text-slate-500', bgColor: 'bg-slate-100', icon: AlertCircle },
-  in_progress: { label: 'project.risk.status.in_progress', color: 'text-blue-500', bgColor: 'bg-blue-50', icon: Activity },
-  pending_review: { label: 'project.risk.status.pending_review', color: 'text-amber-500', bgColor: 'bg-amber-50', icon: AlertCircle }
+  identified: { label: 'project.risk.status_labels.identified', color: 'text-amber-500', bgColor: 'bg-amber-50', icon: AlertCircle },
+  mitigated: { label: 'project.risk.status_labels.mitigated', color: 'text-blue-500', bgColor: 'bg-blue-50', icon: Activity },
+  closed: { label: 'project.risk.status_labels.closed', color: 'text-emerald-500', bgColor: 'bg-emerald-50', icon: CheckCircle },
+  pending: { label: 'project.risk.status_labels.pending', color: 'text-slate-500', bgColor: 'bg-slate-100', icon: AlertCircle },
+  in_progress: { label: 'project.risk.status_labels.in_progress', color: 'text-blue-500', bgColor: 'bg-blue-50', icon: Activity },
+  pending_review: { label: 'project.risk.status_labels.pending_review', color: 'text-amber-500', bgColor: 'bg-amber-50', icon: AlertCircle }
 };
 
 const categoryOptions = [

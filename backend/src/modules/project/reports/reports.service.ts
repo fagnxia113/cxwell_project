@@ -24,15 +24,15 @@ export class ReportsService {
       select: { managerId: true }
     });
 
-    if (project?.managerId && project.managerId.toString() === userId.toString()) {
-      return 'manager';
-    }
-
     // 检查是否是项目成员
     const employee = await this.prisma.sysEmployee.findFirst({
       where: { userId: BigInt(userId) },
       select: { employeeId: true }
     });
+
+    if (project?.managerId && employee && project.managerId.toString() === employee.employeeId.toString()) {
+      return 'manager';
+    }
 
     if (employee) {
       const membership = await this.prisma.projectMember.findFirst({
