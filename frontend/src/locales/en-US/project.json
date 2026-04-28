@@ -19,13 +19,21 @@
     "plan": "Plan",
     "done": "Done"
   },
-  "list_title": "Projects",
-  "list_subtitle": "Project lifecycle management & monitoring",
+  "role": {
+    "manager": "Project Manager",
+    "editor": "Editor",
+    "viewer": "Viewer"
+  },
+  "progress": "Project Progress",
+  "active_project": "Active Project",
+  "list_title": "Project Overview",
+  "list_subtitle": "Full lifecycle project management & progress monitoring",
   "empty": {
-    "title": "No projects",
+    "title": "No Projects",
     "desc": "There are no projects currently. Please create a new project."
   },
   "loading": "Loading projects...",
+  "loading_error": "Failed to load projects",
   "action": {
     "initiate": "Initiate Project",
     "import": "Import Project"
@@ -50,6 +58,11 @@
     "pending": "Pending"
   },
   "fields": {
+    "basic": "Basic Info",
+    "performance": "Performance",
+    "specs": "Specifications",
+    "total_progress": "Total Progress",
+    "budget_progress": "Budget Progress",
     "project_name": "Project Name",
     "customer": "Customer",
     "description": "Description",
@@ -57,32 +70,54 @@
     "tech_manager": "Tech Manager",
     "location": "Location",
     "period": "Period",
+    "building_area": "Building Area",
+    "it_capacity": "IT Capacity",
+    "cabinet_count": "Cabinet Count",
+    "cabinet_power": "Cabinet Power",
+    "rack_power": "Rack Power",
+    "power_architecture": "Power Architecture",
+    "hvac_architecture": "HVAC Architecture",
+    "fire_architecture": "Fire Architecture",
+    "weak_electric_architecture": "弱电智能化 (Weak Current)",
     "budget": "Budget",
+    "country_pending": "Country Pending",
     "start_date": "Start Date",
     "end_date": "End Date",
-    "code": "Project Code"
+    "code": "Project Code",
+    "name": "Name"
+  },
+  "placeholder": {
+    "search": "Search project name, code or country...",
+    "description": "Please enter project background description...",
+    "power_architecture": "e.g.: 2N UPS redundancy, dual utility power, backup generator...",
+    "hvac_architecture": "e.g.: Air-cooled chilled water system, N+2 redundancy, storage tank...",
+    "fire_architecture": "e.g.: VESDA early smoke detection, FM200 gas fire suppression...",
+    "weak_electric_architecture": "e.g.: Spine-Leaf network architecture, Cat6A copper & single-mode fiber..."
+  },
+  "sections": {
+    "base_info": "Basic Info",
+    "specs": "Specifications"
   },
   "milestone": {
     "title": "Project Milestones",
+    "completed_count": "Completed Milestones",
+    "total_weight": "Total Weight",
+    "weight_must_be_100": "Top-level milestones must total 100%",
+    "invalid_dates": "End date cannot be earlier than start date. Please check your input.",
+    "timeline": "Timeline",
+    "period": "Period",
     "weight": "Weight",
-    "progress": "Progress",
-    "status": "Status",
+    "add": "Add Milestone",
     "add_child": "Add Sub-milestone",
-    "save_success": "Milestones saved successfully"
+    "sub_milestones": "Sub-milestones",
+    "update_progress": "Update Progress",
+    "edit": "Edit Plan",
+    "save": "Save Changes",
+    "relate": "Link Phase",
+    "total_phases": "Total Phases"
   },
-  "risk": {
-    "severity": "Severity",
-    "category": "Category",
-    "owner": "Owner",
-    "status": "Status",
-    "add": "Add Risk",
-    "empty": "No active risks detected"
-  },
-  "report": {
-    "title": "Report Management",
-    "add": "Add Report",
-    "submitted": "Submitted",
-    "verified": "Verified"
+  "workflow": {
+    "node_status": "Node Status Overview"
   },
   "stats": {
     "active": "Active Projects",
@@ -154,6 +189,9 @@
     "submitted": "Submitted",
     "last_update": "Last Update",
     "refresh": "Refresh",
+    "title": "Report Management",
+    "add": "Add Report",
+    "edit": "Edit Report",
     "status": {
       "pending": "Pending",
       "submitted": "Submitted",
@@ -166,7 +204,7 @@
     "severity": "Severity",
     "category": "Category",
     "owner": "Owner",
-    "status": "Risk Status",
+    "status": "Status",
     "add": "Add Risk",
     "edit": "Edit Risk",
     "risk_no": "Risk No.",
@@ -203,14 +241,6 @@
       "supply_chain": "Supply Chain Risk"
     },
     "status_labels": {
-      "identified": "Identified",
-      "mitigated": "Mitigated",
-      "closed": "Closed",
-      "pending": "Pending",
-      "in_progress": "In Progress",
-      "pending_review": "Pending Review"
-    },
-    "status": {
       "identified": "Identified",
       "mitigated": "Mitigated",
       "closed": "Closed",
@@ -277,46 +307,5 @@
       "material": "Materials",
       "other": "Other"
     }
-  },
-  "milestone": {
-    "title": "Project Milestones",
-    "weight": "Weight",
-    "progress": "Progress",
-    "status": "Status",
-    "add_child": "Add Sub-milestone",
-    "save_success": "Milestones saved successfully"
-  },
-  "sections": {
-    "base_info": "Basic Info",
-    "specs": "Specifications"
-  },
-  "placeholder": {
-    "search": "Search project name, code or country...",
-    "description": "Please enter project background description...",
-    "power_architecture": "e.g.: 2N UPS redundancy, dual utility power, backup generator...",
-    "hvac_architecture": "e.g.: Air-cooled chilled water system, N+2 redundancy, storage tank...",
-    "fire_architecture": "e.g.: VESDA early smoke detection, FM200 gas fire suppression...",
-    "weak_electric_architecture": "e.g.: Spine-Leaf network architecture, Cat6A copper & single-mode fiber..."
-  },
-  "empty": {
-    "title": "No Projects",
-    "desc": "There are no projects currently. Please create a new project."
-  },
-  "loading_error": "Failed to load projects",
-  "action": {
-    "initiate": "Initiate Project",
-    "import": "Import Project"
-  },
-  "progress": "Project Progress",
-  "active_project": "Active Project",
-  "list_title": "Project Overview",
-  "list_subtitle": "Full lifecycle project management & progress monitoring",
-  "role": {
-    "manager": "Project Manager",
-    "editor": "Editor",
-    "viewer": "Viewer"
-  },
-  "workflow": {
-    "node_status": "Node Status Overview"
   }
 }
