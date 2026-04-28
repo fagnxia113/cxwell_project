@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next'
 import { parseJWTToken } from '../../config/api'
 import { cn } from '../../utils/cn'
 import FlowDetailView from '../../components/workflow/FlowDetailView'
+import { useFetch } from '../../hooks/useReactQuery'
 
 export default function InstanceDetailPage() {
   const { instanceId } = useParams<{ instanceId: string }>()
@@ -36,6 +37,27 @@ export default function InstanceDetailPage() {
   const [historyNodes, setHistoryNodes] = useState<any[]>([])
   const [targetNodeCode, setTargetNodeCode] = useState<string>('')
   const [currentUserId, setCurrentUserId] = useState<string>('')
+  const [userMap, setUserMap] = useState<Record<string, string>>({})
+
+  const { data: employeesData } = useFetch(['employees'], '/api/personnel/employees?pageSize=1000')
+
+  useEffect(() => {
+    if (employeesData?.data) {
+      const uMap: Record<string, string> = {}
+      employeesData.data.forEach((u: any) => {
+        if (u.name) {
+          if (u.userId) uMap[u.userId] = u.name
+          if (u.user_id) uMap[u.user_id] = u.name
+          if (u.employeeId) uMap[u.employeeId] = u.name
+          if (u.employee_id) uMap[u.employee_id] = u.name
+          if (u.loginName) uMap[u.loginName] = u.name
+          if (u.login_name) uMap[u.login_name] = u.name
+          if (u.id) uMap[u.id] = u.name
+        }
+      })
+      setUserMap(uMap)
+    }
+  }, [employeesData])
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -95,7 +117,7 @@ export default function InstanceDetailPage() {
     const task = currentTasks[0]
     const isConfirmed = await confirm({
       title: action === 'pass' ? t('approvals.action.confirm_pass', 'Confirm Approve') : t('approvals.action.confirm_reject', 'Confirm Reject'),
-      content: t('approvals.action.confirm_content', { node: task.node_name || task.nodeName }),
+      content: t('approvals.message.confirm_content', { node: task.node_name || task.nodeName }),
       type: action === 'pass' ? 'primary' : 'danger'
     })
 
@@ -107,7 +129,7 @@ export default function InstanceDetailPage() {
       message.success(action === 'pass' ? t('approvals.message.pass_success') : t('approvals.message.reject_success'))
       navigate('/approvals/center')
     } catch (err: any) {
-      message.error(err.message || '操作失败')
+      message.error(err.message || t('common.error.operation_failed', 'Operation failed'))
     } finally {
       setSubmitting(false)
     }
@@ -173,15 +195,18 @@ export default function InstanceDetailPage() {
       <FlowDetailView
         title={instance?.title || instance?.process_title || t('approvals.history.title')}
         processTitle={instance?.title || instance?.process_title}
-        initiatorName={instance?.initiator_name}
+        initiatorName={userMap[instance?.initiator_id] || userMap[instance?.initiator_name] || instance?.initiator_name}
         createdAt={instance?.start_time || instance?.create_time}
         nodeName={currentNodeName}
         orderType={instance?.process_type || instance?.definition_key}
-        handlerName={instance?.current_assignee_name || currentTask?.assignee_name || currentTask?.approver}
+        handlerName={userMap[instance?.current_assignee_id] || userMap[instance?.current_assignee_name] || currentTask?.assignee_name || currentTask?.approver}
         formTemplate={formTemplate}
         formData={formData}
         readOnly={true}
-        timeline={timeline}
+        timeline={timeline.map(item => ({
+          ...item,
+          approver: userMap[item.operator_id] || userMap[item.approver] || item.approver
+        }))}
         showTimeline={true}
         currentNodeName={currentNodeName}
         editableFields={['final_amount', 'ticket_photo']}

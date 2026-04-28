@@ -514,7 +514,7 @@ export class WorkflowEngineService {
     const instance = await this.prisma.flowInstance.findUnique({ where: { id: instanceId } });
     if (!instance) return [];
 
-    return this.predictFromNode(instance.definitionId, instance.nodeCode, currentVariables);
+    return this.predictFromNode(instance.definitionId, instance.nodeCode, instance.createBy || '', currentVariables);
   }
 
   async getApprovableHistory(instanceId: bigint) {
@@ -625,7 +625,7 @@ export class WorkflowEngineService {
     }
   }
 
-  private async predictFromNode(definitionId: bigint, startNodeCode: string, variables: any, depth: number = 0): Promise<any[]> {
+  private async predictFromNode(definitionId: bigint, startNodeCode: string, initiatorUserId: string, variables: any, depth: number = 0): Promise<any[]> {
     if (depth > 10) return [];
 
     const nodes = await this.prisma.flowNode.findMany({ where: { definitionId } });
@@ -652,7 +652,7 @@ export class WorkflowEngineService {
     const nextNode = nodes.find(n => n.nodeCode === nextSkip.nextNodeCode);
     if (!nextNode) return [];
 
-    const approvers = nextNode.permissionFlag ? await resolveApprovers(this.prisma, nextNode.permissionFlag, undefined, variables) : [];
+    const approvers = nextNode.permissionFlag ? await resolveApprovers(this.prisma, nextNode.permissionFlag, initiatorUserId, variables) : [];
 
     path.push({
       nodeCode: nextNode.nodeCode,
@@ -664,7 +664,7 @@ export class WorkflowEngineService {
     });
 
     if (nextNode.nodeType !== 2) {
-      const remaining = await this.predictFromNode(definitionId, nextNode.nodeCode, variables, depth + 1);
+      const remaining = await this.predictFromNode(definitionId, nextNode.nodeCode, initiatorUserId, variables, depth + 1);
       path.push(...remaining);
     }
 

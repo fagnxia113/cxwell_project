@@ -150,10 +150,36 @@ export default function WorkflowDetailPage() {
     })
   }
 
-  const documentNo = activeFormData?._documentNo || instance.business_id || instance.id?.substring(0, 8).toUpperCase() || '-'
-  const applyDate = activeFormData?._applyDate ? formatLocalDateTime(activeFormData._applyDate) : formatLocalDateTime(instance.start_time)
-  const applicantName = activeFormData?._applicant ? (masterData.users[activeFormData._applicant] || activeFormData._applicant) : instance.initiator_name
-  const processTitle = activeFormData?._title || activeFormData?.title || instance.title || getFlowName(instance.definition_key || definition?.flowCode || '', definition?.flowName || '')
+  // Enrich data with real names from masterData
+  const enrichedInstance = instance ? {
+    ...instance,
+    initiator_name: masterData.users[instance.initiator_id] || masterData.users[instance.initiator_name] || instance.initiator_name
+  } : null
+
+  const enrichedLogs = logs.map(log => ({
+    ...log,
+    operator_name: masterData.users[log.operator_id || ''] || masterData.users[log.operator_name || ''] || log.operator_name
+  }))
+
+  const enrichedTasks = tasks.map(task => ({
+    ...task,
+    assignee_name: masterData.users[task.assignee_id || ''] || masterData.users[task.assignee_name || ''] || task.assignee_name
+  }))
+
+  const enrichedCurrentTask = enrichedTasks.find(t => 
+    t.assignees?.includes(currentUserId) || 
+    t.assignee_id === currentUserId
+  ) || (enrichedTasks.length > 0 ? enrichedTasks[0] : null)
+
+  const isAssignee = !!enrichedCurrentTask && (
+    enrichedCurrentTask.assignees?.includes(currentUserId) || 
+    enrichedCurrentTask.assignee_id === currentUserId
+  )
+
+  const documentNo = activeFormData?._documentNo || (enrichedInstance?.business_id) || (enrichedInstance?.id?.substring(0, 8).toUpperCase()) || '-'
+  const applyDate = activeFormData?._applyDate ? formatLocalDateTime(activeFormData._applyDate) : formatLocalDateTime(enrichedInstance?.start_time)
+  const applicantName = activeFormData?._applicant ? (masterData.users[activeFormData._applicant] || activeFormData._applicant) : (enrichedInstance?.initiator_name || '-')
+  const processTitle = activeFormData?._title || activeFormData?.title || enrichedInstance?.title || getFlowName(enrichedInstance?.definition_key || definition?.flowCode || '', definition?.flowName || '')
 
   const primaryActions = [
     { type: 'approve', label: t('workflow.action.approve'), icon: <CheckCircle className="w-4 h-4" />, className: 'bg-emerald-600 shadow-emerald-200', perm: 'workflow:approve' },
@@ -164,9 +190,9 @@ export default function WorkflowDetailPage() {
     { type: 'cc', label: t('workflow.action.cc') || '抄送', icon: <ClipboardCopy className="w-4 h-4" />, className: 'bg-indigo-600 shadow-indigo-200', perm: 'workflow:cc' },
   ]
 
-  const enabledActions = primaryActions.filter(a => hasButton(a.perm))
+  const enabledActions = primaryActions.filter(a => isAssignee || hasButton(a.perm))
 
-  const isBookerExecute = instance?.definition_key === 'flight_booking' && (currentTask?.node_id === 'BOOKER_EXECUTE' || currentTask?.name === '预定员处理')
+  const isBookerExecute = enrichedInstance?.definition_key === 'flight_booking' && (enrichedCurrentTask?.node_id === 'BOOKER_EXECUTE' || enrichedCurrentTask?.name === '预定员处理')
   const editableFields = isBookerExecute ? ['final_amount', 'ticket_photo'] : []
 
   const renderFormTab = () => (
@@ -211,20 +237,22 @@ export default function WorkflowDetailPage() {
       <div className="max-w-6xl mx-auto p-4 lg:p-6 space-y-4">
         
         {/* Header Section */}
-        <WorkflowHeader
-          instance={instance}
-          processTitle={processTitle}
-          currentTask={currentTask}
-          currentUserId={currentUserId}
-          t={t}
-          onActionClick={(type) => setActionType(type === actionType ? '' : type)}
-          onWithdraw={handleWithdraw}
-          nodeActions={enabledActions}
-          documentNo={documentNo}
-          applyDate={applyDate}
-          applicantName={applicantName}
-          activeActionType={actionType}
-        />
+        {enrichedInstance && (
+          <WorkflowHeader
+            instance={enrichedInstance}
+            processTitle={processTitle}
+            currentTask={enrichedCurrentTask}
+            currentUserId={currentUserId}
+            t={t}
+            onActionClick={(type) => setActionType(type === actionType ? '' : type)}
+            onWithdraw={handleWithdraw}
+            nodeActions={enabledActions}
+            documentNo={documentNo}
+            applyDate={applyDate}
+            applicantName={applicantName}
+            activeActionType={actionType}
+          />
+        )}
 
         {/* Approval Action Panel */}
         <ApprovalActionPanel 
@@ -237,15 +265,15 @@ export default function WorkflowDetailPage() {
           targetNodeId={targetNodeId}
           setTargetNodeId={setTargetNodeId}
           definition={definition}
-          currentTask={currentTask}
-          logs={logs}
+          currentTask={enrichedCurrentTask}
+          logs={enrichedLogs}
           selectedSigners={selectedSigners}
           setSelectedSigners={setSelectedSigners}
           selectedTransferee={selectedTransferee}
           setSelectedTransferee={setSelectedTransferee}
           userMap={masterData.users}
           currentUserId={currentUserId}
-          instance={instance}
+          instance={enrichedInstance}
           shippingState={{
             shippedAt, setShippedAt, shippingNo, setShippingNo,
             shippingAttachment, setShippingAttachment, shippingItemImages, setShippingItemImages,
@@ -288,9 +316,9 @@ export default function WorkflowDetailPage() {
           <div>
             <WorkflowTabsContent 
               activeTab={activeTab}
-              instance={instance}
-              tasks={tasks}
-              logs={logs}
+              instance={enrichedInstance}
+              tasks={enrichedTasks}
+              logs={enrichedLogs}
               definition={definition}
               t={t}
               renderFormTab={renderFormTab}

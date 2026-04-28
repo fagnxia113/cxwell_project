@@ -115,7 +115,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
           "text-sm font-medium truncate",
           selectedOption ? "text-slate-900" : "text-slate-400"
         )}>
-          {selectedOption ? selectedOption.label : (placeholder || t('common.select_placeholder'))}
+          {selectedOption ? t(selectedOption.label) : (placeholder || t('common.select_placeholder'))}
         </span>
         <ChevronDown 
           size={16} 
@@ -186,7 +186,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                         : "text-slate-600 hover:bg-slate-50"
                     )}
                   >
-                    <span className="truncate">{opt.label}</span>
+                    <span className="truncate">{t(opt.label)}</span>
                     {String(opt.value) === String(value) && <CheckCircle size={14} className="shrink-0" />}
                   </button>
                 ))

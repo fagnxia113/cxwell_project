@@ -55,7 +55,9 @@
     "pass": "核准通过",
     "reject_action": "执行驳回",
     "view_flow": "查看流程图",
-    "withdraw": "撤销申请"
+    "withdraw": "撤回申请",
+    "confirm_pass": "确认通过",
+    "confirm_reject": "确认驳回"
   },
   "form": {
     "comment": "审批意见",

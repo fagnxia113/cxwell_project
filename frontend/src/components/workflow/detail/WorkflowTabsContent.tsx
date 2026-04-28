@@ -48,7 +48,7 @@ export const WorkflowTabsContent: React.FC<WorkflowTabsContentProps> = ({
               </div>
             </div>
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-              <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1">{t('workflow.initiator')}</div>
+              <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1">{t('workflow.fields.initiator')}</div>
               <div className="font-bold text-slate-800 truncate">
                 {instance.initiator_name}
               </div>

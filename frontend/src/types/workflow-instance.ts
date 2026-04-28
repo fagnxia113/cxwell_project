@@ -34,6 +34,7 @@ export interface WorkflowTask {
   status: string
   assignee_id: string
   assignee_name: string
+  assignees?: string[]
   result: string | null
   comment: string | null
   created_at: string

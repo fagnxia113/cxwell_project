@@ -97,8 +97,8 @@ export class AuthService {
       };
     }
 
-    // 正确同步：RoleService 写入时没有 role: 前缀，这里查询也对应去掉
-    const policies = await this.casbinService.enforcer.getImplicitPermissionsForUser(roleKey);
+    const casbinRole = `role:${roleKey}`;
+    const policies = await this.casbinService.enforcer.getImplicitPermissionsForUser(casbinRole);
     const allPerms = policies
       .filter(p => p[2] === 'allow' || p[2] === '*')
       .map(p => p[1]);

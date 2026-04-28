@@ -89,7 +89,7 @@ export const ApprovalActionPanel: React.FC<ApprovalActionPanelProps> = ({
               {actionTitle()}
             </h3>
             <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
-              {t('workflow.action.required', 'Action Required')}
+              {t('workflow.action_required')}
             </p>
           </div>
         </div>

@@ -80,7 +80,8 @@ export class RoleService {
 
     // 4. 同步 Casbin 策略 (基于菜单权限 perms 字段)
     // 首先移除该角色的所有策略
-    await this.casbinService.enforcer.removeFilteredPolicy(0, role.roleKey);
+    const casbinRoleKey = `role:${role.roleKey}`;
+    await this.casbinService.enforcer.removeFilteredPolicy(0, casbinRoleKey);
     
     // 获取所有选中菜单的 perms 字段
     const selectedMenus = await this.prisma.sysMenu.findMany({
@@ -92,7 +93,7 @@ export class RoleService {
 
     // 注入新的策略
     for (const menu of selectedMenus) {
-      await this.casbinService.enforcer.addPolicy(role.roleKey, menu.perms!, 'allow');
+      await this.casbinService.enforcer.addPolicy(casbinRoleKey, menu.perms!, 'allow');
     }
 
     // 保存策略到数据库并重载
@@ -109,7 +110,8 @@ export class RoleService {
     // 同时清理 Casbin 关联
     const role = await this.prisma.sysRole.findUnique({ where: { roleId: id } });
     if (role) {
-      await this.casbinService.enforcer.removeFilteredPolicy(0, role.roleKey);
+      const casbinRoleKey = `role:${role.roleKey}`;
+      await this.casbinService.enforcer.removeFilteredPolicy(0, casbinRoleKey);
       await this.casbinService.enforcer.savePolicy();
     }
 

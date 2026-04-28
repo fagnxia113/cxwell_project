@@ -182,7 +182,6 @@ export default function WorkflowDesignerNewPage() {
           nodeName: node.name || node.label,
           nodeType: nodeTypeMap[node.type] || 1,
           coordinate: JSON.stringify(node.position),
-          // 若依/Warm-Flow 风格的权限标识
           permissionFlag: (() => {
             const source = node.approvalConfig?.approverSource
             if (!source?.type) return ''
@@ -190,11 +189,13 @@ export default function WorkflowDesignerNewPage() {
             if (source.type === 'user') return source.value || ''
             if (source.type === 'reportTo_manager') return 'reportTo:manager'
             if (source.type === 'reportTo_deptLeader') return 'reportTo:deptLeader'
-            if (source.type === 'reportTo_n2') return 'reportTo:n2'
+            if (source.type.startsWith('reportTo_n')) return `reportTo:${source.type.replace('reportTo_', '')}`
             if (source.type === 'project_manager') return 'project:manager'
             if (source.type === 'initiator') return 'initiator:self'
             return source.value || ''
-          })() 
+          })(),
+          handlerType: node.serviceConfig?.handlerType || null,
+          handlerPath: node.serviceConfig?.handlerPath || null
         })),
         skips: workflowData.edges.map((edge: any) => ({
           nowNodeCode: edge.source,

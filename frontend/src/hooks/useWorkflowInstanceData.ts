@@ -56,8 +56,16 @@ export function useWorkflowInstanceData() {
     if (employeesData?.data) {
       const uMap: Record<string, string> = {}
       employeesData.data.forEach((u: any) => {
-        if (u.user_id) uMap[u.user_id] = u.name
-        uMap[u.loginName || u.id] = u.name
+        if (u.name) {
+          // Map by all possible identifiers
+          if (u.userId) uMap[u.userId] = u.name
+          if (u.user_id) uMap[u.user_id] = u.name
+          if (u.employeeId) uMap[u.employeeId] = u.name
+          if (u.employee_id) uMap[u.employee_id] = u.name
+          if (u.loginName) uMap[u.loginName] = u.name
+          if (u.login_name) uMap[u.login_name] = u.name
+          if (u.id) uMap[u.id] = u.name
+        }
       })
       setMasterData(prev => ({ ...prev, users: uMap }))
     }
@@ -162,6 +170,7 @@ export function useWorkflowInstanceData() {
         status: task.status || (task.flowStatus === 'todo' ? 'assigned' : task.flowStatus) || 'assigned',
         assignee_id: task.assignee_id || task.approver || task.createBy || '',
         assignee_name: task.assignee_name || task.approver || task.createBy || '',
+        assignees: task.assignees || [],
         result: task.result || null,
         comment: task.comment || task.message || null,
         created_at: task.created_at || task.createTime || '',

@@ -109,6 +109,7 @@ export class OrganizationService {
         where,
         skip,
         take: pageSize,
+        include: { user: true },
         orderBy: { createTime: 'desc' }
       })
     ]);
@@ -120,6 +121,7 @@ export class OrganizationService {
         employeeId: item.employeeId.toString(),
         deptId: item.deptId?.toString(),
         userId: item.userId?.toString(),
+        loginName: (item as any).user?.loginName,
         dingtalkUserId: (item as any).dingtalkUserId?.toString(),
         dingtalkDeptId: (item as any).dingtalkDeptId?.toString(),
         status: item.status === '0' ? 'active' : item.status === '1' ? 'resigned' : 'probation',

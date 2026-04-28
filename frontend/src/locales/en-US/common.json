@@ -13,9 +13,14 @@
   "save": "Save",
   "loading": "Loading...",
   "success": "Success",
-  "error": "Error",
+  "error": {
+    "title": "Operation Failed",
+    "operation_failed": "Failed to execute operation"
+  },
   "noData": "No Data Found",
   "no_data": "No Data Found",
+  "startTime": "Start Time",
+  "remaining": "Remaining",
   "last_update": "Last Update",
   "action": "Action",
   "status": "Status",
@@ -26,6 +31,8 @@
   "attachment": "Attachments",
   "all": "All",
   "submitting": "Processing...",
+  "processing": "Processing...",
+  "show_more": "Show More",
   "days": "days",
   "new_today": "New Today",
   "safety_tip": "Security Notice",
@@ -97,5 +104,16 @@
   "status_labels": {
     "active": "Active",
     "disabled": "Disabled"
+  },
+  "countries": {
+    "china": "China",
+    "singapore": "Singapore",
+    "thailand": "Thailand",
+    "vietnam": "Vietnam",
+    "indonesia": "Indonesia",
+    "malaysia": "Malaysia",
+    "philippines": "Philippines",
+    "japan": "Japan",
+    "usa": "USA"
   }
 }

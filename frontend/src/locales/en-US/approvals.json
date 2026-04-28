@@ -55,7 +55,9 @@
     "pass": "Approve",
     "reject_action": "Reject",
     "view_flow": "View Flowchart",
-    "withdraw": "Withdraw Request"
+    "withdraw": "Withdraw Request",
+    "confirm_pass": "Confirm Approve",
+    "confirm_reject": "Confirm Reject"
   },
   "form": {
     "comment": "Comment",
@@ -81,14 +83,50 @@
     "title": "Draft Box",
     "subtitle": "Manage process drafts",
     "total": "Total Drafts",
+    "rejected": "Rejected",
+    "withdrawn": "Withdrawn",
+    "occupancy": "Storage Occupancy",
+    "all": "All",
+    "status_draft": "Draft",
+    "status_rejected": "Rejected",
+    "status_withdrawn": "Withdrawn",
+    "search_placeholder": "Search drafts...",
+    "number": "No.",
+    "draft_name": "Draft Name",
+    "update_time": "Last Updated",
+    "status": "Status",
+    "type": "Type",
     "no_drafts": "No drafts available",
+    "records_count": "Total {{count}} records, Page {{current}} / {{total}}",
+    "prev_page": "Previous",
+    "next_page": "Next",
+    "no_name": "Unnamed Draft",
+    "draft_archived": "Draft archived",
     "delete_confirm": "Are you sure you want to permanently delete this draft?",
-    "delete_success": "Draft removed"
+    "delete_success": "Draft removed",
+    "load_failed": "Failed to load drafts",
+    "confirm_delete": "Confirm Delete"
   },
   "completed": {
     "title": "Processed",
     "subtitle": "View approval history",
     "total": "Total Processed",
-    "no_records": "No processed records"
+    "approved": "Approved",
+    "quality": "Quality",
+    "avg_time": "Avg. Duration",
+    "all": "All",
+    "approved_status": "Passed",
+    "rejected_status": "Rejected",
+    "search_placeholder": "Search records...",
+    "number": "No.",
+    "task": "Task Name",
+    "applicant": "Applicant",
+    "node": "Node",
+    "result": "Result",
+    "no_records": "No processed records",
+    "records_count": "Total {{count}} records, Page {{current}} / {{total}}",
+    "prev_page": "Previous",
+    "next_page": "Next",
+    "load_failed": "Failed to load processed tasks"
   }
 }

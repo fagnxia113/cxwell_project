@@ -13,9 +13,14 @@
   "save": "保存",
   "loading": "加载中...",
   "success": "操作成功",
-  "error": "操作失败",
+  "error": {
+    "title": "操作失败",
+    "operation_failed": "操作执行失败"
+  },
   "noData": "暂无数据",
   "no_data": "暂无数据",
+  "startTime": "启动时间",
+  "remaining": "剩余",
   "last_update": "最近更新",
   "action": "操作",
   "status": "状态",
@@ -26,6 +31,8 @@
   "attachment": "附件",
   "all": "全部",
   "submitting": "提交中...",
+  "processing": "处理中...",
+  "show_more": "查看更多",
   "days": "天",
   "new_today": "今日新增",
   "safety_tip": "安全提示",
@@ -97,5 +104,16 @@
   "status_labels": {
     "active": "启用",
     "disabled": "停用"
+  },
+  "countries": {
+    "china": "中国",
+    "singapore": "新加坡",
+    "thailand": "泰国",
+    "vietnam": "越南",
+    "indonesia": "印度尼西亚",
+    "malaysia": "马来西亚",
+    "philippines": "菲律宾",
+    "japan": "日本",
+    "usa": "美国"
   }
 }
