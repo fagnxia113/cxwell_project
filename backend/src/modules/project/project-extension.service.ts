@@ -16,14 +16,14 @@ export class ProjectExtensionService {
       select: { managerId: true }
     });
 
-    if (project?.managerId && project.managerId.toString() === userId.toString()) {
-      return 'manager';
-    }
-
     const employee = await this.prisma.sysEmployee.findFirst({
       where: { userId: BigInt(userId) },
       select: { employeeId: true }
     });
+
+    if (project?.managerId && employee && project.managerId.toString() === employee.employeeId.toString()) {
+      return 'manager';
+    }
 
     if (employee) {
       const membership = await this.prisma.projectMember.findFirst({
