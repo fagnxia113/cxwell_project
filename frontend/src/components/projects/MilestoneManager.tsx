@@ -148,9 +148,9 @@ export default function MilestoneManager({
   const handleSaveProgress = async (progress: number) => {
     if (!selectedMilestoneForProgress) return
     try {
-      const milestone = selectedMilestoneForProgress
-
-
+      await apiClient.put(`/api/milestones/${selectedMilestoneForProgress.id}/progress`, {
+        progress: progress
+      })
       setSelectedMilestoneForProgress(null)
       onRefresh()
     } catch (err) {
