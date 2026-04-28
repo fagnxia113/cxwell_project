@@ -92,7 +92,7 @@ export default function TeamTab({
   const loadEmployees = async () => {
     try {
       setLoadingEmployees(true)
-      const res = await apiClient.get<any>('/api/personnel/employees?limit=200')
+      const res = await apiClient.get<any>(`/api/personnel/employees?limit=200&projectId=${projectId}`)
       if (res && res.success) {
         setEmployees(res.data || [])
       }
@@ -224,9 +224,9 @@ export default function TeamTab({
   const daysInMonth = dayjs(currentMonth).daysInMonth()
   const days = Array.from({ length: daysInMonth }, (_, i) => dayjs(currentMonth + '-' + (i + 1).toString().padStart(2, '0')))
 
-  const filteredEmployees = employees.filter(e => 
-    !personnel.some(p => p.employee_id === e.id) && 
-    (e.name?.toLowerCase().includes(searchQuery.toLowerCase()) || e.employee_no?.includes(searchQuery))
+  const filteredEmployees = employees.filter(e =>
+    !personnel.some(p => p.employee_id === e.employeeId) &&
+    (e.name?.toLowerCase().includes(searchQuery.toLowerCase()) || e.employee_no?.includes(searchQuery) || e.employeeId?.includes(searchQuery))
   )
 
   return (

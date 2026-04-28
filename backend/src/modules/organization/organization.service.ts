@@ -37,10 +37,11 @@ export class OrganizationService {
     pageSize?: number;
     name?: string;
     deptId?: string;
+    projectId?: string;
   }, user?: any) {
     const pageNum = Number(query.pageNum) || 1;
     const pageSize = Number(query.pageSize) || 10;
-    const { name, deptId } = query;
+    const { name, deptId, projectId } = query;
     const skip = (pageNum - 1) * pageSize;
 
     const where: any = {};
@@ -58,34 +59,51 @@ export class OrganizationService {
         currentEmployeeId = currentEmployee.employeeId;
       }
 
-      // 获取当前用户参与的项目中的所有员工ID
-      let projectMemberIds: BigInt[] = [];
-      if (currentEmployeeId) {
-        const memberships = await this.prisma.projectMember.findMany({
-          where: { employeeId: currentEmployeeId as any },
-          select: { projectId: true }
+      // 如果传入了 projectId，检查用户是否是该项目经理
+      let isProjectManager = false;
+      if (projectId && currentEmployeeId) {
+        const project = await this.prisma.project.findUnique({
+          where: { projectId: BigInt(projectId) },
+          select: { managerId: true }
         });
-        const projectIds = memberships.map(m => m.projectId);
-
-        if (projectIds.length > 0) {
-          const members = await this.prisma.projectMember.findMany({
-            where: { projectId: { in: projectIds } },
-            select: { employeeId: true }
-          });
-          projectMemberIds = members.map(m => m.employeeId);
+        if (project?.managerId && project.managerId.toString() === currentEmployeeId.toString()) {
+          isProjectManager = true;
         }
       }
 
-      // 构建条件：自己 OR 同一项目的成员
-      const orConditions: any[] = [];
-      if (currentEmployeeId) {
-        orConditions.push({ employeeId: currentEmployeeId });
-      }
-      if (projectMemberIds.length > 0) {
-        orConditions.push({ employeeId: { in: projectMemberIds } });
-      }
-      if (orConditions.length > 0) {
-        where.OR = orConditions;
+      // 如果是项目经理（针对指定项目），可以查看公司所有员工
+      if (isProjectManager) {
+        // 不添加任何人员限制，项目经理可以看到所有员工
+      } else {
+        // 获取当前用户参与的项目中的所有员工ID
+        let projectMemberIds: BigInt[] = [];
+        if (currentEmployeeId) {
+          const memberships = await this.prisma.projectMember.findMany({
+            where: { employeeId: currentEmployeeId as any },
+            select: { projectId: true }
+          });
+          const projectIds = memberships.map(m => m.projectId);
+
+          if (projectIds.length > 0) {
+            const members = await this.prisma.projectMember.findMany({
+              where: { projectId: { in: projectIds } },
+              select: { employeeId: true }
+            });
+            projectMemberIds = members.map(m => m.employeeId);
+          }
+        }
+
+        // 构建条件：自己 OR 同一项目的成员
+        const orConditions: any[] = [];
+        if (currentEmployeeId) {
+          orConditions.push({ employeeId: currentEmployeeId });
+        }
+        if (projectMemberIds.length > 0) {
+          orConditions.push({ employeeId: { in: projectMemberIds } });
+        }
+        if (orConditions.length > 0) {
+          where.OR = orConditions;
+        }
       }
     }
 
