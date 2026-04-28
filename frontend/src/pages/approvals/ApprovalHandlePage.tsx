@@ -13,6 +13,7 @@ import { useMessage } from '../../hooks/useMessage'
 import { useConfirm } from '../../hooks/useConfirm'
 import { useTranslation } from 'react-i18next'
 import { cn } from '../../utils/cn'
+import { getFlowName } from '../../constants/workflowConstants'
 import FlowDetailView from '../../components/workflow/FlowDetailView'
 
 export default function ApprovalHandlePage() {
@@ -134,8 +135,8 @@ export default function ApprovalHandlePage() {
       </div>
 
       <FlowDetailView
-        title={task.process_title}
-        processTitle={task.process_title}
+        title={getFlowName(task.process_type, task.process_title)}
+        processTitle={getFlowName(task.process_type, task.process_title)}
         initiatorName={task.initiator_name}
         createdAt={task.created_at}
         nodeName={task.nodeName || task.node_name}

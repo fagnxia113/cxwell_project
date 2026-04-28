@@ -8,6 +8,7 @@ import FormTemplateRenderer from './workflow/FormTemplateRenderer'
 import { motion } from 'framer-motion'
 import { Send, Save, ArrowLeft, Loader2, FileText, Hash, Calendar, User as UserIcon } from 'lucide-react'
 import { useUser } from '../contexts/UserContext'
+import { getFlowName } from '../constants/workflowConstants'
 import { orgApi } from '../api/orgApi'
 
 interface WorkflowFormLauncherProps {
@@ -56,7 +57,7 @@ const WorkflowFormLauncher: React.FC<WorkflowFormLauncherProps> = ({
         const target = defsRes.data.find((d: any) => d.flowCode === definitionKey)
         setDefinition(target)
         if (target) {
-          setTitle(`${target.flowName || ''}-${new Date().toLocaleDateString(i18n.language)}`)
+          setTitle(`${getFlowName(target.flowCode, target.flowName) || ''}-${new Date().toLocaleDateString(i18n.language)}`)
 
           if (target.id) {
             try {
@@ -220,7 +221,7 @@ const WorkflowFormLauncher: React.FC<WorkflowFormLauncherProps> = ({
         <div className="absolute bottom-0 left-0 w-32 h-32 -ml-10 -mb-10 bg-indigo-400/20 rounded-full blur-2xl" />
 
         <div className="relative z-10">
-          <h2 className="text-2xl font-black text-white tracking-tight">{definition?.flowName || definitionKey}</h2>
+          <h2 className="text-2xl font-black text-white tracking-tight">{getFlowName(definition?.flowCode || definitionKey, definition?.flowName || '')}</h2>
           <div className="flex items-center gap-3 mt-2">
             <span className="px-2.5 py-1 bg-white/20 text-white rounded-lg text-[10px] font-black uppercase tracking-widest backdrop-blur-md border border-white/30">
               {definition?.category || 'PROPOSAL'}

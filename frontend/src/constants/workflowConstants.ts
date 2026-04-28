@@ -12,6 +12,26 @@ import {
   Plus
 } from 'lucide-react';
 
+export const FLOW_NAME_MAP: Record<string, string> = {
+  'employee_onboarding': '员工入职',
+  'employee-onboard': '员工入职',
+  'employee_resignation': '离职审批',
+  'project_approval': '项目立项',
+  'project_completion': '项目结项',
+  'leave_approval': '请假审批',
+  'expense_reimbursement': '报销申请',
+  'flight_booking': '机票预订',
+  'travel_request': '出差申请',
+  'equipment_inbound': '资产入库',
+  'equipment_transfer': '资产调拨',
+  'equipment_repair': '设备维修',
+  'purchase_price_approval': '采购审批',
+};
+
+export const getFlowName = (code: string, fallback: string): string => {
+  return FLOW_NAME_MAP[code] || FLOW_NAME_MAP[code?.replace(/-/g, '_')] || fallback || code;
+};
+
 /**
  * 流程类型配置：图标、颜色、翻译标签
  */

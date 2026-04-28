@@ -152,7 +152,7 @@ export class ReportsService {
   }
 
   async addAttachment(reportId: bigint, fileName: string, filePath: string) {
-    const fileUrlPrefix = this.configService.get<string>('FILE_URL_PREFIX', 'http://localhost:3000/api/files');
+    const fileUrlPrefix = this.configService.get<string>('FILE_URL_PREFIX') || 'http://localhost:3000/api/files';
     const fileUrl = `${fileUrlPrefix}/reports/${filePath}`;
 
     const attachment = await this.prisma.projectReportAttachment.create({
@@ -196,7 +196,7 @@ export class ReportsService {
     if (!attachment) throw new NotFoundException('Attachment not found');
 
     // Extract file path from URL
-    const fileUrlPrefix = this.configService.get<string>('FILE_URL_PREFIX', 'http://localhost:3000/api/files');
+    const fileUrlPrefix = this.configService.get<string>('FILE_URL_PREFIX') || 'http://localhost:3000/api/files';
     const relativePath = attachment.fileUrl.replace(fileUrlPrefix, '');
     const uploadPath = this.configService.get<string>('UPLOAD_PATH', './uploads');
     const fullPath = join(process.cwd(), uploadPath, relativePath);

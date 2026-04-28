@@ -19,6 +19,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../utils/apiClient';
 import { cn } from '../../utils/cn';
+import { getFlowName } from '../../constants/workflowConstants';
 import ProcessInitiator from './components/ProcessInitiator';
 
 type HubType = 'initiate' | 'todo' | 'done' | 'own' | 'draft' | 'cc';
@@ -271,7 +272,7 @@ const ApprovalCenterPage: React.FC = () => {
                               </div>
                               <div>
                                 <div className="flex items-center gap-2.5 mb-1">
-                                  <h3 className="text-sm font-bold text-slate-800">{item.process_title}</h3>
+                                  <h3 className="text-sm font-bold text-slate-800">{getFlowName(item.process_type_code || item.process_type, item.process_title)}</h3>
                                   <span className={cn("px-2 py-0.5 rounded text-[10px] font-semibold uppercase", getStatusColor(item.status))}>
                                     {item.node_name || getLocalizedStatus(item.status)}
                                   </span>

@@ -43,8 +43,8 @@ export class UploadController {
   async upload(@UploadedFile() file: Express.Multer.File) {
     if (!file) throw new BadRequestException('请选择文件');
     const originalName = recoverUtf8FromLatin1(file.originalname);
-    const baseUrl = this.configService.get<string>('BASE_URL') || 'http://localhost:8080';
-    const fileUrl = `${baseUrl}/api/files/${file.filename}`;
+    const fileUrlPrefix = this.configService.get<string>('FILE_URL_PREFIX') || 'http://localhost:3000/api/files';
+    const fileUrl = `${fileUrlPrefix}/${file.filename}`;
     return { url: fileUrl, fileUrl, fileName: originalName, fileSize: file.size };
   }
 }

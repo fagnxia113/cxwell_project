@@ -21,6 +21,10 @@
   },
   "list_title": "Projects",
   "list_subtitle": "Project lifecycle management & monitoring",
+  "empty": {
+    "title": "No projects",
+    "desc": "There are no projects currently. Please create a new project."
+  },
   "loading": "Loading projects...",
   "action": {
     "initiate": "Initiate Project",

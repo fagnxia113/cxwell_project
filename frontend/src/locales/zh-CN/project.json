@@ -28,6 +28,10 @@
   "active_project": "活跃项目",
   "list_title": "项目概览",
   "list_subtitle": "项目全生命周期管理与进度监控",
+  "empty": {
+    "title": "暂无项目",
+    "desc": "当前没有项目数据，请先创建项目。"
+  },
   "loading": "正在加载项目...",
   "loading_error": "项目加载失败",
   "action": {

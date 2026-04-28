@@ -317,8 +317,27 @@ async function main() {
     category: 'project',
     formSchema: [
       { name: 'projectName', label: '项目名称', type: 'text', required: true, group: '基本信息' },
-      { name: 'managerId', label: '项目经理', type: 'select', required: true, dynamicOptions: 'employee', group: '基本信息' },
+      { name: 'projectType', label: '项目类型', type: 'select', required: true, options: [{ label: '国内项目', value: 'domestic' }, { label: '海外项目', value: 'overseas' }], group: '基本信息' },
+      { name: 'country', label: '国家/地区', type: 'text', required: false, group: '基本信息' },
+      { name: 'address', label: '项目地址', type: 'text', required: false, group: '基本信息' },
+      
+      { name: 'managerId', label: '项目经理', type: 'select', required: true, dynamicOptions: 'employee', group: '管理信息' },
+      { name: 'customerId', label: '关联客户', type: 'select', required: false, dynamicOptions: 'customer', group: '管理信息' },
+      { name: 'startDate', label: '计划开工日期', type: 'date', required: true, group: '管理信息' },
+      { name: 'endDate', label: '计划完工日期', type: 'date', required: false, group: '管理信息' },
+      
       { name: 'budget', label: '预算金额(万元)', type: 'number', required: false, group: '商务信息' },
+      { name: 'buildingArea', label: '建筑面积(㎡)', type: 'number', required: false, group: '规模信息' },
+      { name: 'itCapacity', label: 'IT容量(kW)', type: 'number', required: false, group: '规模信息' },
+      { name: 'cabinetCount', label: '机柜数量', type: 'number', required: false, group: '规模信息' },
+      { name: 'cabinetPower', label: '机柜功率(kW)', type: 'number', required: false, group: '规模信息' },
+      
+      { name: 'powerArchitecture', label: '供电架构', type: 'textarea', required: false, group: '技术架构' },
+      { name: 'hvacArchitecture', label: '暖通架构', type: 'textarea', required: false, group: '技术架构' },
+      { name: 'fireArchitecture', label: '消防架构', type: 'textarea', required: false, group: '技术架构' },
+      { name: 'weakElectricArchitecture', label: '弱电架构', type: 'textarea', required: false, group: '技术架构' },
+      
+      { name: 'description', label: '项目描述', type: 'textarea', required: false, group: '其他' },
     ],
     nodes: [
       { id: 3001n, type: 0, code: 'start', name: '提交申请', coord: { x: 250, y: 50 } },
@@ -361,9 +380,12 @@ async function main() {
     flowName: '请假审批流',
     category: 'general',
     formSchema: [
-      { name: 'leaveType', label: '请假类型', type: 'select', required: true, options: [{ label: '年假', value: 'annual' }, { label: '病假', value: 'sick' }, { label: '事假', value: 'personal' }] },
-      { name: 'days', label: '请假天数', type: 'number', required: true },
-      { name: 'reason', label: '原因', type: 'textarea', required: true },
+      { name: 'employeeName', label: '请假人', type: 'text', required: true, group: '基本信息' },
+      { name: 'leaveType', label: '请假类型', type: 'select', required: true, options: [{ label: '年假', value: 'annual' }, { label: '病假', value: 'sick' }, { label: '事假', value: 'personal' }, { label: '调休', value: 'off' }], group: '申请详情' },
+      { name: 'startDate', label: '开始时间', type: 'date', required: true, group: '申请详情' },
+      { name: 'endDate', label: '结束时间', type: 'date', required: true, group: '申请详情' },
+      { name: 'days', label: '合计天数', type: 'number', required: true, group: '申请详情' },
+      { name: 'reason', label: '请假事由', type: 'textarea', required: true, group: '申请详情' },
     ],
     nodes: [
       { id: 7001n, type: 0, code: 'start', name: '发起', coord: { x: 250, y: 50 } },
@@ -383,9 +405,12 @@ async function main() {
     flowName: '费用报销审批流',
     category: 'finance',
     formSchema: [
-      { name: 'amount', label: '报销金额', type: 'number', required: true },
-      { name: 'category', label: '费用类别', type: 'select', required: true, options: [{ label: '差旅费', value: 'travel' }, { label: '办公费', value: 'office' }, { label: '招待费', value: 'entertainment' }] },
-      { name: 'desc', label: '事由说明', type: 'textarea', required: true },
+      { name: 'projectId', label: '关联项目', type: 'select', required: false, dynamicOptions: 'project', group: '基本信息' },
+      { name: 'category', label: '费用类别', type: 'select', required: true, options: [{ label: '差旅费', value: 'travel' }, { label: '办公费', value: 'office' }, { label: '招待费', value: 'entertainment' }, { label: '其他', value: 'other' }], group: '基本信息' },
+      { name: 'amount', label: '报销总金额', type: 'number', required: true, group: '金额详情' },
+      { name: 'expenseDate', label: '发生日期', type: 'date', required: false, group: '金额详情' },
+      { name: 'reason', label: '报销事由', type: 'textarea', required: true, group: '金额详情' },
+      { name: 'items', label: '报销明细', type: 'subform', required: false, group: '报销明细' },
     ],
     nodes: [
       { id: 9201n, type: 0, code: 'start', name: '发起报销', coord: { x: 250, y: 50 } },

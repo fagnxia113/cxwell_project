@@ -19,6 +19,7 @@ import { useMessage } from '../../hooks/useMessage';
 import { useConfirm } from '../../hooks/useConfirm';
 import { workflowApi } from '../../api/workflowApi';
 import { cn } from '../../utils/cn';
+import { getFlowName } from '../../constants/workflowConstants';
 
 interface WorkflowDefinition {
   id: string;
@@ -85,7 +86,7 @@ export default function WorkflowDefinitionListPage() {
         const adaptedData = (res.data || []).map((def: any) => ({
           ...def,
           key: def.flowCode,
-          name: def.flowName,
+          name: getFlowName(def.flowCode, def.flowName),
           status: def.isPublish === 1 ? 'active' : 'draft',
           category: (def.category || 'general').toLowerCase(),
           updateTime: def.updateTime || def.createTime
@@ -209,7 +210,7 @@ export default function WorkflowDefinitionListPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05 }}
                 className="p-5 bg-white border border-slate-100 rounded-xl hover:shadow-md hover:border-indigo-100 transition-all cursor-pointer group flex flex-col justify-between"
-                onClick={() => navigate(`/workflow/definitions/${def.id}`)}
+                onClick={() => navigate(`/workflow/designer/${def.id}`)}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-4">

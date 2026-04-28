@@ -20,6 +20,7 @@ import {
 import { workflowApi } from '../../api/workflowApi'
 import { useMessage } from '../../hooks/useMessage'
 import { cn } from '../../utils/cn'
+import { getFlowName } from '../../constants/workflowConstants'
 
 interface DoneTask {
   id: string
@@ -145,7 +146,7 @@ export default function ApprovalCompletedPage() {
                              <FileText size={16} />
                           </div>
                           <div>
-                            <div className="text-sm font-black text-slate-900 uppercase tracking-tight">{task.process_title}</div>
+                            <div className="text-sm font-black text-slate-900 uppercase tracking-tight">{getFlowName(task.process_type, task.process_title)}</div>
                             <div className="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-widest font-mono">ID: {task.process_id.substring(0,8)}</div>
                           </div>
                        </div>

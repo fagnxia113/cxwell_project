@@ -194,7 +194,6 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onUpdate, onDel
             <option value="reportTo_manager">直属上级</option>
             <option value="reportTo_deptLeader">部门负责人</option>
             <option value="reportTo_n2">上2级上级</option>
-            <option value="department_manager">部门负责人(旧)</option>
             <option value="project_manager">项目经理</option>
             <option value="initiator">发起人</option>
             <option value="form_field">表单字段</option>
@@ -212,12 +211,13 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onUpdate, onDel
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
             >
               <option value="">{t('common.select')}</option>
-              <option value="admin">{t('user_management.role.admin')}</option>
-              <option value="project_manager">{t('user_management.role.project_manager')}</option>
-              <option value="hr_manager">{t('user_management.role.hr_manager')}</option>
-              <option value="equipment_manager">{t('user_management.role.equipment_manager')}</option>
-              <option value="finance_manager">{t('user_management.role.finance_manager') || '财务经理'}</option>
-              <option value="general_manager">{t('user_management.role.general_manager') || '总经理'}</option>
+              <option value="admin">超级管理员</option>
+              <option value="general_manager">总经理</option>
+              <option value="hr">人事主管</option>
+              <option value="pm">项目经理</option>
+              <option value="finance">财务主管</option>
+              <option value="dept_manager">部门经理</option>
+              <option value="epy">员工</option>
             </select>
           </div>
         )}

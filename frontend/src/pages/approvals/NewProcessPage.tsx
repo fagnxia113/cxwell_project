@@ -5,9 +5,11 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { Plus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import ProcessInitiator from './components/ProcessInitiator'
 
 export default function NewProcessPage() {
+  const { t } = useTranslation()
   return (
     <div className="min-h-screen bg-mesh p-4 lg:p-6 space-y-6 animate-fade-in custom-scrollbar">
       {/* Visual Header */}

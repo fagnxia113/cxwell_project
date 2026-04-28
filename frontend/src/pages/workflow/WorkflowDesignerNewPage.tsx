@@ -98,7 +98,6 @@ export default function WorkflowDesignerNewPage() {
             if (subType.match(/^n\d+$/)) return { type: `reportTo_${subType}`, value: flag }
             return { type: 'reportTo_manager', value: flag }
           }
-          if (flag.startsWith('dept:')) return { type: 'department_manager', value: flag }
           return { type: 'user', value: flag }
         }
 
@@ -192,7 +191,6 @@ export default function WorkflowDesignerNewPage() {
             if (source.type === 'reportTo_manager') return 'reportTo:manager'
             if (source.type === 'reportTo_deptLeader') return 'reportTo:deptLeader'
             if (source.type === 'reportTo_n2') return 'reportTo:n2'
-            if (source.type === 'department_manager') return 'reportTo:deptLeader'
             if (source.type === 'project_manager') return 'project:manager'
             if (source.type === 'initiator') return 'initiator:self'
             return source.value || ''

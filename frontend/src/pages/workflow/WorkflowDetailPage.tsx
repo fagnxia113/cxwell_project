@@ -25,6 +25,7 @@ import { usePermission } from '../../contexts/PermissionContext'
 import { WorkflowHeader } from '../../components/workflow/detail/WorkflowHeader'
 import { ApprovalActionPanel } from '../../components/workflow/detail/ApprovalActionPanel'
 import { WorkflowTabsContent } from '../../components/workflow/detail/WorkflowTabsContent'
+import { getFlowName } from '../../constants/workflowConstants'
 
 export default function WorkflowDetailPage() {
   const { t, i18n } = useTranslation()
@@ -152,7 +153,7 @@ export default function WorkflowDetailPage() {
   const documentNo = activeFormData?._documentNo || instance.business_id || instance.id?.substring(0, 8).toUpperCase() || '-'
   const applyDate = activeFormData?._applyDate ? formatLocalDateTime(activeFormData._applyDate) : formatLocalDateTime(instance.start_time)
   const applicantName = activeFormData?._applicant ? (masterData.users[activeFormData._applicant] || activeFormData._applicant) : instance.initiator_name
-  const processTitle = activeFormData?._title || activeFormData?.title || instance.title || definition?.flowName || (instance.definition_key ? `${instance.definition_key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}` : '')
+  const processTitle = activeFormData?._title || activeFormData?.title || instance.title || getFlowName(instance.definition_key || definition?.flowCode || '', definition?.flowName || '')
 
   const primaryActions = [
     { type: 'approve', label: t('workflow.action.approve'), icon: <CheckCircle className="w-4 h-4" />, className: 'bg-emerald-600 shadow-emerald-200', perm: 'workflow:approve' },

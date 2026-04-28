@@ -49,16 +49,24 @@ const GROUP_KEY_MAP: Record<string, string> = {
   '商务信息': 'business_info',
   '业务详情': 'business_info',
   '项目信息': 'project_info',
+  '管理信息': 'project_info',
+  '规模信息': 'project_scale',
   '项目规模': 'project_scale',
   '技术架构': 'tech_arch',
   '阶段规划': 'phase_plan',
   '职位信息': 'job_info',
   '入职岗位信息': 'job_info',
+  '岗位信息': 'job_info',
+  '教育信息': 'education_info',
+  '申请详情': 'basic_info',
+  '金额详情': 'business_info',
+  '报销明细': 'business_info',
   '调动信息': 'transfer_info',
   '请假信息': 'leave_info',
   '学历与教育': 'education_info',
   '补充材料': 'other_info',
-  '其他信息': 'other_info'
+  '其他信息': 'other_info',
+  '其他': 'other_info'
 }
 
 const GROUP_ICONS: Record<string, any> = {
@@ -72,7 +80,8 @@ const GROUP_ICONS: Record<string, any> = {
   'transfer_info': User,
   'leave_info': Calendar,
   'education_info': GraduationCap,
-  'other_info': Info
+  'other_info': Info,
+  'expense_items': Package
 }
 
 const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({

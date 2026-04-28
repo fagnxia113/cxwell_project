@@ -126,6 +126,31 @@
   "hint": {
     "auto_generate": "提交后自动生成"
   },
+  "approval_method": "审批方式",
+  "approval_role": "审批角色",
+  "approver_source": "审批人来源",
+  "approval_mode": {
+    "or_sign": "或签",
+    "or_sign_desc": "任一人通过即可",
+    "and_sign": "会签",
+    "and_sign_desc": "所有人通过才可",
+    "sequential": "依次审批",
+    "sequential_desc": "按顺序逐人审批",
+    "vote": "投票",
+    "vote_desc": "达到阈值即通过"
+  },
+  "vote_threshold": "通过阈值",
+  "vote_threshold_hint": "需要同意的最少人数",
+  "approver_source_type_role": "角色",
+  "approver_source_type_user": "指定人员",
+  "approver_source_type_reportTo_manager": "直属上级",
+  "approver_source_type_reportTo_deptLeader": "部门负责人",
+  "approver_source_type_reportTo_n2": "上2级上级",
+  "approver_source_type_department_manager": "部门负责人(旧)",
+  "approver_source_type_project_manager": "项目经理",
+  "approver_source_type_initiator": "发起人",
+  "approver_source_type_form_field": "表单字段",
+  "approver_source_type_expression": "表达式",
   "prediction": {
     "title": "路径预测",
     "hint": "基于当前业务数据自动计算，实际路径可能因人工决策改变",
@@ -151,12 +176,13 @@
     "definitions": {
       "employee-onboard": "员工入职",
       "employee_onboarding": "员工入职",
-      "employee-resignation": "员工离职",
+      "employee_resignation": "离职审批",
       "expense_reimbursement": "报销申请",
       "project_completion": "项目结项",
       "project_approval": "项目立项",
-      "leave-approval": "请假申请",
+      "leave_approval": "请假审批",
       "travel_request": "出差申请",
+      "flight_booking": "机票预订",
       "general": "通用业务"
     }
   },

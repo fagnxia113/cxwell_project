@@ -21,6 +21,7 @@ import {
 import { workflowApi } from '../../api/workflowApi'
 import { useMessage } from '../../hooks/useMessage'
 import { cn } from '../../utils/cn'
+import { getFlowName } from '../../constants/workflowConstants'
 
 interface ApprovalTask {
   id: string
@@ -221,7 +222,7 @@ export default function ApprovalPendingPage() {
                             <Icon size={18} />
                           </div>
                           <div>
-                            <div className="text-sm font-black text-slate-900 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{task.process_title}</div>
+                            <div className="text-sm font-black text-slate-900 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{getFlowName(task.process_type, task.process_title)}</div>
                             <div className="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-widest">{category.label} · {formatDate(task.created_at)}</div>
                           </div>
                         </div>

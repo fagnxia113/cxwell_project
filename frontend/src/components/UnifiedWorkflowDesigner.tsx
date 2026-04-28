@@ -79,6 +79,7 @@ export const UnifiedWorkflowDesigner: React.FC<UnifiedWorkflowDesignerProps> = (
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
   const [variables, setVariables] = useState<WorkflowVariable[]>(initialVariables)
   const [selectedNode, setSelectedNode] = useState<Node | null>(null)
+  const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null)
   const [activePanel, setActivePanel] = useState<'nodes' | 'variables'>('nodes')
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
   const { screenToFlowPosition, setViewport } = useReactFlow()
@@ -101,10 +102,17 @@ export const UnifiedWorkflowDesigner: React.FC<UnifiedWorkflowDesignerProps> = (
 
   const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     setSelectedNode(node)
+    setSelectedEdge(null)
+  }, [])
+
+  const onEdgeClick = useCallback((_event: React.MouseEvent, edge: Edge) => {
+    setSelectedEdge(edge)
+    setSelectedNode(null)
   }, [])
 
   const onPaneClick = useCallback(() => {
     setSelectedNode(null)
+    setSelectedEdge(null)
   }, [])
 
   const getDefaultNodeData = (type: string): WorkflowNodeData => {
@@ -170,6 +178,13 @@ export const UnifiedWorkflowDesigner: React.FC<UnifiedWorkflowDesignerProps> = (
       setSelectedNode(null)
     }
   }, [selectedNode, setNodes, setEdges])
+
+  const deleteSelectedEdge = useCallback(() => {
+    if (selectedEdge) {
+      setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id))
+      setSelectedEdge(null)
+    }
+  }, [selectedEdge, setEdges])
 
   const onAutoLayout = useCallback(() => {
     const nodeWidth = 200;
@@ -547,16 +562,24 @@ export const UnifiedWorkflowDesigner: React.FC<UnifiedWorkflowDesignerProps> = (
               <ReactFlow
                 ref={reactFlowWrapper}
                 nodes={nodes}
-                edges={edges}
+                edges={edges.map(e => ({
+                  ...e,
+                  style: selectedEdge?.id === e.id
+                    ? { stroke: '#ef4444', strokeWidth: 3 }
+                    : { stroke: '#3b82f6', strokeWidth: 2 },
+                  animated: selectedEdge?.id === e.id ? false : true
+                }))}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
                 onNodeClick={onNodeClick}
+                onEdgeClick={onEdgeClick}
                 onPaneClick={onPaneClick}
                 onDragOver={onDragOver}
                 onDrop={onDrop}
                 nodeTypes={defaultNodeTypes}
                 edgeTypes={defaultEdgeTypes}
+                deleteKeyCode="Delete"
                 fitView
                 attributionPosition="bottom-left"
               >
@@ -574,6 +597,39 @@ export const UnifiedWorkflowDesigner: React.FC<UnifiedWorkflowDesignerProps> = (
                   onDelete={deleteSelectedNode}
                   readOnly={readOnly}
                 />
+              </div>
+            ) : selectedEdge ? (
+              <div className="w-80 bg-white border-l border-gray-200 flex flex-col flex-shrink-0 shadow-xl z-20">
+                <div className="p-6 border-b border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">连线信息</h3>
+                    <button
+                      onClick={deleteSelectedEdge}
+                      disabled={readOnly}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition-all disabled:opacity-50"
+                    >
+                      <Trash className="w-3.5 h-3.5" />
+                      删除连线
+                    </button>
+                  </div>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">连线ID</label>
+                    <p className="text-sm text-gray-700 font-medium break-all">{selectedEdge.id}</p>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">起始节点</label>
+                    <p className="text-sm text-gray-700 font-medium">{nodes.find(n => n.id === selectedEdge.source)?.data?.label || selectedEdge.source}</p>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">目标节点</label>
+                    <p className="text-sm text-gray-700 font-medium">{nodes.find(n => n.id === selectedEdge.target)?.data?.label || selectedEdge.target}</p>
+                  </div>
+                  <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg">
+                    <p className="text-[11px] text-amber-700 font-medium">点击"删除连线"按钮或选中连线后按 Delete 键可删除此连线</p>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="w-80 bg-white border-l border-gray-200 flex flex-col flex-shrink-0 p-8 items-center justify-center text-center">

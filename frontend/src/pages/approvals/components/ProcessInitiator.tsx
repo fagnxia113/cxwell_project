@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { workflowApi } from '../../../api/workflowApi'
 import { cn } from '../../../utils/cn'
+import { getFlowName } from '../../../constants/workflowConstants'
 
 interface ProcessPreset {
   id: string
@@ -79,7 +80,7 @@ const ProcessInitiator: React.FC = () => {
         const published = (res.data || []).filter((d: any) => d.isPublish === 1).map((d: any) => ({
           id: d.id.toString(),
           key: d.flowCode,
-          name: d.flowName,
+          name: getFlowName(d.flowCode, d.flowName),
           version: parseFloat(d.version) || 1,
           category: (d.category || 'general').toLowerCase(),
           status: 'active' as const

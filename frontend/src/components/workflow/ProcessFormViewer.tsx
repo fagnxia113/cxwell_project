@@ -18,17 +18,26 @@ export default function ProcessFormViewer({ instance, formFields, dynamicOptions
   // 业务分组配置
   const FORM_GROUP_CONFIG: Record<string, { title: string; fields: string[]; icon?: any }[]> = {
     'project-approval': [
-      { title: t('workflow.form_groups.basic_info'), fields: ['code', 'name', 'type', 'status'], icon: FileText },
-      { title: t('workflow.form_groups.project_info'), fields: ['country', 'province', 'city', 'address', 'start_date', 'end_date'], icon: Calendar },
-      { title: t('workflow.form_groups.project_manager'), fields: ['manager_id', 'technical_lead_id'], icon: User },
-      { title: t('workflow.form_groups.project_scale'), fields: ['building_area', 'it_capacity', 'cabinet_count', 'cabinet_power'], icon: Zap },
-      { title: t('workflow.form_groups.technical_arch'), fields: ['power_architecture', 'hvac_architecture', 'fire_architecture', 'weak_electric_architecture'], icon: Database },
-      { title: t('workflow.form_groups.business_info'), fields: ['customer_id', 'end_customer', 'budget', 'description'], icon: FileText }
+      { title: t('workflow.form_groups.basic_info'), fields: ['projectCode', 'projectName', 'projectType', 'status'], icon: FileText },
+      { title: t('workflow.form_groups.project_info'), fields: ['country', 'province', 'city', 'address', 'startDate', 'endDate'], icon: Calendar },
+      { title: t('workflow.form_groups.project_manager'), fields: ['managerId', 'technicalLeadId'], icon: User },
+      { title: t('workflow.form_groups.project_scale'), fields: ['buildingArea', 'itCapacity', 'cabinetCount', 'cabinetPower'], icon: Zap },
+      { title: t('workflow.form_groups.technical_arch'), fields: ['powerArchitecture', 'hvacArchitecture', 'fireArchitecture', 'weakElectricArchitecture'], icon: Database },
+      { title: t('workflow.form_groups.business_info'), fields: ['customerId', 'endCustomer', 'budget', 'description'], icon: FileText }
     ],
     'employee-onboard': [
-      { title: t('workflow.form_groups.basic_info'), fields: ['employee_name', 'employee_id', 'gender', 'phone', 'email'], icon: User },
-      { title: t('workflow.form_groups.job_info'), fields: ['department_id', 'position_id', 'employee_type', 'start_date'], icon: FileText },
-      { title: t('workflow.form_groups.other_info'), fields: ['salary', 'notes'], icon: FileText }
+      { title: t('workflow.form_groups.basic_info'), fields: ['employeeName', 'gender', 'countryCode', 'phone', 'email'], icon: User },
+      { title: t('workflow.form_groups.job_info'), fields: ['departmentId', 'position', 'entryDate'], icon: FileText },
+      { title: t('workflow.form_groups.other_info'), fields: ['education', 'graduationSchool'], icon: FileText }
+    ],
+    'leave-approval': [
+      { title: t('workflow.form_groups.basic_info'), fields: ['employeeName', 'leaveType'], icon: User },
+      { title: t('workflow.form_groups.leave_info'), fields: ['startDate', 'endDate', 'days', 'reason'], icon: Calendar }
+    ],
+    'expense-reimbursement': [
+      { title: t('workflow.form_groups.basic_info'), fields: ['projectId', 'category'], icon: FileText },
+      { title: t('workflow.form_groups.expense_info'), fields: ['amount', 'expenseDate', 'reason'], icon: DollarSign },
+      { title: t('workflow.form_groups.expense_items'), fields: ['items'], icon: Package }
     ],
     'equipment-transfer': [
       { title: t('workflow.form_groups.transfer_info'), fields: ['fromLocationType', 'toLocationType', 'transferReason', 'estimatedArrivalDate'], icon: FileText },
