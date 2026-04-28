@@ -84,7 +84,8 @@
     "start_date": "Start Date",
     "end_date": "End Date",
     "code": "Project Code",
-    "name": "Name"
+    "name": "Name",
+    "milestone_prefix": "Milestone Prefix"
   },
   "placeholder": {
     "search": "Search project name, code or country...",

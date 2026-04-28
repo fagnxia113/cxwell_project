@@ -83,7 +83,9 @@
     "country_pending": "国家待定",
     "start_date": "计划开始",
     "end_date": "计划结束",
-    "code": "项目编号"
+    "code": "项目编号",
+    "name": "名称",
+    "milestone_prefix": "里程碑前缀"
   },
   "placeholder": {
     "search": "搜索项目名称、编号或国家...",
@@ -98,6 +100,8 @@
     "specs": "技术参数"
   },
   "milestone": {
+    "title": "里程碑",
+    "add": "新增里程碑",
     "completed_count": "已完成里程碑",
     "total_weight": "总权重",
     "weight_must_be_100": "顶层里程碑的总权重必须为 100%",
