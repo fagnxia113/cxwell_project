@@ -213,13 +213,13 @@ async function main() {
 
   // 5. 菜单体系
   const menus = [
-    { id: 1n, name: '工作台', url: '/dashboard', type: 'C', icon: 'DashboardOutlined', parentId: 0n },
-    { id: 2n, name: '项目管理', url: '/projects', type: 'C', icon: 'ProjectOutlined', parentId: 0n },
-    { id: 3n, name: '工作流中心', url: '/approvals', type: 'M', icon: 'ApartmentOutlined', parentId: 0n },
-    { id: 4n, name: '人员管理', url: '/personnel', type: 'M', icon: 'TeamOutlined', parentId: 0n },
-    { id: 6n, name: '系统管理', url: '/admin', type: 'M', icon: 'SettingOutlined', parentId: 0n },
-    { id: 7n, name: '知识库', url: '/knowledge', type: 'C', icon: 'BookOutlined', parentId: 0n },
-    { id: 8n, name: '组织架构', url: '/organization', type: 'M', icon: 'ClusterOutlined', parentId: 0n },
+    { id: 1n, name: '工作台', url: '/dashboard', type: 'C', icon: 'DashboardOutlined', parentId: 0n, perms: 'menu:dashboard' },
+    { id: 2n, name: '项目管理', url: '/projects', type: 'C', icon: 'ProjectOutlined', parentId: 0n, perms: 'menu:project' },
+    { id: 3n, name: '工作流中心', url: '/approvals', type: 'M', icon: 'ApartmentOutlined', parentId: 0n, perms: 'menu:workflow' },
+    { id: 4n, name: '人员管理', url: '/personnel', type: 'M', icon: 'TeamOutlined', parentId: 0n, perms: 'menu:personnel' },
+    { id: 6n, name: '系统管理', url: '/admin', type: 'M', icon: 'SettingOutlined', parentId: 0n, perms: 'menu:admin' },
+    { id: 7n, name: '知识库', url: '/knowledge', type: 'C', icon: 'BookOutlined', parentId: 0n, perms: 'menu:knowledge' },
+    { id: 8n, name: '组织架构', url: '/organization', type: 'M', icon: 'ClusterOutlined', parentId: 0n, perms: 'menu:organization' },
     
     // 子菜单 - 工作流中心
     { id: 100n, name: '发起流程', url: '/approvals/new', type: 'C', parentId: 3n, perms: 'workflow:create' },
@@ -227,10 +227,10 @@ async function main() {
     
     // 子菜单 - 人员管理
     { id: 401n, name: '员工列表', url: '/personnel', type: 'C', parentId: 4n },
-    { id: 402n, name: '人员调动', url: '/personnel/transfer', type: 'C', parentId: 4n },
-    { id: 403n, name: '汇报关系', url: '/personnel/report-relation', type: 'C', parentId: 4n },
-    { id: 404n, name: '考勤管理', url: '/personnel/attendance', type: 'C', parentId: 4n },
-    { id: 405n, name: '出勤计划', url: '/personnel/rotation-report', type: 'C', parentId: 4n },
+    { id: 403n, name: '汇报关系', url: '/personnel/report-relation', type: 'C', parentId: 4n, perms: 'personnel:report-relation:view' },
+    { id: 404n, name: '考勤管理', url: '/personnel/attendance', type: 'C', parentId: 4n, perms: 'personnel:attendance:view' },
+    { id: 405n, name: '出勤计划', url: '/personnel/rotation-report', type: 'C', parentId: 4n, perms: 'personnel:rotation:view' },
+    { id: 406n, name: '员工档案详情', url: '/personnel/detail', type: 'C', parentId: 4n, perms: 'personnel:detail:view' },
     
     // 子菜单 - 组织架构
     { id: 801n, name: '部门管理', url: '/organization/departments', type: 'C', parentId: 8n },

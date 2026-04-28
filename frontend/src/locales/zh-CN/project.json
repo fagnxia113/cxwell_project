@@ -280,7 +280,7 @@
     "actual_attendance": "实际出勤",
     "member": "成员",
     "members": "团队成员",
-    "scheduled_attendance": "已排班",
+    "scheduled_attendance": "预计出勤",
     "on_duty_current": "本项目工作中",
     "on_duty_other": "其他项目工作中",
     "home_rest": "回国休假",
@@ -313,5 +313,14 @@
       "material": "材料费",
       "other": "其他"
     }
+  },
+  "attendance": {
+    "clocked_in": "已打卡",
+    "not_clocked_in": "未打卡",
+    "config": "配置",
+    "dingtalk_config": "钉钉考勤配置",
+    "dingtalk_group_id": "考勤组ID",
+    "dingtalk_group_name": "考勤组名称",
+    "save_config": "保存配置"
   }
 }

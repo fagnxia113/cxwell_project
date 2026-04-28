@@ -118,5 +118,6 @@
     "philippines": "Philippines",
     "japan": "Japan",
     "usa": "USA"
-  }
+  },
+  "attendance_config_tip": "Please create an attendance group in DingTalk backend first, then enter the ID below."
 }

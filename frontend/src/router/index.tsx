@@ -13,7 +13,6 @@ const TaskBoardPage = lazy(() => import('../pages/tasks/TaskBoardPage'))
 // 人员
 const PersonnelListPage = lazy(() => import('../pages/personnel/PersonnelListPage'))
 const EmployeeDetailPage = lazy(() => import('../pages/personnel/EmployeeDetailPage'))
-const PersonnelTransferPage = lazy(() => import('../pages/personnel/PersonnelTransferPage'))
 const AttendanceBoardPage = lazy(() => import('../pages/personnel/AttendanceBoardPage'))
 const EmployeeMonthlyReportPage = lazy(() => import('../pages/personnel/EmployeeMonthlyReportPage'))
 const ReportRelationPage = lazy(() => import('../pages/personnel/ReportRelationPage'))
@@ -70,7 +69,6 @@ export const routes: RouteObject[] = [
         path: '/personnel',
         children: [
             { path: '', element: <PersonnelListPage /> },
-            { path: 'transfer', element: <PersonnelTransferPage /> },
             { path: 'attendance', element: <AttendanceBoardPage /> },
             { path: 'report-relation', element: <ReportRelationPage /> },
             { path: 'rotation-report', element: <EmployeeMonthlyReportPage /> },

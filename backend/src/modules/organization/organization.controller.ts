@@ -128,8 +128,8 @@ export class OrganizationController {
   }
 
   @Get('employee/:id')
-  async getEmployeeById(@Param('id') id: string) {
-    const data = await this.organizationService.getEmployeeById(id);
+  async getEmployeeById(@Param('id') id: string, @Req() req: any) {
+    const data = await this.organizationService.getEmployeeById(id, req.user);
     return {
       success: true,
       data,

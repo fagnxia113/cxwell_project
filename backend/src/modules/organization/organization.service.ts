@@ -350,12 +350,18 @@ export class OrganizationService {
   /**
    * 获取职员详情
    */
-  async getEmployeeById(id: string) {
+  async getEmployeeById(id: string, user?: any) {
     const item = await this.prisma.sysEmployee.findUnique({
       where: { employeeId: BigInt(id) }
     }) as any;
 
     if (!item) return null;
+
+    const userPermissions = user?.permissions || [];
+    const canViewDetail = userPermissions.includes('*') || userPermissions.includes('personnel:detail:view');
+    const isAdmin = user?.role === 'admin' || user?.roleKey === 'admin';
+    const userId = user?.sub || user?.userId;
+    const isOwnRecord = userId && item.userId?.toString() === userId.toString();
 
     let departmentName: string | null = null;
     if (item.deptId) {
@@ -365,10 +371,19 @@ export class OrganizationService {
       departmentName = dept?.deptName || null;
     }
 
-    return {
+    const baseInfo = {
       employeeId: item.employeeId.toString(),
-      employeeNo: item.employeeNo,
       name: item.name,
+      avatarColor: item.avatarColor,
+    };
+
+    if (!canViewDetail && !isAdmin && !isOwnRecord) {
+      return baseInfo;
+    }
+
+    return {
+      ...baseInfo,
+      employeeNo: item.employeeNo,
       gender: item.gender,
       phone: item.phone,
       phoneCountryCode: item.phoneCountryCode,
@@ -384,7 +399,6 @@ export class OrganizationService {
       currentStatus: 'on_duty',
       hireDate: item.hireDate,
       leaveDate: item.leaveDate,
-      avatarColor: item.avatarColor,
       createTime: item.createTime,
       updateTime: item.updateTime,
       education: item.education,

@@ -236,14 +236,6 @@ export default function TeamTab({
           <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
             <Users size={18} className="text-emerald-500" /> {t('project.tabs.team')}
           </h3>
-          <button 
-            onClick={handleSyncAttendance}
-            disabled={syncing}
-            className="flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black border border-emerald-100 hover:bg-emerald-100 transition-all disabled:opacity-50"
-          >
-            {syncing ? <Loader2 size={12} className="animate-spin" /> : <Users size={12} />} 
-            {t('personnel.action.sync_attendance')}
-          </button>
           
           <button
             onClick={() => {

@@ -118,5 +118,6 @@
     "philippines": "菲律宾",
     "japan": "日本",
     "usa": "美国"
-  }
+  },
+  "attendance_config_tip": "请先在钉钉后台创建考勤组，然后在下方输入考勤组ID。"
 }

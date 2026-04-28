@@ -275,7 +275,7 @@
     "actual_attendance": "Actual Attendance",
     "member": "Member",
     "members": "Team Members",
-    "scheduled_attendance": "Scheduled",
+    "scheduled_attendance": "Expected Attendance",
     "on_duty_current": "Working on This Project",
     "on_duty_other": "Working on Other Projects",
     "home_rest": "Home Leave",
@@ -308,5 +308,14 @@
       "material": "Materials",
       "other": "Other"
     }
+  },
+  "attendance": {
+    "clocked_in": "Clocked In",
+    "not_clocked_in": "Not Clocked In",
+    "config": "Config",
+    "dingtalk_config": "DingTalk Attendance Config",
+    "dingtalk_group_id": "Attendance Group ID",
+    "dingtalk_group_name": "Attendance Group Name",
+    "save_config": "Save Config"
   }
 }
