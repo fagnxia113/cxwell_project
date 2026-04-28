@@ -121,7 +121,7 @@ export class ProjectService {
   /**
    * 获取项目详情
    */
-  async getProjectDetail(id: bigint) {
+  async getProjectDetail(id: bigint, user?: any) {
     const project = await this.prisma.project.findUnique({
       where: { projectId: id },
       include: {
@@ -163,7 +163,41 @@ export class ProjectService {
       managerName = manager?.name ?? null;
     }
 
-    return this.mapProject({ ...project, _managerName: managerName, _actualExpense: actualExpense });
+    // 计算当前用户的项目角色
+    let isProjectManager = false;
+    let isProjectMember = false;
+    let currentUserEmployeeId: string | null = null;
+
+    if (user) {
+      const userId = user?.sub || user?.userId;
+      if (userId) {
+        // 获取当前用户的员工记录
+        const employee = await this.prisma.sysEmployee.findFirst({
+          where: { userId: BigInt(userId) }
+        });
+        if (employee) {
+          currentUserEmployeeId = employee.employeeId.toString();
+          // 检查是否是项目经理
+          if (project.managerId && project.managerId.toString() === employee.employeeId.toString()) {
+            isProjectManager = true;
+          }
+          // 检查是否是项目成员
+          const membership = project.members.find(m => m.employeeId.toString() === employee.employeeId.toString());
+          if (membership) {
+            isProjectMember = true;
+          }
+        }
+      }
+    }
+
+    return this.mapProject({
+      ...project,
+      _managerName: managerName,
+      _actualExpense: actualExpense,
+      _isProjectManager: isProjectManager,
+      _isProjectMember: isProjectMember,
+      _currentUserEmployeeId: currentUserEmployeeId
+    });
   }
 
   /**
@@ -408,6 +442,10 @@ export class ProjectService {
       // 前端需要的 manager 和 tech_manager
       manager: project._managerName || null,
       tech_manager: project._managerName || null,
+      // 用户角色信息
+      isProjectManager: project._isProjectManager || false,
+      isProjectMember: project._isProjectMember || false,
+      currentUserEmployeeId: project._currentUserEmployeeId || null,
       members: project.members?.map((m: any) => ({
         ...m,
         id: m.id.toString(),

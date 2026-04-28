@@ -90,8 +90,19 @@ export class TagsService {
     if (!tag) return null;
 
     const role = await this.checkUserProjectRole(tag.projectId, user);
-    if (role !== 'manager') {
-      throw new ForbiddenException('只有项目经理可以编辑标签');
+    if (role === null) {
+      throw new ForbiddenException('您不是该项目成员');
+    }
+
+    // 项目经理可以更新所有字段
+    // 项目成员只能更新进度字段 (taggedCount, verifiedCount, abnormalCount)
+    if (role === 'member') {
+      if (data.tagType !== undefined || data.systemType !== undefined ||
+          data.requiredCount !== undefined || data.milestoneId !== undefined) {
+        throw new ForbiddenException('只有项目经理可以编辑标签详情');
+      }
+    } else if (role === 'manager') {
+      // 项目经理可以更新所有字段
     }
 
     const updateData: any = { ...data };

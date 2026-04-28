@@ -67,8 +67,8 @@ export class ProjectExtensionService {
 
   async addRisk(projectId: bigint, data: any, user: any) {
     const role = await this.checkUserProjectRole(projectId, user);
-    if (role !== 'manager') {
-      throw new ForbiddenException('只有项目经理可以新建风险');
+    if (!role) {
+      throw new ForbiddenException('您不是该项目成员');
     }
 
     try {

@@ -41,7 +41,7 @@ export default function ProjectDetailPage() {
   const {
     // 数据
     project, phases, tasks, milestones, personnel, knowledge,
-    currentUser, isAdmin, loading, usedManDays,
+    currentUser, isAdmin, isProjectManager, isProjectMember, loading, usedManDays,
     // 编辑
     isEditing, editForm, setEditForm,
     handleEdit, handleCancelEdit, handleSave, handleDelete,
@@ -56,9 +56,6 @@ export default function ProjectDetailPage() {
     updatePersonnelPermission,
     addPersonnel, transferPersonnel, removePersonnel
   } = useProjectDetail(id)
-
-  // 计算用户是否是该项目经理
-  const isProjectManager = currentUser?.id === project?.manager_id
 
   const [activeTab, setActiveTab] = useState('overview')
 
@@ -240,7 +237,7 @@ export default function ProjectDetailPage() {
                     tasks={tasks} 
                     onRefresh={loadProjectData} 
                     setMilestones={setMilestones} 
-                    canEdit={isAdmin || currentUser?.id === project?.manager_id || personnel.find(p => p.employee_id === currentUser?.id)?.can_edit}
+                    canEdit={isAdmin || isProjectManager}
                   />
                 )}
                 {activeTab === 'team' && (
@@ -261,6 +258,7 @@ export default function ProjectDetailPage() {
                     milestones={milestones}
                     isAdmin={isAdmin}
                     isProjectManager={isProjectManager}
+                    isProjectMember={isProjectMember}
                     onAddRisk={addRisk}
                     onUpdateRisk={updateRisk}
                     onDeleteRisk={deleteRisk}

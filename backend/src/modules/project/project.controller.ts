@@ -26,8 +26,8 @@ export class ProjectController {
   }
 
   @Get(':id')
-  async getDetail(@Param('id') id: string) {
-    const data = await this.projectService.getProjectDetail(BigInt(id));
+  async getDetail(@Param('id') id: string, @Req() req: any) {
+    const data = await this.projectService.getProjectDetail(BigInt(id), req.user);
     return {
       success: true,
       data,

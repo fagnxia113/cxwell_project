@@ -18,6 +18,7 @@ interface RisksTabProps {
   onDeleteRisk: (id: string) => void
   isAdmin: boolean
   isProjectManager?: boolean
+  isProjectMember?: boolean
 }
 
 const severityConfig = {
@@ -43,7 +44,7 @@ const categoryOptions = [
   { value: 'supply_chain', label: 'project.risk.categories.supply_chain' },
 ]
 
-export default function RisksTab({ risks, milestones, onAddRisk, onUpdateRisk, onDeleteRisk, isAdmin, isProjectManager }: RisksTabProps) {
+export default function RisksTab({ risks, milestones, onAddRisk, onUpdateRisk, onDeleteRisk, isAdmin, isProjectManager, isProjectMember }: RisksTabProps) {
   const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState<'active' | 'closed'>('active')
   const [showAddForm, setShowAddForm] = useState(false)
@@ -144,7 +145,7 @@ export default function RisksTab({ risks, milestones, onAddRisk, onUpdateRisk, o
         <button
           onClick={() => setShowAddForm(true)}
           className="flex items-center gap-2 px-5 py-2 bg-slate-900 text-white rounded-xl text-xs font-black shadow-lg hover:bg-slate-800 transition-all w-fit"
-          style={{ display: (isAdmin || isProjectManager) ? 'flex' : 'none' }}
+          style={{ display: (isAdmin || isProjectManager || isProjectMember) ? 'flex' : 'none' }}
         >
           <Plus size={16} /> {t('project.risk.add')}
         </button>

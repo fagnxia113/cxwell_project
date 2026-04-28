@@ -32,6 +32,10 @@ export function useProjectDetail(id: string | undefined) {
   const [staffingPlans, setStaffingPlans] = useState<ProjectStaffingPlan[]>([])
   const [usedManDays, setUsedManDays] = useState(0)
 
+  // ---- 用户角色状态 ----
+  const [isProjectManager, setIsProjectManager] = useState(false)
+  const [isProjectMember, setIsProjectMember] = useState(false)
+
   // ---- 编辑状态 ----
   const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
@@ -70,6 +74,10 @@ export function useProjectDetail(id: string | undefined) {
         const data = res.data
         setProject(data)
         setEditForm(data)
+
+        // 设置用户角色信息 (由后端计算)
+        setIsProjectManager(data.isProjectManager === true)
+        setIsProjectMember(data.isProjectMember === true)
 
         // 映射人员 (后端 members -> 前端 personnel)
         const mappedPersonnel: ProjectPersonnel[] = (data.members || []).map((m: any) => ({
@@ -361,7 +369,7 @@ export function useProjectDetail(id: string | undefined) {
   return {
     // 数据
     project, phases, tasks, milestones, personnel, assets, knowledge,
-    currentUser, isAdmin, loading, usedManDays,
+    currentUser, isAdmin, isProjectManager, isProjectMember, loading, usedManDays,
     // 编辑
     isEditing, editForm, setEditForm,
     handleEdit, handleCancelEdit, handleSave, handleDelete,
