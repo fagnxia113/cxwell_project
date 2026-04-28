@@ -16,22 +16,23 @@ export class ProjectService {
     // 超级管理员
     if (userId === '1' || userId === 1) return 'manager';
 
+    // 获取用户的员工记录
+    const employee = await this.prisma.sysEmployee.findFirst({
+      where: { userId: BigInt(userId) },
+      select: { employeeId: true }
+    });
+
     // 检查是否是项目经理
     const project = await this.prisma.project.findUnique({
       where: { projectId: BigInt(projectId) },
       select: { managerId: true }
     });
 
-    if (project?.managerId && project.managerId.toString() === userId.toString()) {
+    if (employee && project?.managerId && project.managerId.toString() === employee.employeeId.toString()) {
       return 'manager';
     }
 
     // 检查是否是项目成员
-    const employee = await this.prisma.sysEmployee.findFirst({
-      where: { userId: BigInt(userId) },
-      select: { employeeId: true }
-    });
-
     if (employee) {
       const membership = await this.prisma.projectMember.findFirst({
         where: {
@@ -68,29 +69,7 @@ export class ProjectService {
     const userId = user?.sub || user?.userId;
     const loginName = user?.loginName;
 
-    let where: any = {};
-
-    // 超级管理员可见所有项目
-    if (userId !== '1' && userId !== 1) {
-      // 获取用户的员工记录（用于查找项目成员关系）
-      let employeeId: BigInt | null = null;
-      const sysEmployee = await this.prisma.sysEmployee.findFirst({
-        where: { userId: BigInt(userId) },
-        select: { employeeId: true }
-      });
-      if (sysEmployee?.employeeId) {
-        employeeId = sysEmployee.employeeId;
-      }
-
-      // 构建权限条件
-      where = {
-        OR: [
-          { createBy: loginName },
-          { managerId: BigInt(userId) },
-          ...(employeeId ? [{ members: { some: { employeeId: employeeId } } }] : [])
-        ]
-      };
-    }
+    let where: any = await this.applyDataScope(user);
 
     if (projectName) {
       where.projectName = { contains: projectName };
@@ -119,9 +98,23 @@ export class ProjectService {
       })
     ]);
 
+    // Fetch manager names
+    const managerIds = list.map(p => p.managerId).filter(id => id != null) as bigint[];
+    let managerMap = new Map<string, string>();
+    if (managerIds.length > 0) {
+      const managers = await this.prisma.sysEmployee.findMany({
+        where: { employeeId: { in: managerIds } },
+        select: { employeeId: true, name: true }
+      });
+      managers.forEach(m => managerMap.set(m.employeeId.toString(), m.name));
+    }
+
     return {
       total,
-      list: list.map(item => this.mapProject(item))
+      list: list.map(item => this.mapProject({
+        ...item,
+        _managerName: item.managerId ? managerMap.get(item.managerId.toString()) : null
+      }))
     };
   }
 
@@ -193,18 +186,47 @@ export class ProjectService {
    * 数据权限过滤
    * 1-全部数据 2-本部门数据 3-仅本人数据
    */
-  private async applyDataScope(user: any): Promise<any> {
+  async applyDataScope(user: any): Promise<any> {
     const userId = user?.sub || user?.userId;
     const loginName = user?.loginName;
+    console.log('[applyDataScope] user:', JSON.stringify({ userId, loginName, role: user?.role }));
     if (!userId) return { createBy: 'none' }; // 未登录拒绝访问
-    if (userId === '1' || userId === 1) return {}; // 如果是 1 (超级管理员)，拥有全部权限
+    if (userId === '1' || userId === 1) {
+      console.log('[applyDataScope] => admin, returning all');
+      return {}; // 如果是 1 (超级管理员)，拥有全部权限
+    }
+
+    // 获取员工ID用于权限过滤
+    let employeeId: bigint | null = null;
+    const sysEmployee = await this.prisma.sysEmployee.findFirst({
+      where: { userId: BigInt(userId) },
+      select: { employeeId: true }
+    });
+    if (sysEmployee?.employeeId) {
+      employeeId = sysEmployee.employeeId;
+    }
+    console.log('[applyDataScope] employeeId:', employeeId?.toString());
 
     // 获取用户最大的数据权限级别 (1 最小，3 最大? 不，根据业务通常 1是全量，2是部门，3是个人)
     const userWithRoles = await this.prisma.sysUserRole.findMany({
       where: { userId: BigInt(userId) },
     });
+    console.log('[applyDataScope] userWithRoles:', userWithRoles.length);
 
-    if (userWithRoles.length === 0) return { createBy: loginName }; // 默认仅个人
+    const personalScope = {
+      OR: [
+        { createBy: loginName },
+        ...(employeeId ? [
+          { managerId: employeeId },
+          { members: { some: { employeeId: employeeId } } }
+        ] : [])
+      ]
+    };
+
+    if (userWithRoles.length === 0) {
+      console.log('[applyDataScope] => no roles, returning personalScope');
+      return personalScope; // 默认仅个人
+    }
 
     const roleIds = userWithRoles.map(r => r.roleId);
     const roles = await this.prisma.sysRole.findMany({
@@ -214,8 +236,12 @@ export class ProjectService {
     // 确定最高权限 (值越小权限越大: 1 < 2 < 3)
     const scopes = roles.map(r => Number(r.dataScope));
     const maxScope = Math.min(...scopes);
+    console.log('[applyDataScope] scopes:', scopes, 'maxScope:', maxScope);
 
-    if (maxScope === 1) return {}; // 全部
+    if (maxScope === 1) {
+      console.log('[applyDataScope] => scope 1, returning all');
+      return {}; // 全部
+    }
 
     if (maxScope === 2) {
       // 获取用户部门
@@ -223,27 +249,24 @@ export class ProjectService {
         where: { userId: BigInt(userId) },
         select: { deptId: true }
       });
+      console.log('[applyDataScope] => scope 2 (dept), deptId:', sysUser?.deptId?.toString());
       return {
         OR: [
           { createBy: loginName }, // 自己创建的
-          { managerId: BigInt(userId) }, // 自己管理的
-          // 这里假设项目也有 deptId 关联，或者通过成员关联
-          { members: { some: { employee: { deptId: sysUser?.deptId } } } }
+          ...(employeeId ? [
+            { managerId: employeeId }, // 自己管理的
+            { members: { some: { employeeId: employeeId } } } // 自己参与的
+          ] : []),
+          ...(sysUser?.deptId ? [
+            // 部门成员参与的
+            { members: { some: { employee: { deptId: sysUser.deptId } } } }
+          ] : [])
         ]
       };
     }
 
-    if (maxScope === 3) {
-      return {
-        OR: [
-          { createBy: loginName },
-          { managerId: BigInt(userId) },
-          { members: { some: { employee: { userId: BigInt(userId) } } } }
-        ]
-      };
-    }
-
-    return { createBy: loginName };
+    console.log('[applyDataScope] => scope 3 (personal)');
+    return personalScope;
   }
 
   /**

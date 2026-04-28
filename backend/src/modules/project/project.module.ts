@@ -12,6 +12,7 @@ import { TaskBoardController } from './task-board.controller';
 @Module({
   imports: [ReportsModule, TagsModule],
   providers: [ProjectService, ProjectExtensionService, MilestoneService],
-  controllers: [TaskBoardController, ProjectController, PersonnelMgmtController, ProjectExtensionController, MilestoneController]
+  controllers: [TaskBoardController, ProjectController, PersonnelMgmtController, ProjectExtensionController, MilestoneController],
+  exports: [ProjectService]
 })
 export class ProjectModule {}

@@ -1,9 +1,13 @@
 import { Controller, Get, Req } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ProjectService } from './project.service';
 
 @Controller('project')
 export class TaskBoardController {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private projectService: ProjectService
+  ) {}
 
   /**
    * 看板聚合接口
@@ -16,39 +20,33 @@ export class TaskBoardController {
     const loginName = user?.loginName;
 
     // --- 1. 构建权限过滤条件 ---
-    let where: any = { delFlag: { not: '2' } };
-
     if (!userId) {
       return { success: false, message: 'User not authenticated' };
     }
 
     try {
+      console.log('[TaskBoard] req.user:', JSON.stringify(user));
+      const projectScope = await this.projectService.applyDataScope(user);
+      console.log('[TaskBoard] projectScope:', JSON.stringify(projectScope, (k, v) => typeof v === 'bigint' ? v.toString() : v));
+      const where: any = { delFlag: { not: '2' }, ...projectScope };
+      console.log('[TaskBoard] final where:', JSON.stringify(where, (k, v) => typeof v === 'bigint' ? v.toString() : v));
+
+      // --- 2. 获取用户 employeeId (用于后续匹配) ---
       const userIdStr = userId.toString();
+      let employeeIdStr: string | null = null;
       if (userIdStr !== '1') {
-        let employeeId: bigint | null = null;
         try {
           const sysEmployee = await this.prisma.sysEmployee.findFirst({
             where: { userId: BigInt(userIdStr) },
             select: { employeeId: true }
           });
           if (sysEmployee?.employeeId) {
-            employeeId = sysEmployee.employeeId;
+            employeeIdStr = sysEmployee.employeeId.toString();
           }
-        } catch (e) {
-          // 静默处理
-        }
-
-        where = {
-          ...where,
-          OR: [
-            ...(loginName ? [{ createBy: loginName }] : []),
-            { managerId: BigInt(userIdStr) },
-            ...(employeeId ? [{ members: { some: { employeeId } } }] : [])
-          ]
-        };
+        } catch (e) {}
       }
 
-      // --- 2. 查询项目及关联数据 ---
+      // --- 3. 查询项目及关联数据 ---
       const projects = await this.prisma.project.findMany({
         where,
         include: {
@@ -68,18 +66,16 @@ export class TaskBoardController {
         orderBy: { createTime: 'desc' }
       });
 
-      // --- 3. 处理数据并转换 BigInt ---
+      // --- 4. 处理数据并转换 BigInt ---
       const result = projects.map(p => {
         try {
           let userRole: 'manager' | 'member' | 'viewer' = 'viewer';
           let canEdit = false;
 
-          const userIdStr = userId.toString();
-
           if (userIdStr === '1') {
             userRole = 'manager';
             canEdit = true;
-          } else if (p.managerId && p.managerId.toString() === userIdStr) {
+          } else if (p.managerId && employeeIdStr && p.managerId.toString() === employeeIdStr) {
             userRole = 'manager';
             canEdit = true;
           } else {

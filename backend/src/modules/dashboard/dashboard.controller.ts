@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Req } from '@nestjs/common';
 import { DashboardService } from './dashboard.service';
 
 @Controller('dashboard')
@@ -6,10 +6,10 @@ export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
   @Get('overview')
-  async getOverview() {
-    const stats = await this.dashboardService.getOverviewStats();
+  async getOverview(@Req() req: any) {
+    const stats = await this.dashboardService.getOverviewStats(req.user);
     const trend = await this.dashboardService.getTrendData();
-    const distribution = await this.dashboardService.getProjectDistribution();
+    const distribution = await this.dashboardService.getProjectDistribution(req.user);
     
     return {
       success: true,

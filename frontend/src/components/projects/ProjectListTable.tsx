@@ -38,6 +38,7 @@ export default function ProjectListTable({ projects, onDelete, onManageTeam }: P
             <tr>
               <th className="px-4 py-2.5 text-left text-[9px] font-semibold text-slate-400 uppercase tracking-wider">{t('project.fields.basic')}</th>
               <th className="px-4 py-2.5 text-left text-[9px] font-semibold text-slate-400 uppercase tracking-wider">{t('common.status')}</th>
+              <th className="px-4 py-2.5 text-left text-[9px] font-semibold text-slate-400 uppercase tracking-wider">{t('project.fields.manager')}</th>
               <th className="px-4 py-2.5 text-left text-[9px] font-semibold text-slate-400 uppercase tracking-wider">{t('project.fields.performance')}</th>
               <th className="px-4 py-2.5 text-left text-[9px] font-semibold text-slate-400 uppercase tracking-wider">{t('project.fields.specs')}</th>
               <th className="px-4 py-2.5 text-left text-[9px] font-semibold text-slate-400 uppercase tracking-wider">{t('project.fields.location')}</th>
@@ -71,6 +72,14 @@ export default function ProjectListTable({ projects, onDelete, onManageTeam }: P
                   </td>
                   <td className="px-4 py-4">
                     <StatusBadge status={project.status} />
+                  </td>
+                  <td className="px-4 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-[10px]">
+                        {project.manager ? project.manager.charAt(0).toUpperCase() : '?'}
+                      </div>
+                      <span className="text-xs font-bold text-slate-600">{project.manager || '-'}</span>
+                    </div>
                   </td>
                   <td className="px-4 py-4">
                     <div className="space-y-1.5 min-w-[120px]">

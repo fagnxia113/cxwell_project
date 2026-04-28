@@ -127,7 +127,7 @@ export default function InstanceDetailPage() {
       setSubmitting(true)
       await workflowApi.submitTask(task.id.toString(), action, { formData }, opinion, targetNodeCode)
       message.success(action === 'pass' ? t('approvals.message.pass_success') : t('approvals.message.reject_success'))
-      navigate('/approvals/center')
+      navigate('/approvals/pending')
     } catch (err: any) {
       message.error(err.message || t('common.error.operation_failed', 'Operation failed'))
     } finally {

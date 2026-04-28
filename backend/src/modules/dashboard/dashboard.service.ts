@@ -1,22 +1,28 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ProjectService } from '../project/project.service';
 
 @Injectable()
 export class DashboardService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private projectService: ProjectService
+  ) {}
 
   /**
    * 获取全局汇总数据
    */
-  async getOverviewStats() {
+  async getOverviewStats(user: any) {
+    const projectScope = await this.projectService.applyDataScope(user);
+
     const [
       projectCount,
       activeProjects,
       pendingTasks,
       employeeCount
     ] = await Promise.all([
-      this.prisma.project.count({ where: { delFlag: { not: '2' } } }),
-      this.prisma.project.count({ where: { status: { in: ['2', '3'] }, delFlag: { not: '2' } } }),
+      this.prisma.project.count({ where: { delFlag: { not: '2' }, ...projectScope } }),
+      this.prisma.project.count({ where: { status: { in: ['2', '3'] }, delFlag: { not: '2' }, ...projectScope } }),
       this.prisma.flowTask.count({ where: { flowStatus: 'todo' } }),
       this.prisma.sysEmployee.count({ where: { status: '0' } }),
     ]);
@@ -41,11 +47,13 @@ export class DashboardService {
   /**
    * 获取项目状态分布 (图表用)
    */
-  async getProjectDistribution() {
+  async getProjectDistribution(user: any) {
+    const projectScope = await this.projectService.applyDataScope(user);
+
     const stats = await this.prisma.project.groupBy({
       by: ['status'],
       _count: { projectId: true },
-      where: { delFlag: { not: '2' } }
+      where: { delFlag: { not: '2' }, ...projectScope }
     });
 
     const statusMap: Record<string, string> = {
