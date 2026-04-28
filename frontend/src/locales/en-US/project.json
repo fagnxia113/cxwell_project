@@ -148,3 +148,175 @@
       "parent_not_selectable": "Parent not selectable"
     }
   },
+  "report": {
+    "name": "Report Name",
+    "required": "Required",
+    "submitted": "Submitted",
+    "last_update": "Last Update",
+    "refresh": "Refresh",
+    "status": {
+      "pending": "Pending",
+      "submitted": "Submitted",
+      "verified": "Verified",
+      "rejected": "Rejected",
+      "partial": "Partial"
+    }
+  },
+  "risk": {
+    "severity": "Severity",
+    "category": "Category",
+    "owner": "Owner",
+    "status": "Risk Status",
+    "add": "Add Risk",
+    "edit": "Edit Risk",
+    "risk_no": "Risk No.",
+    "description": "Description",
+    "deadline": "Deadline",
+    "update_time": "Last Update",
+    "actual_closed_at": "Closed At",
+    "status_label": "Status",
+    "placeholder_title": "Risk title",
+    "example": "e.g.: Equipment delivery delay",
+    "empty": "No matching risk data found",
+    "severities": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "levels": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "categories": {
+      "technical": "Technical Risk",
+      "schedule": "Schedule Risk",
+      "resource": "Resource Risk",
+      "cost": "Cost Risk",
+      "external": "External Risk",
+      "other": "Other Risk",
+      "progress": "Progress Deviation",
+      "safety": "Safety Hazard",
+      "quality": "Quality Issue",
+      "supply_chain": "Supply Chain Risk"
+    },
+    "status_labels": {
+      "identified": "Identified",
+      "mitigated": "Mitigated",
+      "closed": "Closed",
+      "pending": "Pending",
+      "in_progress": "In Progress",
+      "pending_review": "Pending Review"
+    },
+    "status": {
+      "identified": "Identified",
+      "mitigated": "Mitigated",
+      "closed": "Closed",
+      "pending": "Pending",
+      "in_progress": "In Progress",
+      "pending_review": "Pending Review"
+    },
+    "stats": {
+      "active_total": "Active Risks",
+      "high_severity": "High Severity",
+      "overdue_total": "Overdue",
+      "this_week_closed": "Closed This Week"
+    },
+    "tabs": {
+      "active": "Active",
+      "closed": "Closed"
+    }
+  },
+  "reports": {
+    "title": "Report Management",
+    "add": "Add Report",
+    "edit": "Edit Report",
+    "delete_report": "Delete Report",
+    "delete_report_confirm": "Are you sure you want to delete this report?",
+    "empty": "No reports",
+    "update_progress": "Update Report Progress"
+  },
+  "team": {
+    "member_list": "Member List",
+    "planned_attendance": "Planned Attendance",
+    "actual_attendance": "Actual Attendance",
+    "member": "Member",
+    "members": "Team Members",
+    "scheduled_attendance": "Scheduled",
+    "on_duty_current": "Working on This Project",
+    "on_duty_other": "Working on Other Projects",
+    "home_rest": "Home Leave",
+    "local_rest": "Local Rest",
+    "transfer": "Transfer",
+    "transfer_to": "Transfer To",
+    "effective_date": "Effective Date",
+    "remark": "Remark",
+    "legend": {
+      "work": "Working",
+      "leave": "Leave",
+      "other": "Other Project"
+    }
+  },
+  "expense": {
+    "add_item": "Add Expense",
+    "category": "Category",
+    "amount": "Amount",
+    "date": "Date",
+    "notes": "Notes",
+    "notes_placeholder": "Usage description...",
+    "no_records": "No expense records",
+    "categories": {
+      "equipment": "Equipment",
+      "labor": "Labor",
+      "travel": "Travel",
+      "meal": "Meals",
+      "transportation": "Transportation",
+      "accommodation": "Accommodation",
+      "material": "Materials",
+      "other": "Other"
+    }
+  },
+  "milestone": {
+    "title": "Project Milestones",
+    "weight": "Weight",
+    "progress": "Progress",
+    "status": "Status",
+    "add_child": "Add Sub-milestone",
+    "save_success": "Milestones saved successfully"
+  },
+  "sections": {
+    "base_info": "Basic Info",
+    "specs": "Specifications"
+  },
+  "placeholder": {
+    "search": "Search project name, code or country...",
+    "description": "Please enter project background description...",
+    "power_architecture": "e.g.: 2N UPS redundancy, dual utility power, backup generator...",
+    "hvac_architecture": "e.g.: Air-cooled chilled water system, N+2 redundancy, storage tank...",
+    "fire_architecture": "e.g.: VESDA early smoke detection, FM200 gas fire suppression...",
+    "weak_electric_architecture": "e.g.: Spine-Leaf network architecture, Cat6A copper & single-mode fiber..."
+  },
+  "empty": {
+    "title": "No Projects",
+    "desc": "There are no projects currently. Please create a new project."
+  },
+  "loading_error": "Failed to load projects",
+  "action": {
+    "initiate": "Initiate Project",
+    "import": "Import Project"
+  },
+  "progress": "Project Progress",
+  "active_project": "Active Project",
+  "list_title": "Project Overview",
+  "list_subtitle": "Full lifecycle project management & progress monitoring",
+  "role": {
+    "manager": "Project Manager",
+    "editor": "Editor",
+    "viewer": "Viewer"
+  },
+  "workflow": {
+    "node_status": "Node Status Overview"
+  }
+}
