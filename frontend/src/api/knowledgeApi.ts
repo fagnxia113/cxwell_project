@@ -19,9 +19,7 @@ export const knowledgeApi = {
    * 上传文件
    */
   upload: (formData: FormData) => {
-    return apiClient.post<any>('/api/knowledge/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    return apiClient.post<any>('/api/knowledge/upload', formData);
   },
 
   /**
@@ -50,5 +48,9 @@ export const knowledgeApi = {
    */
   updatePermissions: (id: string, data: { visibilityType: string; permissions: any[] }) => {
     return apiClient.put<any>(`/api/knowledge/${id}/permissions`, data);
+  },
+
+  transferOwner: (id: string, newOwnerLoginName: string) => {
+    return apiClient.put<any>(`/api/knowledge/${id}/transfer`, { newOwnerLoginName });
   }
 };

@@ -9,13 +9,14 @@ import dayjs from 'dayjs'
 import {
   Users, Loader2, UserPlus,
   ArrowRightLeft, Trash2, Search,
-  ChevronLeft, ChevronRight, Briefcase, Settings
+  ChevronLeft, ChevronRight, Briefcase, Settings, RefreshCw
 } from 'lucide-react'
 import { useMessage } from '../../hooks/useMessage'
 import { apiClient } from '../../utils/apiClient'
 import { cn } from '../../utils/cn'
 import type { ProjectPersonnel } from '../../types/project'
 import ModalDialog from '../ModalDialog'
+import AttendanceTab from './AttendanceTab'
 
 interface TeamTabProps {
   projectId: string
@@ -41,7 +42,7 @@ export default function TeamTab({
   const { t } = useTranslation()
   const { success, error: showError } = useMessage()
   const [syncing, setSyncing] = useState(false)
-  const [activeView, setActiveView] = useState<'list' | 'schedule' | 'attendance'>('list')
+  const [activeView, setActiveView] = useState<'list' | 'schedule' | 'attendance' | 'details'>('list')
 
   // -- Attendance Config State --
   const [showConfigModal, setShowConfigModal] = useState(false)
@@ -247,6 +248,34 @@ export default function TeamTab({
           >
             <UserPlus size={12} /> {t('personnel.action.add_to_project')}
           </button>
+
+          <button
+            onClick={async () => {
+              setSyncing(true)
+              try {
+                await apiClient.post('/api/personnel/attendance/sync/dingtalk')
+                success(t('personnel.error.sync_success', { count: '' }) || 'Sync Success')
+                loadAttendance()
+              } catch (err) {
+                showError(t('personnel.error.sync_failed') || 'Sync Failed')
+              } finally {
+                setSyncing(false)
+              }
+            }}
+            disabled={syncing}
+            className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg text-[10px] font-black hover:bg-blue-600 transition-all shadow-sm disabled:opacity-50"
+            style={{ display: isProjectManager ? 'flex' : 'none' }}
+          >
+            <RefreshCw size={12} className={cn(syncing && "animate-spin")} /> {t('personnel.action.sync_attendance')}
+          </button>
+
+          <button
+            onClick={() => setShowConfigModal(true)}
+            className="flex items-center gap-2 px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-black hover:bg-slate-200 transition-all shadow-sm"
+            style={{ display: isProjectManager ? 'flex' : 'none' }}
+          >
+            <Settings size={12} /> {t('project.attendance.config')}
+          </button>
         </div>
       </div>
 
@@ -278,6 +307,15 @@ export default function TeamTab({
           )}
         >
           {t('project.team.actual_attendance')}
+        </button>
+        <button
+          onClick={() => setActiveView('details')}
+          className={cn(
+            "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+            activeView === 'details' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
+          )}
+        >
+          {t('project.team.attendance_details') || 'Attendance Details'}
         </button>
       </div>
 
@@ -502,6 +540,10 @@ export default function TeamTab({
             </div>
           </div>
         </div>
+      )}
+      {/* 考勤明细 */}
+      {activeView === 'details' && (
+        <AttendanceTab projectId={projectId} />
       )}
 
       {/* Attendance Config Modal */}

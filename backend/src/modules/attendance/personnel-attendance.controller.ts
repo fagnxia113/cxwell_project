@@ -2,6 +2,12 @@ import { Controller, Get, Post, Body, Query } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DingtalkAttendanceService } from '../dingtalk/services/dingtalk-attendance.service';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 @Controller('personnel/attendance')
 export class PersonnelAttendanceController {
@@ -20,9 +26,12 @@ export class PersonnelAttendanceController {
       select: { employeeId: true, name: true },
     });
 
+    const bjDate = dayjs.tz(targetDate, 'Asia/Shanghai');
+    const utcDate = new Date(Date.UTC(bjDate.year(), bjDate.month(), bjDate.date()));
+
     const todayAttendances = await this.prisma.projectAttendance.findMany({
       where: {
-        workDate: new Date(targetDate),
+        workDate: utcDate,
       },
       include: {
         employee: {
@@ -65,14 +74,16 @@ export class PersonnelAttendanceController {
       };
     });
 
-    return result;
+    return { success: true, data: result };
   }
 
   @Get('summary')
   async getAttendanceSummary(@Query('year_month') yearMonth?: string) {
-    const [year, month] = yearMonth ? yearMonth.split('-').map(Number) : [new Date().getFullYear(), new Date().getMonth() + 1];
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0);
+    const bjStart = dayjs.tz(yearMonth ? `${yearMonth}-01` : undefined, 'Asia/Shanghai').startOf('month');
+    const bjEnd = bjStart.endOf('month');
+
+    const startDate = new Date(Date.UTC(bjStart.year(), bjStart.month(), bjStart.date()));
+    const endDate = new Date(Date.UTC(bjEnd.year(), bjEnd.month(), bjEnd.date()));
 
     const employees = await this.prisma.sysEmployee.findMany({
       where: { status: '0' },
@@ -97,6 +108,8 @@ export class PersonnelAttendanceController {
     });
 
     const summaryMap = new Map<string, { employeeId: string; name: string; workedDays: number; dates: string[]; projects: string[] }>();
+
+    console.log(`[AttendanceSummary] Found ${attendances.length} records for ${yearMonth}`);
 
     for (const att of attendances) {
       const empId = att.employeeId.toString();
@@ -144,18 +157,24 @@ export class PersonnelAttendanceController {
       };
     });
 
+    console.log(`[AttendanceSummary] Returning ${result.length} employees`);
     return {
-      yearMonth: `${year}-${String(month).padStart(2, '0')}`,
-      totalDays: totalDaysInMonth,
-      employees: result,
+      success: true,
+      data: {
+        yearMonth: `${bjStart.year()}-${String(bjStart.month() + 1).padStart(2, '0')}`,
+        totalDays: totalDaysInMonth,
+        employees: result,
+      },
     };
   }
 
   @Get('calendar')
   async getAttendanceCalendar(@Query('year_month') yearMonth?: string) {
-    const [year, month] = yearMonth ? yearMonth.split('-').map(Number) : [new Date().getFullYear(), new Date().getMonth() + 1];
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0);
+    const bjStart = dayjs.tz(yearMonth ? `${yearMonth}-01` : undefined, 'Asia/Shanghai').startOf('month');
+    const bjEnd = bjStart.endOf('month');
+
+    const startDate = new Date(Date.UTC(bjStart.year(), bjStart.month(), bjStart.date()));
+    const endDate = new Date(Date.UTC(bjEnd.year(), bjEnd.month(), bjEnd.date()));
 
     const employees = await this.prisma.sysEmployee.findMany({
       where: { status: '0' },
@@ -207,10 +226,22 @@ export class PersonnelAttendanceController {
     }));
 
     return {
-      yearMonth: `${year}-${String(month).padStart(2, '0')}`,
-      days: Array.from({ length: endDate.getDate() }, (_, i) => i + 1),
-      employees: result,
+      success: true,
+      data: {
+        yearMonth: `${bjStart.year()}-${String(bjStart.month() + 1).padStart(2, '0')}`,
+        days: Array.from({ length: endDate.getDate() }, (_, i) => i + 1),
+        employees: result,
+      },
     };
+  }
+
+  @Get('records')
+  async getAttendanceRecords(
+    @Query('start_date') startDate?: string,
+    @Query('end_date') endDate?: string,
+  ) {
+    const records = await this.attendanceService.getAllAttendanceDetails(startDate, endDate);
+    return { success: true, data: records };
   }
 
   @Post('sync/dingtalk')

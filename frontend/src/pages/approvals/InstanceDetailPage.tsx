@@ -209,7 +209,7 @@ export default function InstanceDetailPage() {
         }))}
         showTimeline={true}
         currentNodeName={currentNodeName}
-        editableFields={['final_amount', 'ticket_photo']}
+        editableFields={['amount', 'attachment']}
         onFormDataChange={(name, value) => setFormData((prev: any) => ({ ...prev, [name]: value }))}
       >
         {isCurrentAssignee && instance?.status === 'running' && (

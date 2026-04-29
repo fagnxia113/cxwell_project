@@ -30,6 +30,7 @@ interface FormField {
   group?: string
   rows?: number
   min?: number
+  multi?: boolean
 }
 
 interface FormTemplateRendererProps {
@@ -182,7 +183,9 @@ const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
             options={currentOptions}
             onChange={async (v) => {
               onFieldChange(field.name, v)
-              
+
+              if ((field as any).multi === true) return
+
               // Auto-population logic for projects
               if (field.type === 'project' && v) {
                 try {
@@ -241,6 +244,7 @@ const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
               }
             }}
             placeholder={fieldPlaceholder}
+            multi={field.type === 'employee' && (field as any).multi === true}
           />
         )
       case 'date':

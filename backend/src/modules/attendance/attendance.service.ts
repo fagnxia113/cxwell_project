@@ -2,6 +2,13 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DingtalkAttendanceService } from '../dingtalk/services/dingtalk-attendance.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.tz.setDefault('Asia/Shanghai');
 
 @Injectable()
 export class AttendanceService {
@@ -29,11 +36,12 @@ export class AttendanceService {
       }
 
       let totalSynced = 0;
-      const today = new Date();
-      const fromDate = new Date(today);
-      fromDate.setDate(fromDate.getDate() - 7); // 同步最近7天的数据
-      const workDateFrom = `${fromDate.getFullYear()}${String(fromDate.getMonth() + 1).padStart(2, '0')}${fromDate.getDate()}000000`;
-      const workDateTo = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${today.getDate()}235959`;
+      const now = dayjs().tz();
+      const fromDate = now.subtract(7, 'day').startOf('day');
+      const toDate = now.endOf('day');
+      
+      const workDateFrom = fromDate.format('YYYYMMDDHHmmss');
+      const workDateTo = toDate.format('YYYYMMDDHHmmss');
 
       // 遍历每个配置的考勤组
       for (const config of projectsWithConfig) {
@@ -71,39 +79,52 @@ export class AttendanceService {
           
           // 处理每个员工每天的记录
           for (const [key, records] of recordMap) {
-            const [userId] = key.split('-');
-            const member = members.find(m => m.employee.dingtalkUserId === userId);
-            if (!member) continue;
+            try {
+              const [userId] = key.split('-');
+              const member = members.find(m => m.employee.dingtalkUserId === userId);
+              if (!member) continue;
 
-            const checkInRecord = records.find(r => r.checkType === 'OnDuty');
-            const checkOutRecord = records.find(r => r.checkType === 'OffDuty');
+              const checkInRecord = records.find(r => r.checkType === 'OnDuty');
+              const checkOutRecord = records.find(r => r.checkType === 'OffDuty');
+              if (checkInRecord || checkOutRecord) {
+                // 使用实际打卡时间的日期作为工作日期，以匹配看板的日历视图
+                // 优先使用打卡时间，如果没有则回退到钉钉的工作日期
+                const actualCheckTime = checkInRecord?.userCheckTime || checkOutRecord?.userCheckTime || checkInRecord?.workDate || checkOutRecord?.workDate;
+                
+                // 使用北京时间确定日期组件
+                const bjDate = dayjs(actualCheckTime).tz('Asia/Shanghai');
+                // 存储为 YYYY-MM-DD 00:00:00 UTC，保持与数据库 Date 类型及前端查询兼容
+                const workDate = new Date(Date.UTC(bjDate.year(), bjDate.month(), bjDate.date()));
 
-            if (checkInRecord || checkOutRecord) {
-              await this.prisma.projectAttendance.upsert({
-                where: {
-                  projectId_employeeId_workDate: {
+                await this.prisma.projectAttendance.upsert({
+                  where: {
+                    projectId_employeeId_workDate: {
+                      projectId: config.projectId,
+                      employeeId: member.employeeId,
+                      workDate: workDate,
+                    },
+                  },
+                  update: {
+                    checkInTime: checkInRecord?.userCheckTime ? new Date(checkInRecord.userCheckTime) : undefined,
+                    checkOutTime: checkOutRecord?.userCheckTime ? new Date(checkOutRecord.userCheckTime) : undefined,
+                    locationName: checkInRecord?.userAddress || checkInRecord?.locationTitle || checkInRecord?.locationResult || checkOutRecord?.userAddress || checkOutRecord?.locationTitle || checkOutRecord?.locationResult || 'Normal',
+                  },
+                  create: {
                     projectId: config.projectId,
                     employeeId: member.employeeId,
-                    workDate: new Date(checkInRecord?.workDate || checkOutRecord?.workDate),
+                    workDate: workDate,
+                    checkInTime: checkInRecord?.userCheckTime ? new Date(checkInRecord.userCheckTime) : undefined,
+                    checkOutTime: checkOutRecord?.userCheckTime ? new Date(checkOutRecord.userCheckTime) : undefined,
+                    locationName: checkInRecord?.locationResult || checkOutRecord?.locationResult,
+                    sourceType: 'dingtalk',
+                    dingtalkUserId: userId,
                   },
-                },
-                update: {
-                  checkInTime: checkInRecord?.userCheckTime ? new Date(checkInRecord.userCheckTime) : undefined,
-                  checkOutTime: checkOutRecord?.userCheckTime ? new Date(checkOutRecord.userCheckTime) : undefined,
-                  locationName: checkInRecord?.locationResult || checkOutRecord?.locationResult,
-                },
-                create: {
-                  projectId: config.projectId,
-                  employeeId: member.employeeId,
-                  workDate: new Date(checkInRecord?.workDate || checkOutRecord?.workDate),
-                  checkInTime: checkInRecord?.userCheckTime ? new Date(checkInRecord.userCheckTime) : undefined,
-                  checkOutTime: checkOutRecord?.userCheckTime ? new Date(checkOutRecord.userCheckTime) : undefined,
-                  locationName: checkInRecord?.locationResult || checkOutRecord?.locationResult,
-                  sourceType: 'dingtalk',
-                  dingtalkUserId: userId,
-                },
-              });
-              totalSynced++;
+                });
+                totalSynced++;
+              }
+            } catch (recordError) {
+              console.error(`[AttendanceSync] Error syncing record for key ${key}:`, recordError.message);
+              // 继续处理下一个记录
             }
           }
         }
@@ -214,6 +235,77 @@ export class AttendanceService {
 
     // 按打卡天数降序排列，有打卡的排前面
     return Array.from(employeeMap.values()).sort((a, b) => b.checkedDays - a.checkedDays);
+  }
+
+  async getProjectAttendanceDetails(projectId: bigint, startDate?: string, endDate?: string) {
+    const where: any = { projectId };
+
+    if (startDate && endDate) {
+      where.workDate = {
+        gte: dayjs(startDate).startOf('day').toDate(),
+        lte: dayjs(endDate).endOf('day').toDate()
+      };
+    }
+
+    const attendances = await this.prisma.projectAttendance.findMany({
+      where,
+      include: {
+        employee: {
+          select: {
+            name: true,
+          }
+        }
+      },
+      orderBy: { workDate: 'desc' }
+    });
+
+    return attendances.map(a => ({
+      id: a.id.toString(),
+      employeeName: a.employee?.name || '未知',
+      workDate: a.workDate,
+      checkInTime: a.checkInTime,
+      checkOutTime: a.checkOutTime,
+      locationName: a.locationName,
+    }));
+  }
+
+  async getAllAttendanceDetails(startDate?: string, endDate?: string) {
+    const where: any = {};
+
+    if (startDate && endDate) {
+      where.workDate = {
+        gte: dayjs(startDate).startOf('day').toDate(),
+        lte: dayjs(endDate).endOf('day').toDate()
+      };
+    }
+
+    const attendances = await this.prisma.projectAttendance.findMany({
+      where,
+      include: {
+        employee: {
+          select: {
+            name: true,
+          }
+        },
+        project: {
+          select: {
+            projectName: true,
+          }
+        }
+      },
+      orderBy: { workDate: 'desc' }
+    });
+
+    return attendances.map(a => ({
+      id: a.id.toString(),
+      employeeName: a.employee?.name || '未知',
+      workDate: a.workDate,
+      checkInTime: a.checkInTime,
+      checkOutTime: a.checkOutTime,
+      locationName: a.locationName,
+      projectName: a.project?.projectName || '',
+      status: 'normal'
+    }));
   }
 
   async getProjectManDays(projectId: bigint, yearMonth?: string) {

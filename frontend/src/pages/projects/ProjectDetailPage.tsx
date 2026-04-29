@@ -31,6 +31,7 @@ import TagsTab from '../../components/projects/TagsTab'
 import TeamTab from '../../components/projects/TeamTab'
 import RisksTab from '../../components/projects/RisksTab'
 import ExpensesTab from '../../components/projects/ExpensesTab'
+import AttendanceTab from '../../components/projects/AttendanceTab'
 import ProjectReportView from '../../components/projects/ProjectReportView'
 
 export default function ProjectDetailPage() {

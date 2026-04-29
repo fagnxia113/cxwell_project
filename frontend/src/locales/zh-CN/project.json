@@ -278,6 +278,7 @@
     "member_list": "成员列表",
     "planned_attendance": "计划出勤",
     "actual_attendance": "实际出勤",
+    "attendance_details": "考勤明细",
     "member": "成员",
     "members": "团队成员",
     "scheduled_attendance": "预计出勤",
@@ -321,6 +322,10 @@
     "dingtalk_config": "钉钉考勤配置",
     "dingtalk_group_id": "考勤组ID",
     "dingtalk_group_name": "考勤组名称",
-    "save_config": "保存配置"
+    "save_config": "保存配置",
+    "check_in": "签到时间",
+    "check_out": "签退时间",
+    "location": "打卡地点",
+    "dingtalk_synced": "钉钉同步数据"
   }
 }

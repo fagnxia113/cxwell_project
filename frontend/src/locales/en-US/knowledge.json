@@ -56,5 +56,14 @@
   "empty_title": "No content",
   "empty_desc": "No files found in this directory.",
   "no_assets": "No Documents",
-  "no_assets_desc": "Upload files or create folders to get started."
+  "no_assets_desc": "Upload files or create folders to get started.",
+  "transfer_owner": "Transfer Owner",
+  "transfer_select_placeholder": "Select new owner...",
+  "transfer_btn": "Transfer",
+  "transfer_tip": "After transfer, the new owner will have full management permissions, including modifying visibility and deletion",
+  "transfer_confirm_title": "Confirm Transfer Ownership",
+  "transfer_confirm_desc": "Are you sure you want to transfer ownership to {{name}}? You will lose management permissions after transfer.",
+  "transfer_success": "Ownership transferred successfully",
+  "transfer_error": "Failed to transfer ownership",
+  "transfer_no_login": "Selected user has no login account, cannot transfer"
 }

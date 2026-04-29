@@ -35,6 +35,20 @@ export class AttendanceController {
     return { success: true, data };
   }
 
+  @Get('project/:projectId/details')
+  async getDetails(
+    @Param('projectId') projectId: string,
+    @Query('start_date') startDate?: string,
+    @Query('end_date') endDate?: string,
+  ) {
+    const data = await this.attendanceService.getProjectAttendanceDetails(
+      BigInt(projectId),
+      startDate,
+      endDate
+    );
+    return { success: true, data };
+  }
+
   @Get('project/:projectId/man-days')
   async getManDays(
     @Param('projectId') projectId: string,

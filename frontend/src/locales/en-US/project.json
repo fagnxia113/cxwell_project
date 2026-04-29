@@ -273,6 +273,7 @@
     "member_list": "Member List",
     "planned_attendance": "Planned Attendance",
     "actual_attendance": "Actual Attendance",
+    "attendance_details": "Attendance Details",
     "member": "Member",
     "members": "Team Members",
     "scheduled_attendance": "Expected Attendance",
@@ -316,6 +317,10 @@
     "dingtalk_config": "DingTalk Attendance Config",
     "dingtalk_group_id": "Attendance Group ID",
     "dingtalk_group_name": "Attendance Group Name",
-    "save_config": "Save Config"
+    "save_config": "Save Config",
+    "check_in": "Check In Time",
+    "check_out": "Check Out Time",
+    "location": "Location",
+    "dingtalk_synced": "Synced via DingTalk"
   }
 }

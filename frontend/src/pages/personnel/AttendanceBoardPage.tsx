@@ -12,13 +12,17 @@ import {
   Calendar,
   BarChart3,
   Activity as ActivityIcon,
-  LayoutGrid
+  LayoutGrid,
+  FileText,
+  MapPin,
+  Clock
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { apiClient } from '../../utils/apiClient'
 import { useMessage } from '../../hooks/useMessage'
 import { useTranslation } from 'react-i18next'
 import { cn } from '../../utils/cn'
+import AttendanceTab from '../../components/projects/AttendanceTab'
 
 interface SummaryData {
   yearMonth: string
@@ -50,7 +54,7 @@ interface CalendarData {
   }[]
 }
 
-type ViewMode = 'summary' | 'calendar'
+type ViewMode = 'summary' | 'calendar' | 'records'
 
 const StatCard = ({ title, value, icon: Icon, color, delay }: any) => {
   const colorConfig: Record<string, { bg: string; text: string }> = {
@@ -218,6 +222,16 @@ export default function AttendanceBoardPage() {
             <Calendar size={16} />
             {t('personnel.attendance.view_mode.calendar')}
           </button>
+          <button
+            onClick={() => setViewMode('records')}
+            className={cn(
+              "px-5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2",
+              viewMode === 'records' ? "bg-white text-primary shadow-sm" : "text-slate-400 hover:text-slate-600"
+            )}
+          >
+            <FileText size={16} />
+            {t('project.team.attendance_details') || 'Attendance Details'}
+          </button>
         </div>
 
         <div className="flex-1 min-w-[200px] relative group">
@@ -331,7 +345,7 @@ export default function AttendanceBoardPage() {
                   </tbody>
                 </table>
               </div>
-            ) : (
+            ) : viewMode === 'calendar' ? (
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead className="bg-slate-50/50 border-b border-slate-100">
@@ -382,14 +396,44 @@ export default function AttendanceBoardPage() {
 
                             return (
                               <td key={day} className={cn(
-                                "px-1 py-3 text-center",
+                                "px-1 py-3 text-center relative group/cell",
                                 isWeekend ? "bg-rose-50/10" : ""
                               )}>
                                 {record?.hasClockedIn ? (
-                                  <div 
-                                    className="w-3 h-3 mx-auto rounded-full bg-emerald-500 shadow-sm transition-transform hover:scale-125 cursor-help" 
-                                    title={`${record.projectName}\n打卡: ${record.checkInTime || '-'} / ${record.checkOutTime || '-'}`}
-                                  />
+                                  <>
+                                    <div 
+                                      className="w-3 h-3 mx-auto rounded-full bg-emerald-500 shadow-sm transition-transform hover:scale-125 cursor-pointer" 
+                                    />
+                                    {/* Optimized Tooltip */}
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-900/95 backdrop-blur-md text-white p-3 rounded-xl shadow-2xl opacity-0 invisible group-hover/cell:opacity-100 group-hover/cell:visible transition-all z-50 pointer-events-none border border-white/10">
+                                      <div className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2 pb-2 border-b border-white/10">
+                                        {record.projectName || 'Default Project'}
+                                      </div>
+                                      <div className="space-y-2">
+                                        <div className="flex items-center justify-between gap-2">
+                                          <div className="flex items-center gap-1.5 text-slate-400">
+                                            <Clock size={10} />
+                                            <span className="text-[9px] font-bold uppercase">{t('project.attendance.check_in') || 'IN'}</span>
+                                          </div>
+                                          <span className="text-[11px] font-black">{record.checkInTime ? dayjs(record.checkInTime).format('HH:mm') : '--:--'}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-2">
+                                          <div className="flex items-center gap-1.5 text-slate-400">
+                                            <Clock size={10} />
+                                            <span className="text-[9px] font-bold uppercase">{t('project.attendance.check_out') || 'OUT'}</span>
+                                          </div>
+                                          <span className="text-[11px] font-black">{record.checkOutTime ? dayjs(record.checkOutTime).format('HH:mm') : '--:--'}</span>
+                                        </div>
+                                        {record.locationName && (
+                                          <div className="pt-1.5 flex items-start gap-1.5 border-t border-white/10">
+                                            <MapPin size={10} className="mt-0.5 text-emerald-500" />
+                                            <span className="text-[9px] font-medium leading-relaxed text-slate-300">{record.locationName}</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-slate-900/95" />
+                                    </div>
+                                  </>
                                 ) : (
                                   <div className="w-1 h-1 mx-auto rounded-full bg-slate-100" />
                                 )}
@@ -401,6 +445,10 @@ export default function AttendanceBoardPage() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            ) : (
+              <div className="p-0">
+                <AttendanceTab month={currentMonth} />
               </div>
             )}
           </>

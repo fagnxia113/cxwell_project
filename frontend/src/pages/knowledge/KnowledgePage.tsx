@@ -21,7 +21,8 @@ import {
   Check,
   AlertCircle,
   Menu,
-  RotateCcw
+  RotateCcw,
+  ArrowRightLeft
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -42,6 +43,7 @@ interface KnowledgeItem {
   ownerId: string;
   visibilityType: 'everyone' | 'private' | 'specified';
   createdAt: string;
+  createBy?: string;
   children?: KnowledgeItem[];
   permissions?: any[];
 }
@@ -158,17 +160,36 @@ export default function KnowledgePage() {
   
   const [allDepts, setAllDepts] = useState<any[]>([])
   const [allEmployees, setAllEmployees] = useState<any[]>([])
+  const [transferTarget, setTransferTarget] = useState<string>('')
+  const [transferSearch, setTransferSearch] = useState('')
+  const [currentUser, setCurrentUser] = useState<any>(null)
 
   useEffect(() => {
+    const stored = localStorage.getItem('user')
+    if (stored) {
+      try {
+        setCurrentUser(JSON.parse(stored))
+      } catch {}
+    }
     loadData()
     loadOptions()
   }, [])
+
+  const mapDates = (items: any[]): KnowledgeItem[] => {
+    return items.map(item => ({
+      ...item,
+      createdAt: item.createTime || item.createdAt,
+      createBy: item.createBy,
+      children: item.children ? mapDates(item.children) : undefined
+    }))
+  }
 
   const loadData = async () => {
     setLoading(true)
     try {
       const res = await knowledgeApi.getTree()
-      setFolders(res.data || [])
+      const data = Array.isArray(res) ? res : (res.data || [])
+      setFolders(mapDates(data))
     } catch (error: any) {
       showError(error.message || t('knowledge.load_error'))
     } finally {
@@ -211,6 +232,13 @@ export default function KnowledgePage() {
     flatten(folders);
     return list;
   }, [folders]);
+
+  const canEditPermissions = (item: KnowledgeItem) => {
+    if (!currentUser) return false;
+    if (currentUser.role === 'admin') return true;
+    if (item.createBy && currentUser.loginName && item.createBy === currentUser.loginName) return true;
+    return false;
+  }
 
   const currentContent = useMemo(() => {
     const findFolder = (list: KnowledgeItem[]): KnowledgeItem | undefined => {
@@ -258,8 +286,8 @@ export default function KnowledgePage() {
         parentId: currentFolderId,
         visibilityType,
         permissions: visibilityType === 'specified' ? [
-          ...selectedDepartments.map(id => ({ targetType: 'dept', targetId: id })),
-          ...selectedPersonnel.map(id => ({ targetType: 'user', targetId: id }))
+          ...selectedDepartments.map(id => ({ targetType: 'DEPT', targetId: id })),
+          ...selectedPersonnel.map(id => ({ targetType: 'USER', targetId: id }))
         ] : []
       }
       await knowledgeApi.create(data)
@@ -315,8 +343,9 @@ export default function KnowledgePage() {
   const openPermissionModal = (item: KnowledgeItem) => {
     setEditingItem(item);
     setVisibilityType(item.visibilityType || 'everyone');
-    setSelectedDepartments(item.permissions?.filter(p => p.targetType === 'dept').map(p => p.targetId) || []);
-    setSelectedPersonnel(item.permissions?.filter(p => p.targetType === 'user').map(p => p.targetId) || []);
+    setSelectedDepartments(item.permissions?.filter(p => p.targetType === 'DEPT').map(p => p.targetId) || []);
+    setSelectedPersonnel(item.permissions?.filter(p => p.targetType === 'USER').map(p => p.targetId) || []);
+    setTransferTarget('');
     setIsPermissionModalOpen(true);
   }
 
@@ -326,8 +355,8 @@ export default function KnowledgePage() {
       const data = {
         visibilityType,
         permissions: visibilityType === 'specified' ? [
-          ...selectedDepartments.map(id => ({ targetType: 'dept', targetId: id })),
-          ...selectedPersonnel.map(id => ({ targetType: 'user', targetId: id }))
+          ...selectedDepartments.map(id => ({ targetType: 'DEPT', targetId: id })),
+          ...selectedPersonnel.map(id => ({ targetType: 'USER', targetId: id }))
         ] : []
       };
       await knowledgeApi.updatePermissions(editingItem.id, data);
@@ -336,6 +365,30 @@ export default function KnowledgePage() {
       loadData();
     } catch (error: any) {
       showError(error.message || t('knowledge.perm_error'));
+    }
+  }
+
+  const handleTransferOwner = async () => {
+    if (!editingItem || !transferTarget) return;
+    const targetEmp = allEmployees.find(e => e.employeeId === transferTarget);
+    if (!targetEmp?.loginName) {
+      showError(t('knowledge.transfer_no_login'));
+      return;
+    }
+    const confirmed = await confirm({
+      title: t('knowledge.transfer_confirm_title'),
+      content: t('knowledge.transfer_confirm_desc', { name: targetEmp.name }),
+      type: 'danger'
+    });
+    if (!confirmed) return;
+    try {
+      await knowledgeApi.transferOwner(editingItem.id, targetEmp.loginName);
+      success(t('knowledge.transfer_success'));
+      setIsPermissionModalOpen(false);
+      setTransferTarget('');
+      loadData();
+    } catch (error: any) {
+      showError(error.message || t('knowledge.transfer_error'));
     }
   }
 
@@ -488,7 +541,7 @@ export default function KnowledgePage() {
                      <div className="col-span-2"><VisibilityBadge type={item.visibilityType} /></div>
                      <div className="col-span-2"><span className="text-[13px] font-bold text-slate-400">{new Date(item.createdAt).toLocaleDateString()}</span></div>
                      <div className="col-span-2 flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
-                        {item.isFolder && <button onClick={() => openPermissionModal(item)} className="w-10 h-10 flex items-center justify-center bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl text-slate-400 transition-all" title={t('knowledge.perm_edit')}><Shield size={18} /></button>}
+                        {item.isFolder && canEditPermissions(item) && <button onClick={() => openPermissionModal(item)} className="w-10 h-10 flex items-center justify-center bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl text-slate-400 transition-all" title={t('knowledge.perm_edit')}><Shield size={18} /></button>}
                         {!item.isFolder && <button onClick={() => item.fileUrl && window.open(item.fileUrl)} className="w-10 h-10 flex items-center justify-center bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl text-slate-400 transition-all"><Download size={18} /></button>}
                         <button onClick={() => handleDelete(item.id)} className="w-10 h-10 flex items-center justify-center bg-slate-50 hover:bg-rose-50 hover:text-rose-600 rounded-xl text-slate-400 transition-all"><Trash2 size={18} /></button>
                      </div>
@@ -500,91 +553,74 @@ export default function KnowledgePage() {
         </main>
       </div>
 
-      {/* Permission Modal - Supporting Data Backfilling (回带) */}
+      {/* Permission Modal */}
       <AnimatePresence>
         {isPermissionModalOpen && editingItem && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xl">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-               className="bg-white w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden"
+               className="bg-white w-full max-w-lg rounded-xl shadow-lg overflow-hidden"
              >
-                <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                    <div>
-                      <h3 className="text-xl font-black text-slate-900 tracking-tight">{t('knowledge.perm_edit')}</h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Folder size={14} className="text-amber-500" fill="currentColor" />
-                        <p className="text-[11px] text-slate-400 font-black uppercase tracking-widest">{editingItem.title}</p>
+                      <h3 className="text-lg font-bold text-slate-800">{t('knowledge.perm_edit')}</h3>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <Folder size={12} className="text-amber-500" fill="currentColor" />
+                        <p className="text-xs text-slate-400 font-medium">{editingItem.title}</p>
                       </div>
                    </div>
-                   <button onClick={() => setIsPermissionModalOpen(false)} className="w-12 h-12 flex items-center justify-center bg-white shadow-sm border border-slate-100 hover:bg-slate-50 rounded-2xl text-slate-400 transition-all"><X size={24} /></button>
+                   <button onClick={() => setIsPermissionModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-all"><X size={18} /></button>
                 </div>
 
-                <div className="p-10 space-y-8">
-                   {/* Visibility Mode Toggle */}
-                   <div className="space-y-4">
-                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{t('knowledge.permissions_title')}</label>
-                      <div className="flex gap-3">
+                <div className="p-6 space-y-6">
+                   <div className="space-y-3">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('knowledge.permissions_title')}</label>
+                      <div className="flex gap-2">
                          {(['everyone', 'private', 'specified'] as const).map((mode) => (
-                            <button key={mode} type="button" onClick={() => setVisibilityType(mode)} className={cn("flex-1 py-4 px-2 rounded-2xl text-[11px] font-black uppercase transition-all border-2 flex flex-col items-center gap-2", visibilityType === mode ? "bg-indigo-50 border-indigo-600 text-indigo-600 shadow-lg shadow-indigo-100" : "bg-white border-slate-100 text-slate-400 hover:border-slate-200")}>
-                               {mode === 'everyone' && <Globe size={20} />}
-                               {mode === 'private' && <Lock size={20} />}
-                               {mode === 'specified' && <Users size={20} />}
+                            <button key={mode} type="button" onClick={() => setVisibilityType(mode)} className={cn("flex-1 py-3 px-3 rounded-lg text-xs font-semibold transition-all border flex items-center justify-center gap-2", visibilityType === mode ? "bg-indigo-50 border-indigo-500 text-indigo-600" : "bg-white border-slate-200 text-slate-500 hover:border-slate-300")}>
+                               {mode === 'everyone' && <Globe size={14} />}
+                               {mode === 'private' && <Lock size={14} />}
+                               {mode === 'specified' && <Users size={14} />}
                                {t(`knowledge.visibility_${mode}`)}
                             </button>
                          ))}
                       </div>
                    </div>
 
-                   {/* Specified Viewers Selection */}
                    {visibilityType === 'specified' && (
-                     <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
-                        {/* Summary Header (回带展示区) */}
-                        <div className="flex items-center justify-between p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
-                          <div className="flex items-center gap-3">
-                            <Check size={18} className="text-indigo-600" />
-                            <span className="text-xs font-black text-indigo-700 uppercase tracking-widest">
+                     <div className="space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                        <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
+                          <div className="flex items-center gap-2">
+                            <Check size={14} className="text-indigo-500" />
+                            <span className="text-xs font-semibold text-slate-600">
                               {t('knowledge.perm_selected_count', { count: selectedDepartments.length + selectedPersonnel.length })}
                             </span>
                           </div>
                           {(selectedDepartments.length > 0 || selectedPersonnel.length > 0) && (
-                            <button onClick={() => { setSelectedDepartments([]); setSelectedPersonnel([]); }} className="text-[10px] font-black text-rose-500 uppercase tracking-widest hover:underline flex items-center gap-1">
-                              <RotateCcw size={12} />
+                            <button onClick={() => { setSelectedDepartments([]); setSelectedPersonnel([]); }} className="text-[10px] font-semibold text-rose-500 hover:underline flex items-center gap-1">
+                              <RotateCcw size={10} />
                               {t('knowledge.perm_clear_all')}
                             </button>
                           )}
                         </div>
 
-                        {/* Departments */}
-                        <div className="space-y-3">
-                           <div className="flex items-center justify-between px-2">
-                              <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{t('knowledge.perm_depts')}</label>
-                              <div className="relative w-32 group">
-                                <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-600" size={12} />
-                                <input type="text" placeholder={t('common.search')} value={deptSearch} onChange={e => setDeptSearch(e.target.value)} className="w-full text-[11px] font-bold bg-slate-50 border-none rounded-lg pl-7 pr-2 py-1.5 focus:bg-white focus:ring-2 focus:ring-indigo-100 transition-all outline-none" />
-                              </div>
-                           </div>
-                           <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto p-4 bg-slate-50/50 rounded-2xl border-2 border-slate-100/50 custom-scrollbar">
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('knowledge.perm_depts')}</label>
+                           <div className="flex flex-wrap gap-2 max-h-[100px] overflow-y-auto p-3 bg-slate-50 rounded-lg border border-slate-100 custom-scrollbar">
                               {allDepts.filter(d => d.name.toLowerCase().includes(deptSearch.toLowerCase())).map(dept => (
-                                 <button key={dept.id} type="button" onClick={() => setSelectedDepartments(prev => prev.includes(dept.id) ? prev.filter(i => i !== dept.id) : [...prev, dept.id])} className={cn("px-3 py-2 rounded-xl text-[11px] font-bold transition-all flex items-center gap-2 border shadow-sm", selectedDepartments.includes(dept.id) ? "bg-indigo-600 border-indigo-600 text-white" : "bg-white border-slate-200 text-slate-600 hover:border-indigo-300")}>
-                                    {selectedDepartments.includes(dept.id) && <Check size={12} />}
+                                 <button key={dept.id} type="button" onClick={() => setSelectedDepartments(prev => prev.includes(dept.id) ? prev.filter(i => i !== dept.id) : [...prev, dept.id])} className={cn("px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 border", selectedDepartments.includes(dept.id) ? "bg-indigo-500 border-indigo-500 text-white" : "bg-white border-slate-200 text-slate-600 hover:border-indigo-300")}>
+                                    {selectedDepartments.includes(dept.id) && <Check size={10} />}
                                     {dept.name}
                                  </button>
                               ))}
                            </div>
                         </div>
 
-                        {/* Personnel */}
-                        <div className="space-y-3">
-                           <div className="flex items-center justify-between px-2">
-                              <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{t('knowledge.perm_users')}</label>
-                              <div className="relative w-32 group">
-                                <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-emerald-600" size={12} />
-                                <input type="text" placeholder={t('common.search')} value={userSearch} onChange={e => setUserSearch(e.target.value)} className="w-full text-[11px] font-bold bg-slate-50 border-none rounded-lg pl-7 pr-2 py-1.5 focus:bg-white focus:ring-2 focus:ring-emerald-100 transition-all outline-none" />
-                              </div>
-                           </div>
-                           <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto p-4 bg-slate-50/50 rounded-2xl border-2 border-slate-100/50 custom-scrollbar">
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('knowledge.perm_users')}</label>
+                           <div className="flex flex-wrap gap-2 max-h-[100px] overflow-y-auto p-3 bg-slate-50 rounded-lg border border-slate-100 custom-scrollbar">
                               {allEmployees.filter(e => e.name.toLowerCase().includes(userSearch.toLowerCase())).map(emp => (
-                                 <button key={emp.id} type="button" onClick={() => setSelectedPersonnel(prev => prev.includes(emp.id) ? prev.filter(i => i !== emp.id) : [...prev, emp.id])} className={cn("px-3 py-2 rounded-xl text-[11px] font-bold transition-all flex items-center gap-2 border shadow-sm", selectedPersonnel.includes(emp.id) ? "bg-emerald-600 border-emerald-600 text-white" : "bg-white border-slate-200 text-slate-600 hover:border-emerald-300")}>
-                                    {selectedPersonnel.includes(emp.id) && <Check size={12} />}
+                                 <button key={emp.employeeId} type="button" onClick={() => setSelectedPersonnel(prev => prev.includes(emp.employeeId) ? prev.filter(i => i !== emp.employeeId) : [...prev, emp.employeeId])} className={cn("px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 border", selectedPersonnel.includes(emp.employeeId) ? "bg-emerald-500 border-emerald-500 text-white" : "bg-white border-slate-200 text-slate-600 hover:border-emerald-300")}>
+                                    {selectedPersonnel.includes(emp.employeeId) && <Check size={10} />}
                                     {emp.name}
                                  </button>
                               ))}
@@ -592,77 +628,80 @@ export default function KnowledgePage() {
                         </div>
                      </div>
                    )}
+
+                   <div className="pt-4 border-t border-slate-100 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <ArrowRightLeft size={14} className="text-amber-500" />
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('knowledge.transfer_owner')}</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <select value={transferTarget} onChange={e => setTransferTarget(e.target.value)} className="flex-1 bg-slate-50 border border-transparent focus:border-indigo-100 rounded-lg px-3 py-2.5 text-sm font-medium focus:bg-white transition-all outline-none">
+                          <option value="">{t('knowledge.transfer_select_placeholder')}</option>
+                          {allEmployees.filter(e => e.name.toLowerCase().includes(transferSearch.toLowerCase())).map(emp => (
+                            <option key={emp.employeeId} value={emp.employeeId}>{emp.name}{emp.loginName ? ` (${emp.loginName})` : ''}</option>
+                          ))}
+                        </select>
+                        <button onClick={handleTransferOwner} disabled={!transferTarget} className="px-4 py-2.5 bg-amber-500 text-white rounded-lg text-xs font-semibold shadow-sm hover:bg-amber-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed">{t('knowledge.transfer_btn')}</button>
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-medium">{t('knowledge.transfer_tip')}</p>
+                   </div>
                 </div>
 
-                <div className="p-10 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-4">
-                   <button onClick={() => setIsPermissionModalOpen(false)} className="px-8 py-3 text-xs font-black uppercase text-slate-400 hover:text-slate-900 tracking-widest transition-all">{t('common.cancel')}</button>
-                   <button onClick={handleUpdatePermissions} className="px-10 py-3 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-indigo-600 transition-all active:scale-95">{t('common.save')}</button>
+                <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+                   <button onClick={() => setIsPermissionModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-all">{t('common.cancel')}</button>
+                   <button onClick={handleUpdatePermissions} className="px-5 py-2 bg-primary text-white rounded-lg text-sm font-medium shadow-sm hover:brightness-110 transition-all">{t('common.save')}</button>
                 </div>
              </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* Upload and New Folder modals remain similar but with updated UI styling classes */}
+      {/* Folder Modal */}
       <AnimatePresence>
         {isFolderModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xl">
-             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden">
-                <div className="p-8 border-b border-slate-100 flex items-center justify-between">
-                   <h3 className="text-xl font-black text-slate-900 tracking-tight">{t('knowledge.folder_new')}</h3>
-                   <button onClick={() => setIsFolderModalOpen(false)} className="w-10 h-10 flex items-center justify-center hover:bg-slate-50 rounded-2xl text-slate-400 transition-all"><X size={20} /></button>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white w-full max-w-md rounded-xl shadow-lg overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                   <h3 className="text-lg font-bold text-slate-800">{t('knowledge.folder_new')}</h3>
+                   <button onClick={() => setIsFolderModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-all"><X size={18} /></button>
                 </div>
-                <form onSubmit={handleCreateFolder} className="p-8 space-y-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
-                   <div className="space-y-3">
-                       <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{t('knowledge.folder_name')}</label>
-                       <input autoFocus type="text" value={newFolderName} onChange={e => setNewFolderName(e.target.value)} placeholder={t('knowledge.folder_placeholder')} className="w-full bg-slate-50 border-2 border-transparent rounded-2xl px-5 py-4 text-sm font-bold focus:bg-white focus:border-indigo-100 transition-all outline-none" />
+                <form onSubmit={handleCreateFolder} className="p-6 space-y-5 max-h-[80vh] overflow-y-auto custom-scrollbar">
+                   <div className="space-y-2">
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('knowledge.folder_name')}</label>
+                       <input autoFocus type="text" value={newFolderName} onChange={e => setNewFolderName(e.target.value)} placeholder={t('knowledge.folder_placeholder')} className="w-full bg-slate-50 border border-transparent focus:border-indigo-100 rounded-lg px-4 py-3 text-sm font-medium focus:bg-white transition-all outline-none" />
                    </div>
 
-                   <div className="space-y-6 pt-6 border-t border-slate-50">
-                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{t('knowledge.permissions_title')}</label>
-                      <div className="flex gap-3">
+                   <div className="space-y-3 pt-4 border-t border-slate-100">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('knowledge.permissions_title')}</label>
+                      <div className="flex gap-2">
                          {(['everyone', 'private', 'specified'] as const).map((mode) => (
-                            <button key={mode} type="button" onClick={() => setVisibilityType(mode)} className={cn("flex-1 py-3 px-2 rounded-2xl text-[10px] font-black uppercase transition-all border-2 flex flex-col items-center gap-1.5", visibilityType === mode ? "bg-indigo-50 border-indigo-600 text-indigo-600 shadow-md shadow-indigo-100" : "bg-white border-slate-100 text-slate-400 hover:border-slate-200")}>
-                               {mode === 'everyone' && <Globe size={16} />}
-                               {mode === 'private' && <Lock size={16} />}
-                               {mode === 'specified' && <Users size={16} />}
+                            <button key={mode} type="button" onClick={() => setVisibilityType(mode)} className={cn("flex-1 py-2.5 px-3 rounded-lg text-xs font-semibold transition-all border flex items-center justify-center gap-1.5", visibilityType === mode ? "bg-indigo-50 border-indigo-500 text-indigo-600" : "bg-white border-slate-200 text-slate-500 hover:border-slate-300")}>
+                               {mode === 'everyone' && <Globe size={12} />}
+                               {mode === 'private' && <Lock size={12} />}
+                               {mode === 'specified' && <Users size={12} />}
                                {t(`knowledge.visibility_${mode}`)}
                             </button>
                          ))}
                       </div>
 
                       {visibilityType === 'specified' && (
-                         <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
-                            {/* Departments Selection */}
-                            <div className="space-y-3">
-                               <div className="flex items-center justify-between px-1">
-                                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('knowledge.perm_depts')}</label>
-                                  <div className="relative w-28 group">
-                                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-600" size={10} />
-                                    <input type="text" placeholder={t('common.search')} value={deptSearch} onChange={e => setDeptSearch(e.target.value)} className="w-full text-[10px] font-bold bg-slate-50 border-none rounded-lg pl-6 pr-2 py-1.5 outline-none focus:bg-white transition-all" />
-                                  </div>
-                               </div>
-                               <div className="flex flex-wrap gap-1.5 max-h-[100px] overflow-y-auto p-3 bg-slate-50/50 rounded-xl border border-slate-100 custom-scrollbar">
-                                  {allDepts.filter(d => d.name.toLowerCase().includes(deptSearch.toLowerCase())).map(dept => (
-                                     <button key={dept.id} type="button" onClick={() => setSelectedDepartments(prev => prev.includes(dept.id) ? prev.filter(i => i !== dept.id) : [...prev, dept.id])} className={cn("px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1.5 border", selectedDepartments.includes(dept.id) ? "bg-indigo-600 border-indigo-600 text-white" : "bg-white border-slate-200 text-slate-600 hover:border-indigo-300")}>
+                         <div className="space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                            <div className="space-y-2">
+                               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('knowledge.perm_depts')}</label>
+                               <div className="flex flex-wrap gap-1.5 max-h-[80px] overflow-y-auto p-2.5 bg-slate-50 rounded-lg border border-slate-100 custom-scrollbar">
+                                  {allDepts.map(dept => (
+                                     <button key={dept.id} type="button" onClick={() => setSelectedDepartments(prev => prev.includes(dept.id) ? prev.filter(i => i !== dept.id) : [...prev, dept.id])} className={cn("px-2 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1 border", selectedDepartments.includes(dept.id) ? "bg-indigo-500 border-indigo-500 text-white" : "bg-white border-slate-200 text-slate-600 hover:border-indigo-300")}>
                                         {dept.name}
                                      </button>
                                   ))}
                                </div>
                             </div>
 
-                            {/* Personnel Selection */}
-                            <div className="space-y-3">
-                               <div className="flex items-center justify-between px-1">
-                                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('knowledge.perm_users')}</label>
-                                  <div className="relative w-28 group">
-                                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-emerald-600" size={10} />
-                                    <input type="text" placeholder={t('common.search')} value={userSearch} onChange={e => setUserSearch(e.target.value)} className="w-full text-[10px] font-bold bg-slate-50 border-none rounded-lg pl-6 pr-2 py-1.5 outline-none focus:bg-white transition-all" />
-                                  </div>
-                               </div>
-                               <div className="flex flex-wrap gap-1.5 max-h-[100px] overflow-y-auto p-3 bg-slate-50/50 rounded-xl border border-slate-100 custom-scrollbar">
-                                  {allEmployees.filter(e => e.name.toLowerCase().includes(userSearch.toLowerCase())).map(emp => (
-                                     <button key={emp.id} type="button" onClick={() => setSelectedPersonnel(prev => prev.includes(emp.id) ? prev.filter(i => i !== emp.id) : [...prev, emp.id])} className={cn("px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1.5 border", selectedPersonnel.includes(emp.id) ? "bg-emerald-600 border-emerald-600 text-white" : "bg-white border-slate-200 text-slate-600 hover:border-emerald-300")}>
+                            <div className="space-y-2">
+                               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('knowledge.perm_users')}</label>
+                               <div className="flex flex-wrap gap-1.5 max-h-[80px] overflow-y-auto p-2.5 bg-slate-50 rounded-lg border border-slate-100 custom-scrollbar">
+                                  {allEmployees.map(emp => (
+                                     <button key={emp.employeeId} type="button" onClick={() => setSelectedPersonnel(prev => prev.includes(emp.employeeId) ? prev.filter(i => i !== emp.employeeId) : [...prev, emp.employeeId])} className={cn("px-2 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1 border", selectedPersonnel.includes(emp.employeeId) ? "bg-emerald-500 border-emerald-500 text-white" : "bg-white border-slate-200 text-slate-600 hover:border-emerald-300")}>
                                         {emp.name}
                                      </button>
                                   ))}
@@ -672,9 +711,9 @@ export default function KnowledgePage() {
                       )}
                    </div>
 
-                   <div className="flex items-center gap-4 pt-6 border-t border-slate-50">
-                      <button type="button" onClick={() => setIsFolderModalOpen(false)} className="flex-1 py-4 text-xs font-black uppercase text-slate-400 tracking-widest">{t('common.cancel')}</button>
-                      <button type="submit" disabled={!newFolderName.trim()} className="flex-1 py-4 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-indigo-600 transition-all active:scale-95">{t('common.save')}</button>
+                   <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
+                      <button type="button" onClick={() => setIsFolderModalOpen(false)} className="flex-1 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-700 transition-all">{t('common.cancel')}</button>
+                      <button type="submit" disabled={!newFolderName.trim()} className="flex-1 py-2.5 bg-primary text-white rounded-lg text-sm font-medium shadow-sm hover:brightness-110 transition-all disabled:opacity-40">{t('common.save')}</button>
                    </div>
                 </form>
              </motion.div>
@@ -684,36 +723,48 @@ export default function KnowledgePage() {
 
       <AnimatePresence>
         {isUploadModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xl">
-             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white w-full max-w-xl rounded-[40px] shadow-2xl overflow-hidden">
-                <div className="p-10 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                   <div><h3 className="text-xl font-black text-slate-900 tracking-tight">{t('knowledge.upload_title')}</h3><p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mt-1">{t('knowledge.upload_subtitle')}</p></div>
-                   <button onClick={() => setIsUploadModalOpen(false)} className="w-12 h-12 flex items-center justify-center bg-white shadow-sm border border-slate-100 rounded-2xl text-slate-400 transition-all"><X size={24} /></button>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white w-full max-w-lg rounded-xl shadow-lg overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                   <div>
+                     <h3 className="text-lg font-bold text-slate-800">{t('knowledge.upload_title')}</h3>
+                     <p className="text-xs text-slate-400 font-medium mt-0.5">{t('knowledge.upload_subtitle')}</p>
+                   </div>
+                   <button onClick={() => setIsUploadModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-all"><X size={18} /></button>
                 </div>
-                <div className="p-10 space-y-8">
-                   <div onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); setFiles(prev => [...prev, ...Array.from(e.dataTransfer.files)]); }} className="border-2 border-dashed border-slate-200 rounded-[32px] p-16 flex flex-col items-center justify-center gap-6 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all group cursor-pointer relative">
+                <div className="p-6 space-y-5">
+                   <div onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); setFiles(prev => [...prev, ...Array.from(e.dataTransfer.files)]); }} className="border-2 border-dashed border-slate-200 rounded-xl p-8 flex flex-col items-center justify-center gap-4 hover:border-indigo-300 hover:bg-indigo-50/30 transition-all group cursor-pointer relative">
                       <input type="file" multiple onChange={e => e.target.files && setFiles(prev => [...prev, ...Array.from(e.target.files!)])} className="absolute inset-0 opacity-0 cursor-pointer" />
-                      <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-slate-200 group-hover:text-indigo-600 shadow-sm transition-all"><Upload size={40} /></div>
-                      <div className="text-center"><p className="text-base font-black text-slate-900">{t('knowledge.upload_drop_title')}</p><p className="text-xs text-slate-400 font-bold mt-2 uppercase tracking-widest">{t('knowledge.upload_drop_desc')}</p></div>
+                      <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-300 group-hover:text-indigo-500 transition-all"><Upload size={28} /></div>
+                      <div className="text-center">
+                        <p className="text-sm font-semibold text-slate-700">{t('knowledge.upload_drop_title')}</p>
+                        <p className="text-xs text-slate-400 mt-1">{t('knowledge.upload_drop_desc')}</p>
+                      </div>
                    </div>
                    {files.length > 0 && (
-                     <div className="space-y-2 max-h-40 overflow-y-auto p-2 bg-slate-50 rounded-2xl custom-scrollbar">
+                     <div className="space-y-2 max-h-32 overflow-y-auto p-3 bg-slate-50 rounded-lg custom-scrollbar">
                         {files.map((f, i) => (
-                          <div key={i} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm"><div className="flex items-center gap-3"><div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl"><File size={16} /></div><span className="text-sm font-bold text-slate-700 truncate w-48">{f.name}</span></div><button onClick={() => setFiles(prev => prev.filter((_, idx) => idx !== i))} className="text-slate-300 hover:text-rose-500"><X size={16} /></button></div>
+                          <div key={i} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-100">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="p-2 bg-indigo-50 text-indigo-500 rounded-lg shrink-0"><File size={14} /></div>
+                              <span className="text-sm font-medium text-slate-700 truncate">{f.name}</span>
+                            </div>
+                            <button onClick={() => setFiles(prev => prev.filter((_, idx) => idx !== i))} className="p-1.5 text-slate-300 hover:text-rose-500 shrink-0"><X size={14} /></button>
+                          </div>
                         ))}
                      </div>
                    )}
-                   <div className="space-y-3">
-                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{t('knowledge.upload_target')}</label>
-                      <select value={uploadTargetFolder} onChange={e => setUploadTargetFolder(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent rounded-2xl px-5 py-4 text-sm font-bold focus:bg-white focus:border-indigo-100 transition-all outline-none">
+                   <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('knowledge.upload_target')}</label>
+                      <select value={uploadTargetFolder} onChange={e => setUploadTargetFolder(e.target.value)} className="w-full bg-slate-50 border border-transparent focus:border-indigo-100 rounded-lg px-3 py-2.5 text-sm font-medium focus:bg-white transition-all outline-none">
                          <option value="current">{currentFolderId ? flatFolders.find(f => f.id === currentFolderId)?.title : t('knowledge.sidebar_root')}</option>
                          {flatFolders.map(folder => (<option key={folder.id} value={folder.id}>{folder.title}</option>))}
                       </select>
                    </div>
                 </div>
-                <div className="p-10 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-4">
-                   <button onClick={() => setIsUploadModalOpen(false)} className="px-8 py-3 text-xs font-black uppercase text-slate-400 tracking-widest">{t('common.cancel')}</button>
-                   <button disabled={uploading || files.length === 0} onClick={handleBatchUpload} className="px-10 py-3 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-indigo-600 transition-all active:scale-95 flex items-center gap-3">
+                <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+                   <button onClick={() => setIsUploadModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-all">{t('common.cancel')}</button>
+                   <button disabled={uploading || files.length === 0} onClick={handleBatchUpload} className="px-5 py-2 bg-primary text-white rounded-lg text-sm font-medium shadow-sm hover:brightness-110 transition-all flex items-center gap-2 disabled:opacity-40">
                      {uploading && <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />}
                      {t('knowledge.upload_submit')}
                    </button>

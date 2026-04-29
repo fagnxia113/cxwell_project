@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -15,6 +15,12 @@ import { useTranslation } from 'react-i18next'
 import { cn } from '../../utils/cn'
 import { getFlowName } from '../../constants/workflowConstants'
 import FlowDetailView from '../../components/workflow/FlowDetailView'
+
+const NODE_EDITABLE_FIELDS: Record<string, Record<string, string[]>> = {
+    'flight_booking': {
+      'BOOKER_EXECUTE': ['amount', 'attachment']
+    }
+  }
 
 export default function ApprovalHandlePage() {
   const { taskId } = useParams<{ taskId: string }>()
@@ -34,6 +40,11 @@ export default function ApprovalHandlePage() {
   const [historyNodes, setHistoryNodes] = useState<any[]>([])
   const [targetNodeCode, setTargetNodeCode] = useState<string>('')
   const [isAuthorized, setIsAuthorized] = useState(false)
+
+  const editableFields = useMemo(() => {
+    if (!task?.definition_key || !task?.current_node_id) return []
+    return NODE_EDITABLE_FIELDS[task.definition_key]?.[task.current_node_id] || []
+  }, [task?.definition_key, task?.current_node_id])
 
   useEffect(() => {
     if (taskId) loadData()
@@ -145,7 +156,7 @@ export default function ApprovalHandlePage() {
         formTemplate={formTemplate}
         formData={formData}
         readOnly={true}
-        editableFields={['final_amount', 'ticket_photo']}
+        editableFields={editableFields}
         onFormDataChange={(name, value) => setFormData((prev: any) => ({ ...prev, [name]: value }))}
         timeline={timeline}
         showTimeline={true}

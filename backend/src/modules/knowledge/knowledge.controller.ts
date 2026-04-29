@@ -13,22 +13,22 @@ export class KnowledgeController {
 
   @Get('tree')
   async getTree(@Request() req) {
-    return this.knowledgeService.getTree(req.user.sub);
+    return this.knowledgeService.getTree(req.user.sub || req.user.userId, req.user.role);
   }
 
   @Post()
   async create(@Body() data, @Request() req) {
-    return this.knowledgeService.create(data, req.user.sub);
+    return this.knowledgeService.create(data, req.user.sub || req.user.userId, req.user.role);
   }
 
   @Put(':id')
   async update(@Param('id') id: string, @Body() data, @Request() req) {
-    return this.knowledgeService.update(id, data, req.user.sub);
+    return this.knowledgeService.update(id, data, req.user.sub || req.user.userId, req.user.role);
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string, @Request() req) {
-    return this.knowledgeService.delete(id, req.user.sub);
+    return this.knowledgeService.delete(id, req.user.sub || req.user.userId, req.user.role);
   }
 
   @Post('upload')
@@ -57,7 +57,7 @@ export class KnowledgeController {
       parentId: parentId || null
     };
     // 文件不设独立权限，继承父目录
-    return this.knowledgeService.create(data, req.user.sub);
+    return this.knowledgeService.create(data, req.user.sub || req.user.userId, req.user.role);
   }
 
   /**
@@ -81,7 +81,22 @@ export class KnowledgeController {
       BigInt(id),
       body.visibilityType,
       body.permissions || [],
-      req.user.sub,
+      req.user.sub || req.user.userId,
+      req.user.role,
+    );
+  }
+
+  @Put(':id/transfer')
+  async transferOwner(
+    @Param('id') id: string,
+    @Body() body: { newOwnerLoginName: string },
+    @Request() req,
+  ) {
+    return this.knowledgeService.transferOwner(
+      BigInt(id),
+      body.newOwnerLoginName,
+      req.user.sub || req.user.userId,
+      req.user.role,
     );
   }
 }

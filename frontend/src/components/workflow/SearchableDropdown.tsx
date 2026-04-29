@@ -18,6 +18,7 @@ interface SearchableDropdownProps {
   onChange: (value: any) => void
   disabled?: boolean
   className?: string
+  multi?: boolean
 }
 
 const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
@@ -27,7 +28,8 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   placeholder,
   onChange,
   disabled = false,
-  className
+  className,
+  multi = false
 }) => {
   const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
@@ -36,16 +38,25 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   const [placement, setPlacement] = useState<'top' | 'bottom'>('bottom')
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const selectedOption = useMemo(() => 
-    options.find(opt => String(opt.value) === String(value)), 
-    [options, value]
+  const selectedValues = useMemo(() => {
+    if (multi) {
+      return Array.isArray(value) ? value.map(String) : []
+    }
+    return []
+  }, [value, multi])
+
+  const selectedOptions = useMemo(() =>
+    multi
+      ? options.filter(opt => selectedValues.includes(String(opt.value)))
+      : options.find(opt => String(opt.value) === String(value)),
+    [multi, options, selectedValues, value]
   )
 
   const filteredOptions = useMemo(() => {
     if (!search) return options
     const s = search.toLowerCase()
-    return options.filter(opt => 
-      opt.label.toLowerCase().includes(s) || 
+    return options.filter(opt =>
+      opt.label.toLowerCase().includes(s) ||
       String(opt.value).toLowerCase().includes(s)
     )
   }, [options, search])
@@ -56,7 +67,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
       const windowHeight = window.innerHeight
       const dropdownHeight = 350
       const spaceBelow = windowHeight - rect.bottom
-      
+
       const newPlacement = spaceBelow < dropdownHeight && rect.top > dropdownHeight ? 'top' : 'bottom'
       setPlacement(newPlacement)
 
@@ -94,10 +105,32 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   }, [])
 
   const handleSelect = (val: any) => {
-    onChange(val)
-    setIsOpen(false)
-    setSearch('')
+    if (multi) {
+      const strVal = String(val)
+      const newValues = selectedValues.includes(strVal)
+        ? selectedValues.filter(v => v !== strVal)
+        : [...selectedValues, strVal]
+      onChange(newValues)
+    } else {
+      onChange(val)
+      setIsOpen(false)
+      setSearch('')
+    }
   }
+
+  const handleRemoveTag = (val: string) => {
+    if (multi) {
+      onChange(selectedValues.filter(v => v !== val))
+    }
+  }
+
+  const displayText = multi
+    ? selectedOptions.length > 0
+      ? `${selectedOptions.length} 人已选`
+      : placeholder || t('common.select_placeholder')
+    : selectedOptions && !Array.isArray(selectedOptions)
+      ? t(selectedOptions.label)
+      : (placeholder || t('common.select_placeholder'))
 
   return (
     <div className={cn("relative w-full", className)} ref={containerRef}>
@@ -113,18 +146,35 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
       >
         <span className={cn(
           "text-sm font-medium truncate",
-          selectedOption ? "text-slate-900" : "text-slate-400"
+          multi ? (selectedOptions.length > 0 ? "text-slate-900" : "text-slate-400") : (selectedOptions && !Array.isArray(selectedOptions) ? "text-slate-900" : "text-slate-400")
         )}>
-          {selectedOption ? t(selectedOption.label) : (placeholder || t('common.select_placeholder'))}
+          {displayText}
         </span>
-        <ChevronDown 
-          size={16} 
-          className={cn(
-            "text-slate-300 transition-transform duration-300",
-            isOpen && "rotate-180 text-primary"
-          )} 
-        />
+        <div className="flex items-center gap-1">
+          {multi && selectedOptions.length > 0 && (
+            <span className="text-[10px] font-black bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{selectedOptions.length}</span>
+          )}
+          <ChevronDown
+            size={16}
+            className={cn(
+              "text-slate-300 transition-transform duration-300",
+              isOpen && "rotate-180 text-primary"
+            )}
+          />
+        </div>
       </button>
+
+      {/* Tags for multi-select */}
+      {multi && selectedOptions.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-1.5">
+          {Array.isArray(selectedOptions) && selectedOptions.map(opt => (
+            <span key={String(opt.value)} className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary text-xs font-semibold rounded-full">
+              {t(opt.label)}
+              <button onClick={(e) => { e.stopPropagation(); handleRemoveTag(String(opt.value)); }} className="hover:text-rose-500"><X size={10} /></button>
+            </span>
+          ))}
+        </div>
+      )}
 
       {isOpen && createPortal(
         <div 
@@ -181,13 +231,20 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                     onClick={() => handleSelect(opt.value)}
                     className={cn(
                       "w-full px-4 py-3 text-left text-sm font-bold rounded-lg transition-all flex items-center justify-between group",
-                      String(opt.value) === String(value)
-                        ? "bg-primary text-white shadow-lg shadow-primary/20"
-                        : "text-slate-600 hover:bg-slate-50"
+                      multi
+                        ? (selectedValues.includes(String(opt.value))
+                          ? "bg-primary text-white shadow-lg shadow-primary/20"
+                          : "text-slate-600 hover:bg-slate-50")
+                        : (String(opt.value) === String(value)
+                          ? "bg-primary text-white shadow-lg shadow-primary/20"
+                          : "text-slate-600 hover:bg-slate-50")
                     )}
                   >
                     <span className="truncate">{t(opt.label)}</span>
-                    {String(opt.value) === String(value) && <CheckCircle size={14} className="shrink-0" />}
+                    {multi
+                      ? (selectedValues.includes(String(opt.value)) && <CheckCircle size={14} className="shrink-0" />)
+                      : (String(opt.value) === String(value) && <CheckCircle size={14} className="shrink-0" />)
+                    }
                   </button>
                 ))
               )}

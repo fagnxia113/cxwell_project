@@ -58,5 +58,14 @@
   "empty_title": "暂无内容",
   "empty_desc": "当前目录下还没有任何文件，开始上传吧！",
   "no_assets": "暂无内容",
-  "no_assets_desc": "当前目录下还没有任何文件，开始上传吧！"
+  "no_assets_desc": "当前目录下还没有任何文件，开始上传吧！",
+  "transfer_owner": "转让创建人",
+  "transfer_select_placeholder": "选择新创建人...",
+  "transfer_btn": "转让",
+  "transfer_tip": "转让后，新创建人将拥有此文件夹的完整管理权限，包括修改可见范围和删除",
+  "transfer_confirm_title": "确认转让创建人",
+  "transfer_confirm_desc": "确定将创建人转让给 {{name}} 吗？转让后您将失去此文件夹的管理权限。",
+  "transfer_success": "创建人转让成功",
+  "transfer_error": "创建人转让失败",
+  "transfer_no_login": "所选用户没有登录账号，无法转让"
 }

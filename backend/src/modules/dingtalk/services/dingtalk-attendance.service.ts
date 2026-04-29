@@ -1,6 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { DingtalkAuthService } from './dingtalk-auth.service';
 import axios from 'axios';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 @Injectable()
 export class DingtalkAttendanceService {
@@ -46,13 +52,14 @@ export class DingtalkAttendanceService {
 
       this.logger.warn('[getAttendanceList] Old API failed:', responseOld.data.errmsg, 'trying new API');
 
-      const startTime = new Date(dateFrom).getTime();
-      const endTime = new Date(dateTo).getTime();
+      // 确保使用北京时间的毫秒数
+      const startTime = dayjs.tz(dateFrom, 'Asia/Shanghai').valueOf();
+      const endTime = dayjs.tz(dateTo, 'Asia/Shanghai').valueOf();
 
       const response = await axios.post(
         `https://api.dingtalk.com/v1.0/attendance/checkin/records/query`,
         {
-          userIdList: userIds,
+          userIds: userIds,
           startTime: startTime,
           endTime: endTime,
         },
@@ -69,8 +76,8 @@ export class DingtalkAttendanceService {
       if (response.data.success || response.data.errcode === 0) {
         return {
           success: true,
-          data: response.data.result?.records || [],
-          hasMore: response.data.result?.hasMore || false,
+          data: response.data.records || response.data.result?.records || [],
+          hasMore: response.data.hasMore || response.data.result?.hasMore || false,
         };
       }
 

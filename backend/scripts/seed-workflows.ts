@@ -42,13 +42,13 @@ async function main() {
       name: '机票预订申请单',
       category: 'travel',
       fields: JSON.stringify([
-        { label: '出发城市', name: 'from_city', type: 'text', required: true },
-        { label: '到达城市', name: 'to_city', type: 'text', required: true },
-        { label: '出发日期', name: 'travel_date', type: 'date', required: true },
+        { label: '出发地', name: 'departure', type: 'text', required: true },
+        { label: '目的地', name: 'destination', type: 'text', required: true },
+        { label: '出行人员', name: 'travelers', type: 'employee', required: true, multi: true },
         { label: '关联项目', name: 'project_id', type: 'project', required: false },
-        { label: '出差事由', name: 'reason', type: 'textarea', required: true },
-        { label: '最终票价', name: 'final_amount', type: 'number', required: false, readonly: true, description: '由预定员填写' },
-        { label: '机票照片', name: 'ticket_photo', type: 'file', required: false, readonly: true, description: '由预定员上传' }
+        { label: '出行原因', name: 'reason', type: 'textarea', required: true },
+        { label: '金额', name: 'amount', type: 'number', required: false, readonly: true, description: '由预订员填写' },
+        { label: '附件', name: 'attachment', type: 'file', required: false, readonly: true, description: '由预订员上传' }
       ]),
       layout: JSON.stringify({}),
       version: 1,
@@ -134,7 +134,13 @@ async function main() {
   await prisma.flowDefinition.upsert({
     where: { id: flightDefId },
     update: {
-      ext: JSON.stringify({ form_schema: flightFields ? JSON.parse(flightFields) : [] })
+      ext: JSON.stringify({
+        form_schema: flightFields ? JSON.parse(flightFields) : [],
+        nodeEditableFields: {
+          'MANAGER_APPROVE': [],
+          'BOOKER_EXECUTE': ['amount', 'attachment']
+        }
+      })
     },
     create: {
       id: flightDefId,
@@ -145,7 +151,13 @@ async function main() {
       isPublish: 1,
       createBy: 'admin',
       createTime: new Date(),
-      ext: JSON.stringify({ form_schema: flightFields ? JSON.parse(flightFields) : [] })
+      ext: JSON.stringify({
+        form_schema: flightFields ? JSON.parse(flightFields) : [],
+        nodeEditableFields: {
+          'MANAGER_APPROVE': [],
+          'BOOKER_EXECUTE': ['amount', 'attachment']
+        }
+      })
     }
   });
 

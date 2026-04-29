@@ -193,7 +193,7 @@ export default function WorkflowDetailPage() {
   const enabledActions = primaryActions.filter(a => isAssignee || hasButton(a.perm))
 
   const isBookerExecute = enrichedInstance?.definition_key === 'flight_booking' && (enrichedCurrentTask?.node_id === 'BOOKER_EXECUTE' || enrichedCurrentTask?.name === '预定员处理')
-  const editableFields = isBookerExecute ? ['final_amount', 'ticket_photo'] : []
+  const editableFields = isBookerExecute ? ['amount', 'attachment'] : []
 
   const renderFormTab = () => (
     <div className="bg-white/80 rounded-xl shadow-sm border border-white overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
