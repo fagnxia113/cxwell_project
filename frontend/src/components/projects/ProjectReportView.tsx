@@ -81,7 +81,7 @@ export default function ProjectReportView({
           <div className="w-px h-12 bg-slate-200" />
           <div className="text-center space-y-2">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('project.report.active_risks') || 'Active Risks'}</p>
-            <p className="text-2xl font-black text-rose-600">{risks.filter(r => r.status === 'open').length}</p>
+            <p className="text-2xl font-black text-rose-600">{risks.filter(r => r.status === 'pending' || r.status === 'in_progress').length}</p>
           </div>
         </div>
       </section>
@@ -124,13 +124,13 @@ export default function ProjectReportView({
       </section>
 
       {/* 第四部分：风险摘要 */}
-      {risks.filter(r => r.status === 'open').length > 0 && (
+      {risks.filter(r => r.status === 'pending' || r.status === 'in_progress').length > 0 && (
         <section>
           <h2 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
             <div className="w-1.5 h-4 bg-rose-500 rounded-full" /> 04 {t('project.report.active_risks') || 'Active Risks'}
           </h2>
           <div className="space-y-4">
-            {risks.filter(r => r.status === 'open').map(risk => (
+            {risks.filter(r => r.status === 'pending' || r.status === 'in_progress').map(risk => (
               <div key={risk.id} className="p-6 rounded-2xl border-l-4 border-rose-500 bg-rose-50/30 space-y-2">
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-black text-slate-900 uppercase">{risk.title}</h4>

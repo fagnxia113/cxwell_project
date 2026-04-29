@@ -57,11 +57,9 @@ export const BusinessFormSection: React.FC<BusinessFormSectionProps> = ({
         {filteredFields.length > 0 ? (
           <FormTemplateRenderer
             fields={filteredFields}
-            formData={activeFormData}
+            data={activeFormData}
             onFieldChange={() => {}} // Readonly mode in detail page
-            isReadonly={isReadonly}
-            currentNodeId={currentNodeId}
-            mode="approval"
+            mode="view"
             userMap={masterData.users}
             departmentMap={masterData.depts}
             warehouseMap={masterData.warehouses}

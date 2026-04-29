@@ -31,6 +31,7 @@ interface FormField {
   rows?: number
   min?: number
   multi?: boolean
+  columns?: any[]
 }
 
 interface FormTemplateRendererProps {
@@ -39,6 +40,13 @@ interface FormTemplateRendererProps {
   onFieldChange: (name: string, value: any) => void
   mode?: 'create' | 'edit' | 'view'
   editableFields?: string[]
+  userMap?: Record<string, string>
+  departmentMap?: Record<string, string>
+  warehouseMap?: Record<string, string>
+  projectMap?: Record<string, string>
+  positionMap?: Record<string, string>
+  customerMap?: Record<string, string>
+  repairOrder?: any
 }
 
 const baseInputClass = "w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 text-sm font-medium transition-all duration-300 focus:ring-4 focus:ring-primary/10 focus:border-primary hover:border-slate-300 placeholder:text-slate-300 shadow-sm"

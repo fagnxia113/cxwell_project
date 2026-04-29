@@ -206,7 +206,7 @@ export default function WorkflowDetailPage() {
         </h3>
         {currentTask && (
           <span className="text-[10px] font-medium px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md border border-blue-100">
-            {currentTask.name || currentTask.node_name}
+            {currentTask.name}
           </span>
         )}
       </div>

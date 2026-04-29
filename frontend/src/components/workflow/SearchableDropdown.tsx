@@ -48,7 +48,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   const selectedOptions = useMemo(() =>
     multi
       ? options.filter(opt => selectedValues.includes(String(opt.value)))
-      : options.find(opt => String(opt.value) === String(value)),
+      : options.find(opt => String(opt.value) === String(value)) || null,
     [multi, options, selectedValues, value]
   )
 
@@ -124,9 +124,10 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
     }
   }
 
+  const selectedArr = Array.isArray(selectedOptions) ? selectedOptions : []
   const displayText = multi
-    ? selectedOptions.length > 0
-      ? `${selectedOptions.length} 人已选`
+    ? selectedArr.length > 0
+      ? `${selectedArr.length} 人已选`
       : placeholder || t('common.select_placeholder')
     : selectedOptions && !Array.isArray(selectedOptions)
       ? t(selectedOptions.label)
@@ -146,13 +147,13 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
       >
         <span className={cn(
           "text-sm font-medium truncate",
-          multi ? (selectedOptions.length > 0 ? "text-slate-900" : "text-slate-400") : (selectedOptions && !Array.isArray(selectedOptions) ? "text-slate-900" : "text-slate-400")
+          multi ? (selectedArr.length > 0 ? "text-slate-900" : "text-slate-400") : (selectedOptions && !Array.isArray(selectedOptions) ? "text-slate-900" : "text-slate-400")
         )}>
           {displayText}
         </span>
         <div className="flex items-center gap-1">
-          {multi && selectedOptions.length > 0 && (
-            <span className="text-[10px] font-black bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{selectedOptions.length}</span>
+          {multi && selectedArr.length > 0 && (
+            <span className="text-[10px] font-black bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{selectedArr.length}</span>
           )}
           <ChevronDown
             size={16}
@@ -165,9 +166,9 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
       </button>
 
       {/* Tags for multi-select */}
-      {multi && selectedOptions.length > 0 && (
+      {multi && selectedArr.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-1.5">
-          {Array.isArray(selectedOptions) && selectedOptions.map(opt => (
+          {selectedArr.map(opt => (
             <span key={String(opt.value)} className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary text-xs font-semibold rounded-full">
               {t(opt.label)}
               <button onClick={(e) => { e.stopPropagation(); handleRemoveTag(String(opt.value)); }} className="hover:text-rose-500"><X size={10} /></button>

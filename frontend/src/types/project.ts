@@ -121,7 +121,7 @@ export interface ProjectRisk {
   description: string
   category?: string
   milestone_id?: string
-  level: 'low' | 'medium' | 'high'
+  level: 'low' | 'medium' | 'high' | 'critical'
   status: 'pending' | 'in_progress' | 'pending_review' | 'closed'
   owner_id?: string
   owner_name?: string

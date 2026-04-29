@@ -36,8 +36,8 @@ export default function ProcessFormViewer({ instance, formFields, dynamicOptions
     ],
     'expense-reimbursement': [
       { title: t('workflow.form_groups.basic_info'), fields: ['projectId', 'category'], icon: FileText },
-      { title: t('workflow.form_groups.expense_info'), fields: ['amount', 'expenseDate', 'reason'], icon: DollarSign },
-      { title: t('workflow.form_groups.expense_items'), fields: ['items'], icon: Package }
+      { title: t('workflow.form_groups.expense_info'), fields: ['amount', 'expenseDate', 'reason'], icon: Zap },
+      { title: t('workflow.form_groups.expense_items'), fields: ['items'], icon: Database }
     ],
     'equipment-transfer': [
       { title: t('workflow.form_groups.transfer_info'), fields: ['fromLocationType', 'toLocationType', 'transferReason', 'estimatedArrivalDate'], icon: FileText },

@@ -83,5 +83,41 @@ export const workflowApi = {
   /** 获取流程流转时间轴/轨迹 */
   getTimeline: async (instanceId: string) => {
     return apiClient.get<any>(`/api/workflow/tasks/timeline/${instanceId}`)
+  },
+
+  /** 根据业务 ID 获取流程实例 (适配项目管理详情页) */
+  getInstanceByBusinessId: async (businessId: string) => {
+    // 假设后端支持此过滤，或者前端先拉取我的实例再过滤
+    // 暂时用 processes 列表并在前端过滤，或者如果有特定接口则使用
+    const res = await apiClient.get<any>(`/api/workflow/processes`)
+    if (res.success && Array.isArray(res.data)) {
+      const target = res.data.find((inst: any) => inst.business_id === businessId || inst.businessId === businessId)
+      return { success: true, data: target }
+    }
+    return { success: false, data: null }
+  },
+
+  /** 获取轨迹 (兼容旧调用) */
+  getTrajectory: async (instanceId: string) => {
+    return apiClient.get<any>(`/api/workflow/tasks/timeline/${instanceId}`)
+  },
+
+  /** 获取我的待办 (兼容旧调用) */
+  getPendingTasks: async () => {
+    return apiClient.get<any>('/api/workflow/tasks/todo')
+  },
+
+  /** 审批任务 (兼容旧调用) */
+  approveTask: async (taskId: string, params: { message: string, skipType: 'PASS' | 'REJECT' }) => {
+    if (params.skipType === 'PASS') {
+      return apiClient.post<any>('/api/workflow/complete', { taskId, comment: params.message })
+    } else {
+      return apiClient.post<any>('/api/workflow/reject', { taskId, comment: params.message })
+    }
+  },
+
+  /** 撤回实例 (兼容旧调用) */
+  withdrawInstance: async (instanceId: string) => {
+    return apiClient.post<any>('/api/workflow/cancel', { instanceId })
   }
 }

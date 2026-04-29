@@ -1,5 +1,6 @@
 import React from 'react'
 import { useParams } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion'
 import { useFormDesigner } from '../../hooks/useFormDesigner'
 
 // Sub-components

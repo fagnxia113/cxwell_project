@@ -28,7 +28,7 @@ const severityConfig = {
   critical: { label: 'project.risk.levels.critical', color: 'text-rose-500', bgColor: 'bg-rose-50', dot: 'bg-rose-500' },
 }
 
-const statusConfig = {
+const statusConfig: Record<string, { label: string; color: string; bgColor: string; icon: any }> = {
   identified: { label: 'project.risk.status_labels.identified', color: 'text-amber-500', bgColor: 'bg-amber-50', icon: AlertCircle },
   mitigated: { label: 'project.risk.status_labels.mitigated', color: 'text-blue-500', bgColor: 'bg-blue-50', icon: Activity },
   closed: { label: 'project.risk.status_labels.closed', color: 'text-emerald-500', bgColor: 'bg-emerald-50', icon: CheckCircle },
@@ -72,7 +72,7 @@ export default function RisksTab({ risks, milestones, onAddRisk, onUpdateRisk, o
 
     return {
       activeTotal: activeRisks.length,
-      highSeverity: activeRisks.filter(r => r.level === 'high' || r.level === 'critical').length,
+      highSeverity: activeRisks.filter(r => (r.level as string) === 'high' || (r.level as string) === 'critical').length,
       overdueTotal: overdueRisks.length,
       thisWeekClosed: thisWeekClosed.length
     }
@@ -336,7 +336,7 @@ export default function RisksTab({ risks, milestones, onAddRisk, onUpdateRisk, o
                           onChange={(e) => onUpdateRisk(risk.id, { status: e.target.value })}
                           className={cn(
                             "text-[10px] font-black px-2 py-1 rounded-lg border-none focus:ring-2 focus:ring-slate-900 transition-all cursor-pointer outline-none",
-                            status.bgColor, status.color
+                            statusInfo.bgColor, statusInfo.color
                           )}
                         >
                           <option value="pending">{t('project.risk.status.pending')}</option>

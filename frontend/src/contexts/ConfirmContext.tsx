@@ -29,7 +29,7 @@ export const ConfirmProvider: React.FC<{ children: ReactNode }> = ({ children })
   })
 
   // 使用 ref 来保存 resolve 函数，从而实现 promise 化调用
-  const resolveRef = useRef<(value: boolean) => void>()
+  const resolveRef = useRef<(value: boolean) => void>(null!)
 
   const confirm = useCallback((confirmOptions: ConfirmOptions): Promise<boolean> => {
     setOptions({

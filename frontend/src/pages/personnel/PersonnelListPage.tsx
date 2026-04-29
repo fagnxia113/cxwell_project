@@ -186,7 +186,7 @@ export default function PersonnelListPage() {
     if (!id) return '-'
     const strId = String(id)
     const pos = positions.find(p => String(p.id) === strId)
-    return pos?.name || pos?.postName || '-'
+    return pos?.name || (pos as any)?.postName || '-'
   }
 
   const stats = useMemo(() => ({
@@ -202,7 +202,7 @@ export default function PersonnelListPage() {
       name: employee.name,
       phone: employee.phone || '',
       email: employee.email || '',
-      department: employee.department_id,
+      department: employee.deptId || '',
       position: employee.position,
       status: employee.status
     })
@@ -381,7 +381,7 @@ export default function PersonnelListPage() {
                    <div className="col-span-2">
                     <div className="flex items-center gap-1.5">
                       <Building size={12} className="text-slate-300" />
-                      <span className="text-xs font-medium text-slate-600 truncate">{getDepartmentName(emp.deptId)}</span>
+                      <span className="text-xs font-medium text-slate-600 truncate">{getDepartmentName(emp.deptId || '')}</span>
                     </div>
                   </div>
 

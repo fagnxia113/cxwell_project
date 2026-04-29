@@ -37,7 +37,7 @@ const tagTypeConfig = {
   white: { label: 'project.tag.types.white', color: 'text-slate-400', bgColor: 'bg-white', dotColor: 'bg-slate-300', borderColor: 'border-slate-200' },
 }
 
-const statusConfig = {
+const statusConfig: Record<string, { label: string; color: string; bgColor: string; icon: any }> = {
   pending: { label: 'project.tag.status_labels.pending', color: 'text-slate-500', bgColor: 'bg-slate-100', icon: Clock },
   tagging: { label: 'project.tag.status_labels.tagging', color: 'text-amber-500', bgColor: 'bg-amber-50', icon: AlertCircle },
   verifying: { label: 'project.tag.status_labels.verifying', color: 'text-blue-500', bgColor: 'bg-blue-50', icon: AlertCircle },
@@ -337,7 +337,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
               ) : (
                 flattenedMilestones.map(m => {
                   const stats = milestoneStats[m.id] || { required: 0, tagged: 0, verified: 0, abnormal: 0, progress: 0, status: 'pending' };
-                  const mStatusInfo = statusConfig[stats.status] || statusConfig.pending;
+                  const mStatusInfo = statusConfig[stats.status as keyof typeof statusConfig] || statusConfig.pending;
                   const MStatusIcon = mStatusInfo.icon;
                   const milestoneTags = tags.filter(r => r.milestone_id === m.id);
 

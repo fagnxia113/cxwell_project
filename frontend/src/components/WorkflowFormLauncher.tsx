@@ -161,7 +161,7 @@ const WorkflowFormLauncher: React.FC<WorkflowFormLauncherProps> = ({
     const confirmed = await confirm({
       title: t('workflow.submit_confirm_title'),
       content: t('workflow.submit_confirm_content'),
-      type: 'primary'
+      type: 'info'
     })
 
     if (!confirmed) return

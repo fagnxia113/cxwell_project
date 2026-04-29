@@ -319,7 +319,7 @@ export default function EmployeeDetailPage() {
                   {employee.name.charAt(0)}
                 </div>
                 <h2 className="text-xl font-bold text-slate-900">{employee.name}</h2>
-                <div className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">{employee.employee_no}</div>
+                <div className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">{employee.employeeNo}</div>
                 <div className="flex flex-wrap justify-center gap-2 mt-4">
                   <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusInfo.color} border border-current opacity-90`}>
                     {statusInfo.label}
@@ -393,7 +393,7 @@ export default function EmployeeDetailPage() {
                         ))}
                       </select>
                     ) : (
-                      <div className="text-xs font-bold text-slate-900">{employee.department_name || '-'}</div>
+                      <div className="text-xs font-bold text-slate-900">{employee.departmentName || '-'}</div>
                     )}
                   </div>
                   <div>
@@ -410,7 +410,7 @@ export default function EmployeeDetailPage() {
                         ))}
                       </select>
                     ) : (
-                      <div className="text-xs font-bold text-slate-900">{employee.position_name || '-'}</div>
+                      <div className="text-xs font-bold text-slate-900">{employee.positionName || '-'}</div>
                     )}
                   </div>
                   <div>
@@ -429,7 +429,7 @@ export default function EmployeeDetailPage() {
                         <option value="implementer">{t('personnel.roles.implementer')}</option>
                       </select>
                     ) : (
-                      <div className="text-sm font-bold text-gray-900">{getRoleLabel(employee.role)}</div>
+                      <div className="text-sm font-bold text-gray-900">{getRoleLabel(employee.role || '')}</div>
                     )}
                   </div>
                   <div>

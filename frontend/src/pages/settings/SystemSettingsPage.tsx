@@ -24,6 +24,7 @@ import { API_URL } from '../../config/api'
 import { apiClient } from '../../utils/apiClient'
 import { useMessage } from '../../hooks/useMessage'
 import { cn } from '../../utils/cn'
+import { useTranslation } from 'react-i18next'
 
 interface SystemConfig {
   id: string
@@ -67,6 +68,7 @@ const StatCard = ({ title, value, icon: Icon, color, delay }: any) => {
 }
 
 export default function SystemSettingsPage() {
+  const { t } = useTranslation()
   const message = useMessage()
   const [configs, setConfigs] = useState<SystemConfig[]>([])
   const [loading, setLoading] = useState(true)

@@ -58,4 +58,7 @@ export const workflowApi = {
   // 退回接口 (回退到指定节点，继续运行)
   rollback: (taskId: string, comment: string, targetNodeCode?: string) =>
     apiClient.post<any>('/api/workflow/tasks/rollback', { taskId, comment, targetNodeCode }),
+
+  // 兼容旧调用名
+  getDoneTasks: () => apiClient.get<any>('/api/workflow/tasks/hub/done'),
 };

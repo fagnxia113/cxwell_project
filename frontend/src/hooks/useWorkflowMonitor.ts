@@ -38,6 +38,9 @@ export interface Statistics {
     running: number;
     completed: number;
   }>;
+  activeCount?: number;
+  errorCount?: number;
+  pendingIntervention?: number;
 }
 
 export interface RealtimeMonitoring {
@@ -57,7 +60,7 @@ export interface RealtimeMonitoring {
 
 export function useWorkflowMonitor() {
   const { t } = useTranslation();
-  const { error, success } = useMessage();
+  const { error, success, warning } = useMessage();
 
   const [instances, setInstances] = useState<ProcessInstance[]>([]);
   const [statistics, setStatistics] = useState<Statistics | null>(null);
@@ -132,7 +135,7 @@ export function useWorkflowMonitor() {
           break;
         // 其他类型暂不实现或按需扩展
         default:
-          message.warning('该干预类型暂未开放');
+          warning('该干预类型暂未开放');
           return false;
       }
 

@@ -106,7 +106,7 @@ export default function ApprovalHandlePage() {
     const isConfirmed = await confirm({
       title: action === 'pass' ? t('approvals.action.confirm_pass', 'Confirm Approve') : t('approvals.action.confirm_reject', 'Confirm Reject'),
       content: t('approvals.action.confirm_content', { node: task.node_name }),
-      type: action === 'pass' ? 'primary' : 'danger'
+      type: action === 'pass' ? 'info' : 'danger'
     })
 
     if (!isConfirmed) return

@@ -45,8 +45,8 @@ export default function MilestoneGantt({ milestones, onProgressClick, title }: M
   // 收集所有日期（包括子里程碑）
   const collectAllDates = (milestones: Milestone[]): Date[] => {
     return milestones.flatMap(m => [
-      new Date(m.planned_start_date || m.plannedDate),
-      new Date(m.planned_end_date || m.plannedDate),
+      new Date(m.planned_start_date || ''),
+      new Date(m.planned_end_date || ''),
       ...(m.children ? collectAllDates(m.children) : [])
     ])
   }
@@ -149,16 +149,16 @@ export default function MilestoneGantt({ milestones, onProgressClick, title }: M
 
   const renderMilestoneRow = (milestone: Milestone, level: number = 0) => {
     const hasChildren = milestone.children && milestone.children.length > 0
-    const startDate = milestone.planned_start_date || milestone.plannedDate
-    const endDate = milestone.planned_end_date || milestone.plannedDate
+    const startDate = milestone.planned_start_date
+    const endDate = milestone.planned_end_date
     const dateRange = getChildDateRange(milestone.children || [], startDate, endDate)
-    const startDays = getDateDays(new Date(dateRange.start))
-    const endDays = getDateDays(new Date(dateRange.end))
+    const startDays = getDateDays(new Date(dateRange.start || ''))
+    const endDays = getDateDays(new Date(dateRange.end || ''))
 
     const left = (startDays - scaleStartDays) * dayWidth
     const width = (endDays - startDays + 1) * dayWidth
     const progress = milestone.progress || 0
-    const isDelayed = today > new Date(dateRange.end) && progress < 100
+    const isDelayed = today > new Date(dateRange.end || '') && progress < 100
     const isCompleted = hasChildren ? progress === 100 : milestone.status === 'completed'
 
     return (
@@ -207,7 +207,7 @@ export default function MilestoneGantt({ milestones, onProgressClick, title }: M
         {/* 子里程碑 */}
         {hasChildren && isExpanded(milestone.id) && (
           <div className="divide-y divide-slate-100">
-            {milestone.children?.map(child => renderMilestoneRow(child, level + 1))}
+            {milestone.children!.map(child => renderMilestoneRow(child, level + 1))}
           </div>
         )}
       </React.Fragment>
@@ -218,10 +218,10 @@ export default function MilestoneGantt({ milestones, onProgressClick, title }: M
     const hasChildren = milestone.children && milestone.children.length > 0
     const progress = milestone.progress || 0
     const weight = hasChildren
-      ? milestone.children.reduce((sum, c) => sum + (c.weight || 0), 0)
+      ? milestone.children!.reduce((sum, c) => sum + (c.weight || 0), 0)
       : (milestone.weight || 0)
-    const startDate = milestone.planned_start_date || milestone.plannedDate
-    const endDate = milestone.planned_end_date || milestone.plannedDate
+    const startDate = milestone.planned_start_date
+    const endDate = milestone.planned_end_date
     const dateRange = getChildDateRange(milestone.children || [], startDate, endDate)
 
     return (
@@ -281,7 +281,7 @@ export default function MilestoneGantt({ milestones, onProgressClick, title }: M
         {/* 子项区域 */}
         {hasChildren && isExpanded(milestone.id) && (
           <div className="bg-slate-50/5">
-            {milestone.children.map(child => renderMilestoneInfo(child, level + 1))}
+            {milestone.children!.map(child => renderMilestoneInfo(child, level + 1))}
           </div>
         )}
       </React.Fragment>

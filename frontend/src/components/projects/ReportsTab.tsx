@@ -30,7 +30,7 @@ interface ReportsTabProps {
   isProjectManager?: boolean
 }
 
-const statusConfig = {
+const statusConfig: Record<string, { label: string; color: string; bgColor: string; icon: any }> = {
   pending: { label: 'project.report.status.pending', color: 'text-slate-500', bgColor: 'bg-slate-100', icon: Clock },
   submitted: { label: 'project.report.status.submitted', color: 'text-amber-500', bgColor: 'bg-amber-50', icon: AlertCircle },
   verified: { label: 'project.report.status.verified', color: 'text-emerald-500', bgColor: 'bg-emerald-50', icon: CheckCircle },

@@ -108,12 +108,12 @@ export default function AttendanceBoardPage() {
     try {
       setLoading(true)
       if (viewMode === 'summary') {
-        const res = await apiClient.get<SummaryData>(`/api/personnel/attendance/summary?year_month=${currentMonth}`)
+        const res = await apiClient.get<any>(`/api/personnel/attendance/summary?year_month=${currentMonth}`)
         if (res && res.success && res.data) {
           setSummaryData(res.data)
         }
       } else {
-        const res = await apiClient.get<CalendarData>(`/api/personnel/attendance/calendar?year_month=${currentMonth}`)
+        const res = await apiClient.get<any>(`/api/personnel/attendance/calendar?year_month=${currentMonth}`)
         if (res && res.success && res.data) {
           setCalendarData(res.data)
         }
