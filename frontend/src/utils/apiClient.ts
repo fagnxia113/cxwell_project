@@ -241,23 +241,50 @@ class ApiClient {
       clearTimeout(timeoutId)
 
       const text = await response.text()
-      const data: ApiResponse<T> = text ? JSON.parse(text) : {}
+      let bodyData: any = null
+      
+      if (text) {
+        try {
+          bodyData = JSON.parse(text)
+        } catch (e) {
+          // 响应不是JSON格式
+        }
+      }
 
-      if (!response.ok || !data.success) {
+      if (!response.ok) {
         const error = new ApiError(
-          data.error || data.message || i18n.t('api.upload_failed'),
+          bodyData?.message || bodyData?.error || i18n.t('api.upload_failed'),
           response.status,
-          data.error
+          bodyData?.error
         )
         if (onGlobalError) onGlobalError(error)
         throw error
       }
 
-      if (data.message && onGlobalSuccess) {
-        onGlobalSuccess(data.message)
+      // 兼容两种响应格式:
+      // 1. 标准格式 { success: true, data: T, message: string }
+      // 2. 直接数据格式 T
+      if (bodyData && typeof bodyData === 'object' && 'success' in bodyData) {
+        const data = bodyData as ApiResponse<T>
+        
+        if (!data.success) {
+          const error = new ApiError(
+            data.error || data.message || i18n.t('api.upload_failed'),
+            response.status,
+            data.error
+          )
+          if (onGlobalError) onGlobalError(error)
+          throw error
+        }
+
+        if (data.message && onGlobalSuccess) {
+          onGlobalSuccess(data.message)
+        }
+
+        return data.data as T
       }
 
-      return data.data as T
+      return bodyData as T
     } catch (error: any) {
       clearTimeout(timeoutId)
 

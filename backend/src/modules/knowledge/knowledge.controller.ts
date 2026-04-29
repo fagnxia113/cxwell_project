@@ -1,13 +1,15 @@
 import { 
   Controller, Get, Post, Body, Put, Param, Delete, 
-  UseInterceptors, UploadedFile, Request
+  UseInterceptors, UploadedFile, Request, BadRequestException, UseFilters
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { KnowledgeService } from './knowledge.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { FileUploadExceptionFilter } from '../../common/filters/file-upload.filter';
 
 @Controller('knowledge')
+@UseFilters(FileUploadExceptionFilter)
 export class KnowledgeController {
   constructor(private readonly knowledgeService: KnowledgeService) {}
 
@@ -37,26 +39,32 @@ export class KnowledgeController {
       destination: './uploads/knowledge',
       filename: (req, file, cb) => {
         const randomName = Array(32).fill(null).map(() => (Math.round(Math.random() * 16)).toString(16)).join('');
-        return cb(null, `${randomName}${extname(file.originalname)}`);
+        const ext = extname(file.originalname);
+        return cb(null, `${randomName}${ext}`);
       }
     }),
     fileFilter: (req, file, cb) => {
       const allowed = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.png', '.jpg', '.jpeg', '.zip', '.rar'];
       const ext = extname(file.originalname).toLowerCase();
       if (allowed.includes(ext)) cb(null, true);
-      else cb(new Error('不支持的文件类型'), false);
+      else cb(new BadRequestException(`不支持的文件类型: ${ext}，仅支持 PDF、Office 文档、图片和压缩包`), false);
     },
     limits: { fileSize: 20 * 1024 * 1024 }
   }))
   async upload(@UploadedFile() file: Express.Multer.File, @Body('parentId') parentId: string, @Request() req) {
+    if (!file) {
+      throw new BadRequestException('请选择要上传的文件，文件大小不能超过 20MB');
+    }
+
+    const originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
+
     const data = {
-      title: file.originalname,
+      title: originalname,
       type: 'Document',
       fileUrl: `/api/files/knowledge/${file.filename}`,
       isFolder: false,
       parentId: parentId || null
     };
-    // 文件不设独立权限，继承父目录
     return this.knowledgeService.create(data, req.user.sub || req.user.userId, req.user.role);
   }
 

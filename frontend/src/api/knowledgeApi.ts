@@ -19,7 +19,7 @@ export const knowledgeApi = {
    * 上传文件
    */
   upload: (formData: FormData) => {
-    return apiClient.post<any>('/api/knowledge/upload', formData);
+    return apiClient.upload<any>('/api/knowledge/upload', formData);
   },
 
   /**

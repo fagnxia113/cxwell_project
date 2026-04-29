@@ -446,12 +446,16 @@ async function main() {
     flowName: '费用报销审批流',
     category: 'finance',
     formSchema: [
-      { name: 'projectId', label: '关联项目', type: 'select', required: false, dynamicOptions: 'project', group: 'basic_info' },
-      { name: 'category', label: '费用类别', type: 'select', required: true, options: [{ label: '差旅费', value: 'travel' }, { label: '办公费', value: 'office' }, { label: '招待费', value: 'entertainment' }, { label: '其他', value: 'other' }], group: 'basic_info' },
-      { name: 'amount', label: '报销总金额', type: 'number', required: true, group: 'expense_info' },
-      { name: 'expenseDate', label: '发生日期', type: 'date', required: false, group: 'expense_info' },
-      { name: 'reason', label: '报销事由', type: 'textarea', required: true, group: 'expense_info' },
-      { name: 'items', label: '报销明细', type: 'subform', required: false, group: 'items' },
+      { name: 'totalAmount', label: '总金额', type: 'number', required: true, group: 'basic_info', description: '明细金额合计' },
+      { name: 'remark', label: '备注', type: 'textarea', required: false, group: 'basic_info' },
+      { name: 'attachment', label: '上传附件', type: 'file', required: false, group: 'basic_info' },
+      { name: 'items', label: '报销明细', type: 'subform', required: true, group: 'detail_info', columns: [
+        { name: 'projectId', label: '关联项目', type: 'select', dataSource: 'project' },
+        { name: 'category', label: '费用类别', type: 'select', options: [{ label: '差旅费', value: 'travel' }, { label: '办公费', value: 'office' }, { label: '招待费', value: 'entertainment' }, { label: '其他', value: 'other' }] },
+        { name: 'amount', label: '金额', type: 'number' },
+        { name: 'expenseDate', label: '发生日期', type: 'date' },
+        { name: 'reason', label: '事由', type: 'text' }
+      ]},
     ],
     nodes: [
       { id: 9201n, type: 0, code: 'start', name: '发起报销', coord: { x: 250, y: 50 } },
@@ -473,19 +477,25 @@ async function main() {
     flowName: '机票预订申请流',
     category: 'general',
     formSchema: [
-      { name: 'departure', label: '出发地', type: 'text', required: true },
-      { name: 'destination', label: '目的地', type: 'text', required: true },
-      { name: 'date', label: '出发日期', type: 'date', required: true },
-      { name: 'idCard', label: '乘机人证件号', type: 'text', required: true },
+      { name: 'travelers', label: '出行人员', type: 'employee', required: true, multi: true, group: 'basic_info' },
+      { name: 'departure', label: '出发地', type: 'text', required: true, group: 'basic_info' },
+      { name: 'destination', label: '目的地', type: 'text', required: true, group: 'basic_info' },
+      { name: 'travel_date', label: '出行日期', type: 'date', required: true, group: 'basic_info' },
+      { name: 'reason', label: '出行原因', type: 'textarea', required: true, group: 'basic_info' },
+      { name: 'project_id', label: '关联项目', type: 'select', required: false, dynamicOptions: 'project', group: 'basic_info' },
+      { name: 'amount', label: '费用', type: 'number', required: false, readonly: true, description: '由预订员填写', group: 'booker_info' },
+      { name: 'attachment', label: '附件', type: 'file', required: false, readonly: true, description: '由预订员上传', group: 'booker_info' }
     ],
     nodes: [
       { id: 9401n, type: 0, code: 'start', name: '发起申请', coord: { x: 250, y: 50 } },
-      { id: 9402n, type: 1, code: 'admin_process', name: '行政处理/出票', flag: 'role:admin', coord: { x: 250, y: 150 } },
-      { id: 9403n, type: 2, code: 'end', name: '预订成功', coord: { x: 250, y: 250 } },
+      { id: 9402n, type: 1, code: 'manager_approve', name: '部门经理审批', flag: 'reportTo:deptLeader', coord: { x: 250, y: 150 } },
+      { id: 9403n, type: 1, code: 'booker_process', name: '预订员处理', flag: 'role:booker', coord: { x: 250, y: 250 } },
+      { id: 9404n, type: 2, code: 'end', name: '预订成功', coord: { x: 250, y: 350 } },
     ],
     skips: [
-      { id: 9501n, now: 'start', next: 'admin_process', name: '提交申请', type: 'pass' },
-      { id: 9502n, now: 'admin_process', next: 'end', name: '确认出票', type: 'pass' },
+      { id: 9501n, now: 'start', next: 'manager_approve', name: '提交申请', type: 'pass' },
+      { id: 9502n, now: 'manager_approve', next: 'booker_process', name: '同意', type: 'pass' },
+      { id: 9503n, now: 'booker_process', next: 'end', name: '确认出票', type: 'pass' },
     ]
   });
 

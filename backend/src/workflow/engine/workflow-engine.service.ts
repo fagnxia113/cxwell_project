@@ -559,7 +559,6 @@ export class WorkflowEngineService {
       const safeBusinessId = businessId || '';
       this.logger.log(`handleWorkflowCompletion called: definitionId=${definitionId}, businessId=${safeBusinessId}`);
       const def = await tx.flowDefinition.findUnique({ where: { id: definitionId } });
-      const flowCode = def?.flowCode || '';
 
       if (!safeBusinessId) {
         this.logger.warn('handleWorkflowCompletion: businessId is empty, skipping');
@@ -578,13 +577,7 @@ export class WorkflowEngineService {
         relatedId: instance?.id.toString(),
       });
 
-      const handler = this.handlerMap[flowCode];
-      if (handler) {
-        this.logger.log(`handleWorkflowCompletion: 调用处理器 ${flowCode}`);
-        await handler.handle(tx, safeBusinessId, instance, {});
-      } else {
-        this.logger.log(`handleWorkflowCompletion: flowCode=${flowCode} 不匹配任何处理器`);
-      }
+      this.logger.log(`handleWorkflowCompletion: 流程完成通知已发送，业务操作由服务节点处理`);
     } catch (err) {
       this.logger.error(`业务联动失败: ${err.message}`);
     }

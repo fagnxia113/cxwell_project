@@ -8,8 +8,44 @@ import { PrismaService } from '../../prisma/prisma.service';
 @Injectable()
 export class TaskQueryService {
   private readonly logger = new Logger(TaskQueryService.name);
+  private userNameCache = new Map<string, string>();
 
   constructor(private prisma: PrismaService) {}
+
+  /**
+   * 获取用户真实姓名
+   */
+  private async getUserName(loginName: string | undefined | null): Promise<string> {
+    if (!loginName) return '系统';
+    
+    if (this.userNameCache.has(loginName)) {
+      return this.userNameCache.get(loginName)!;
+    }
+
+    const user = await this.prisma.sysUser.findFirst({
+      where: { loginName },
+      select: { userName: true, userId: true }
+    });
+    
+    if (user?.userName) {
+      this.userNameCache.set(loginName, user.userName);
+      return user.userName;
+    }
+
+    if (user?.userId) {
+      const employee = await this.prisma.sysEmployee.findFirst({
+        where: { userId: user.userId },
+        select: { name: true }
+      });
+      
+      if (employee?.name) {
+        this.userNameCache.set(loginName, employee.name);
+        return employee.name;
+      }
+    }
+
+    return loginName;
+  }
 
   /**
    * 获取任务详情 (含流程上下文)
@@ -26,6 +62,8 @@ export class TaskQueryService {
       this.prisma.flowDefinition.findUnique({ where: { id: task.definitionId } }),
     ]);
 
+    const initiatorName = await this.getUserName(instance?.createBy || undefined);
+
     return {
       ...task,
       id: task.id.toString(),
@@ -37,7 +75,7 @@ export class TaskQueryService {
       definition_name: definition?.flowName,
       current_node_id: task.nodeCode,
       current_node_name: task.nodeName,
-      initiator_name: instance?.createBy || '系统',
+      initiator_name: initiatorName,
       created_at: task.createTime,
       form_data: instance?.ext ? JSON.parse(instance.ext) : {},
     };
@@ -84,6 +122,13 @@ export class TaskQueryService {
     const instanceMap = new Map(instances.map(i => [i.id.toString(), i]));
     const defMap = new Map(definitions.map(d => [d.id.toString(), d]));
 
+    const loginNames = [...new Set(instances.map(i => i.createBy).filter((n): n is string => Boolean(n)))];
+    const userNameMap = new Map<string, string>();
+    await Promise.all(loginNames.map(async loginName => {
+      const name = await this.getUserName(loginName);
+      userNameMap.set(loginName, name);
+    }));
+
     // 4. 聚合为若依标准展示模型
     return tasks.map(task => {
       const inst = instanceMap.get(task.instanceId.toString());
@@ -95,7 +140,7 @@ export class TaskQueryService {
         process_title: inst?.businessId || '未命名业务',
         process_type: def?.flowName || '通用流程',
         node_name: task.nodeName,
-        initiator_name: inst?.createBy || '系统',
+        initiator_name: inst?.createBy ? (userNameMap.get(inst.createBy) || inst.createBy) : '系统',
         status: 'pending',
         create_time: task.createTime,
         form_data: inst?.ext ? JSON.parse(inst.ext) : {},
@@ -308,6 +353,13 @@ export class TaskQueryService {
     const instanceMap = new Map(instances.map(i => [i.id.toString(), i]));
     const defMap = new Map(definitions.map(d => [d.id.toString(), d]));
 
+    const loginNames = [...new Set(instances.map(i => i.createBy).filter((n): n is string => Boolean(n)))];
+    const userNameMap = new Map<string, string>();
+    await Promise.all(loginNames.map(async loginName => {
+      const name = await this.getUserName(loginName);
+      userNameMap.set(loginName, name);
+    }));
+
     return tasks.map(task => {
       const inst = instanceMap.get(task.instanceId.toString());
       return {
@@ -315,7 +367,7 @@ export class TaskQueryService {
         instance_id: task.instanceId.toString(),
         process_title: inst?.businessId || '抄送流程',
         process_type: defMap.get(task.definitionId.toString())?.flowName || '通用',
-        initiator_name: inst?.createBy || '系统',
+        initiator_name: inst?.createBy ? (userNameMap.get(inst.createBy) || inst.createBy) : '系统',
         status: 'cc',
         create_time: task.createTime,
         form_data: inst?.ext ? JSON.parse(inst.ext) : {},
@@ -333,6 +385,25 @@ export class TaskQueryService {
     const definition = await this.prisma.flowDefinition.findUnique({
       where: { id: instance.definitionId }
     });
+
+    let initiatorName = instance.createBy;
+    if (instance.createBy) {
+      const user = await this.prisma.sysUser.findFirst({
+        where: { loginName: instance.createBy },
+        select: { userName: true, userId: true }
+      });
+      if (user?.userName) {
+        initiatorName = user.userName;
+      } else if (user?.userId) {
+        const employee = await this.prisma.sysEmployee.findFirst({
+          where: { userId: user.userId },
+          select: { name: true }
+        });
+        if (employee?.name) {
+          initiatorName = employee.name;
+        }
+      }
+    }
     
     const history = await this.prisma.flowHisTask.findMany({
       where: { instanceId: id, delFlag: '0' },
@@ -373,7 +444,7 @@ export class TaskQueryService {
         variables: { formData },
         form_data: formData,
         initiator_id: instance.createBy,
-        initiator_name: instance.createBy,
+        initiator_name: initiatorName,
         start_time: instance.createTime,
         end_time: null,
         current_node_id: instance.nodeCode,

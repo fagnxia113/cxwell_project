@@ -295,7 +295,7 @@ const WorkflowFormLauncher: React.FC<WorkflowFormLauncherProps> = ({
               </label>
               <input
                 type="text"
-                value={localStorage.getItem('userName') || t('common.system')}
+                value={user?.name || localStorage.getItem('userName') || t('common.system')}
                 disabled
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-lg text-slate-600 text-sm font-medium cursor-default shadow-inner"
               />

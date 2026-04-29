@@ -71,6 +71,8 @@ export class ProjectService {
 
     let where: any = await this.applyDataScope(user);
 
+    where.delFlag = '0';
+
     if (projectName) {
       where.projectName = { contains: projectName };
     }

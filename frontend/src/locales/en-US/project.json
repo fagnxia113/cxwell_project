@@ -36,7 +36,11 @@
   "loading_error": "Failed to load projects",
   "action": {
     "initiate": "Initiate Project",
-    "import": "Import Project"
+    "import": "Import Project",
+    "confirm_delete": "Confirm Delete Project",
+    "delete_desc": "After deletion, the project will be moved to recycle bin and automatically cleared after 30 days. Are you sure?",
+    "delete_later": "Delete Later",
+    "delete_now": "Delete Now"
   },
   "tabs": {
     "overview": "Overview",

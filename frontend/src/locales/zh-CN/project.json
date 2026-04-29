@@ -36,7 +36,11 @@
   "loading_error": "项目加载失败",
   "action": {
     "initiate": "发起立项",
-    "import": "批量导入"
+    "import": "批量导入",
+    "confirm_delete": "确认删除项目",
+    "delete_desc": "删除后项目将移入回收站，30天后自动清除。确定要删除吗？",
+    "delete_later": "稍后删除",
+    "delete_now": "立即删除"
   },
   "tabs": {
     "overview": "概览看板",
