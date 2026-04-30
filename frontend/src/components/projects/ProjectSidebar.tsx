@@ -27,9 +27,9 @@ interface ProjectSidebarProps {
 // 精简点：用配置数组驱动 9 个技术规格字段，消除大量重复代码
 const NUMERIC_SPECS = [
   { key: 'building_area',  labelKey: 'project.fields.building_area',  icon: Briefcase,  unit: 'm²' },
-  { key: 'it_capacity',    labelKey: 'project.fields.it_capacity',    icon: TrendingUp,  unit: 'kW' },
+  { key: 'it_capacity',    labelKey: 'project.fields.it_capacity',    icon: TrendingUp,  unit: 'MW' },
   { key: 'cabinet_count',  labelKey: 'project.fields.cabinet_count',  icon: List,        unitKey: 'common.unit_piece' },
-  { key: 'cabinet_power',  labelKey: 'project.fields.cabinet_power',  icon: DollarSign,  unit: 'kW / R' },
+  { key: 'cabinet_power',  labelKey: 'project.fields.cabinet_power',  icon: DollarSign,  unit: 'kW' },
   { key: 'rack_power',     labelKey: 'project.fields.rack_power',     icon: Zap,         unit: 'kW' },
 ] as const
 

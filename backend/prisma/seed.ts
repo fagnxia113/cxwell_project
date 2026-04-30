@@ -368,10 +368,10 @@ async function main() {
       { name: 'endDate', label: '计划完工日期', type: 'date', required: false, group: 'mgmt_info' },
       
       { name: 'budget', label: '预算金额(万元)', type: 'number', required: false, group: 'finance_info' },
-      { name: 'buildingArea', label: '建筑面积(㎡)', type: 'number', required: false, group: 'scale_info' },
-      { name: 'itCapacity', label: 'IT容量(kW)', type: 'number', required: false, group: 'scale_info' },
-      { name: 'cabinetCount', label: '机柜数量', type: 'number', required: false, group: 'scale_info' },
-      { name: 'cabinetPower', label: '机柜功率(kW)', type: 'number', required: false, group: 'scale_info' },
+      { name: 'buildingArea', label: '建筑面积（平方米）', type: 'number', required: false, group: 'scale_info' },
+      { name: 'itCapacity', label: 'IT容量（兆瓦）', type: 'number', required: false, group: 'scale_info' },
+      { name: 'cabinetCount', label: '机柜数量（架）', type: 'number', required: false, group: 'scale_info' },
+      { name: 'cabinetPower', label: '机柜功率（千瓦）', type: 'number', required: false, group: 'scale_info' },
       
       { name: 'powerArchitecture', label: '供电架构', type: 'textarea', required: false, group: 'tech_arch' },
       { name: 'hvacArchitecture', label: '暖通架构', type: 'textarea', required: false, group: 'tech_arch' },

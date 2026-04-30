@@ -384,9 +384,7 @@ export class ProjectService {
    * 更新项目
    */
   async updateProject(id: bigint, data: any) {
-    const res = await this.prisma.project.update({
-      where: { projectId: id },
-      data: {
+    const updateData: any = {
         projectName: data.name,
         status: data.status,
         progress: data.progress,
@@ -401,7 +399,25 @@ export class ProjectService {
         hvacArchitecture: data.hvac_architecture,
         fireArchitecture: data.fire_architecture,
         weakElectricArchitecture: data.weak_electric_architecture,
-      }
+      };
+    if (data.managerId !== undefined) {
+      updateData.managerId = data.managerId ? BigInt(data.managerId) : null;
+    }
+    if (data.customerId !== undefined) {
+      updateData.customerId = data.customerId ? BigInt(data.customerId) : null;
+    }
+    if (data.budget !== undefined) {
+      updateData.budget = data.budget;
+    }
+    if (data.country !== undefined) {
+      updateData.country = data.country;
+    }
+    if (data.address !== undefined) {
+      updateData.address = data.address;
+    }
+    const res = await this.prisma.project.update({
+      where: { projectId: id },
+      data: updateData
     });
     return this.mapProject(res);
   }

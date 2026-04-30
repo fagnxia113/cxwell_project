@@ -130,9 +130,9 @@ export default function OverviewTab({
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {[
           { key: 'building_area', label: t('project.fields.building_area'), icon: Briefcase, unit: 'm²' },
-          { key: 'it_capacity', label: t('project.fields.it_capacity'), icon: TrendingUp, unit: 'kW' },
+          { key: 'it_capacity', label: t('project.fields.it_capacity'), icon: TrendingUp, unit: 'MW' },
           { key: 'cabinet_count', label: t('project.fields.cabinet_count'), icon: List, unit: t('common.unit_piece') },
-          { key: 'cabinet_power', label: t('project.fields.cabinet_power'), icon: DollarSign, unit: 'kW / R' },
+          { key: 'cabinet_power', label: t('project.fields.cabinet_power'), icon: DollarSign, unit: 'kW' },
           { key: 'budget', label: t('project.fields.budget'), icon: DollarSign, unit: t('common.unit_ten_thousand') },
         ].map(spec => (
           <div key={spec.key} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">

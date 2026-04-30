@@ -103,7 +103,7 @@ export default function ProjectListTable({ projects, onDelete, onManageTeam }: P
                           <Zap size={10} />
                           <span className="text-[8px] font-black">CAP</span>
                         </div>
-                        <span className="text-xs font-bold text-slate-600">{project.it_capacity || '-'} kW</span>
+                        <span className="text-xs font-bold text-slate-600">{project.it_capacity || '-'} MW</span>
                       </div>
                       <div className="w-px h-6 bg-slate-100" />
                       <div className="flex flex-col gap-0.5">

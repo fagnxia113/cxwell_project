@@ -76,7 +76,7 @@
     "period": "Period",
     "building_area": "Building Area (m²)",
     "it_capacity": "IT Capacity (MW)",
-    "cabinet_count": "Cabinet Count (R)",
+    "cabinet_count": "Cabinet Count (Racks)",
     "cabinet_power": "Cabinet Power (kW)",
     "rack_power": "Rack Power",
     "power_architecture": "Power Architecture",

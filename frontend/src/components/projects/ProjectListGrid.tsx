@@ -105,7 +105,7 @@ export default function ProjectListGrid({ projects }: ProjectListGridProps) {
                     <Zap size={10} />
                     <span className="text-[8px] font-black uppercase tracking-widest">Cap</span>
                   </div>
-                  <span className="text-[10px] font-black text-slate-700 tabular-nums">{project.it_capacity || '-'} kW</span>
+                  <span className="text-[10px] font-black text-slate-700 tabular-nums">{project.it_capacity || '-'} MW</span>
                 </div>
                 <div className="flex flex-col gap-0.5 border-x border-slate-100 px-2 text-center">
                   <div className="flex items-center justify-center gap-1.5 text-slate-400">
