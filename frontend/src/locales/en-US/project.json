@@ -59,7 +59,9 @@
     "completed": "Completed",
     "paused": "Paused",
     "delayed": "Delayed",
-    "pending": "Pending"
+    "pending": "Pending",
+    "preliminary": "Preliminary",
+    "archived": "Archived"
   },
   "fields": {
     "basic": "Basic Info",

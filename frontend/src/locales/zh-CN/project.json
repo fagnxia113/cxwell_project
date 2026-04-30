@@ -59,7 +59,9 @@
     "completed": "已结项",
     "paused": "已暂停",
     "delayed": "已延期",
-    "pending": "待处理"
+    "pending": "待处理",
+    "preliminary": "预研",
+    "archived": "已归档"
   },
   "fields": {
     "basic": "基本信息",

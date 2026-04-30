@@ -260,12 +260,12 @@ export default function DashboardPage() {
   const [projects, setProjects] = useState<any[]>([])
   const [risks, setRisks] = useState<any[]>([])
 
-  const statusLabels: Record<string, { zh: string; en: string }> = {
-    '1': { zh: '预研', en: 'Preliminary' },
-    '2': { zh: '立项', en: 'Initiated' },
-    '3': { zh: '进行中', en: 'In Progress' },
-    '4': { zh: '已完成', en: 'Completed' },
-    '5': { zh: '已归档', en: 'Archived' },
+  const statusCodeToKey: Record<string, string> = {
+    '1': 'preliminary',
+    '2': 'initiated',
+    '3': 'in_progress',
+    '4': 'completed',
+    '5': 'archived',
   };
 
   const distribution = useMemo(() => {
@@ -277,10 +277,10 @@ export default function DashboardPage() {
     return Object.entries(statusCount)
       .filter(([_, v]) => v > 0)
       .map(([k, v]) => ({
-        name: i18n.language === 'zh' ? (statusLabels[k]?.zh || '其他') : (statusLabels[k]?.en || 'Other'),
+        name: t(`project.status.${statusCodeToKey[k] || 'pending'}`),
         value: v
       }));
-  }, [projects, i18n.language]);
+  }, [projects, t, i18n.language]);
 
   useEffect(() => { loadDashboardData() }, [])
 
