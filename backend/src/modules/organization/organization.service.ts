@@ -414,6 +414,13 @@ export class OrganizationService {
       where: { employeeId: BigInt(id) }
     });
 
+    const statusMap: Record<string, string> = {
+      active: '0',
+      resigned: '1',
+      probation: '2'
+    };
+    const dbStatus = statusMap[data.status] || data.status;
+
     const updateData: any = {
       name: data.name,
       phone: data.phone,
@@ -423,7 +430,10 @@ export class OrganizationService {
       position: data.position,
       postId: data.postId ? BigInt(data.postId) : undefined,
       reportToId: data.reportToId ? BigInt(data.reportToId) : data.reportToId === null ? null : undefined,
-      status: data.status,
+      status: dbStatus,
+      hireDate: data.hireDate ? new Date(data.hireDate) : undefined,
+      education: data.education !== undefined ? data.education : undefined,
+      university: data.university !== undefined ? data.university : undefined,
       updateTime: new Date()
     };
 

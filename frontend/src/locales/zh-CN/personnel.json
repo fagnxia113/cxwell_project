@@ -73,7 +73,16 @@
     "remark": "备注",
     "userId": "用户ID",
     "dingtalk_user_id": "钉钉用户ID",
-    "dingtalk_dept_id": "钉钉部门ID"
+    "dingtalk_dept_id": "钉钉部门ID",
+    "education": "学历",
+    "university": "毕业院校"
+  },
+  "education": {
+    "high_school": "高中",
+    "college": "大专",
+    "bachelor": "本科",
+    "master": "硕士",
+    "phd": "博士"
   },
   "error": {
     "load_failed": "加载人员数据失败",

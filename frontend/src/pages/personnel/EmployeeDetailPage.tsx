@@ -224,6 +224,18 @@ export default function EmployeeDetailPage() {
     return labels[role] || role
   }
 
+  const getEducationLabel = (education: string | null | undefined) => {
+    if (!education) return '-'
+    const labels: Record<string, string> = {
+      high_school: t('personnel.education.high_school'),
+      college: t('personnel.education.college'),
+      bachelor: t('personnel.education.bachelor'),
+      master: t('personnel.education.master'),
+      phd: t('personnel.education.phd')
+    }
+    return labels[education] || education
+  }
+
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'root'
 
   if (loading) {
@@ -386,6 +398,48 @@ export default function EmployeeDetailPage() {
                           />
                         ) : (
                           <span className="text-xs font-bold text-slate-900 break-all">{employee.email || '-'}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="text-gray-400 mt-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 14l9-5-9-5-9 5 9 5z" /><path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" /></svg>
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-[10px] text-slate-400 font-bold mb-0.5">{t('personnel.fields.education')}</label>
+                        {isEditing ? (
+                          <select
+                            value={editForm.education || ''}
+                            onChange={(e) => setEditForm({ ...editForm, education: e.target.value })}
+                            className="w-full bg-slate-50 border border-slate-100 rounded-md px-3 py-1.5 text-xs font-bold focus:ring-4 focus:ring-blue-600/5 transition-all outline-none focus:border-blue-500"
+                          >
+                            <option value="">-</option>
+                            <option value="high_school">{t('personnel.education.high_school')}</option>
+                            <option value="college">{t('personnel.education.college')}</option>
+                            <option value="bachelor">{t('personnel.education.bachelor')}</option>
+                            <option value="master">{t('personnel.education.master')}</option>
+                            <option value="phd">{t('personnel.education.phd')}</option>
+                          </select>
+                        ) : (
+                          <span className="text-xs font-bold text-slate-900">{getEducationLabel(employee.education)}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="text-gray-400 mt-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" /></svg>
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-[10px] text-slate-400 font-bold mb-0.5">{t('personnel.fields.university')}</label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editForm.university || ''}
+                            onChange={(e) => setEditForm({ ...editForm, university: e.target.value })}
+                            className="w-full bg-slate-50 border border-slate-100 rounded-md px-3 py-1.5 text-xs font-bold focus:ring-4 focus:ring-blue-600/5 transition-all outline-none focus:border-blue-500"
+                          />
+                        ) : (
+                          <span className="text-xs font-bold text-slate-900">{employee.university || '-'}</span>
                         )}
                       </div>
                     </div>

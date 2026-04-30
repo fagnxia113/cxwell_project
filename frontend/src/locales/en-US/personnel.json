@@ -55,7 +55,16 @@
     "role": "System Role",
     "status": "Status",
     "hire_date": "Hire Date",
-    "remark": "Remark"
+    "remark": "Remark",
+    "education": "Education",
+    "university": "University"
+  },
+  "education": {
+    "high_school": "High School",
+    "college": "College",
+    "bachelor": "Bachelor",
+    "master": "Master",
+    "phd": "PhD"
   },
   "attendance": {
     "title": "Attendance Board",
