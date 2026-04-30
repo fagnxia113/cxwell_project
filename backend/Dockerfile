@@ -3,7 +3,8 @@ FROM node:20-slim AS builder
 
 WORKDIR /app
 
-# Install system dependencies for Prisma
+ENV NODE_OPTIONS=--max-old-space-size=768
+
 RUN apt-get update && apt-get install -y openssl python3 make g++ && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./

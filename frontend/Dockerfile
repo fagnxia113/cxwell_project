@@ -3,6 +3,8 @@ FROM node:20-slim AS builder
 
 WORKDIR /app
 
+ENV NODE_OPTIONS=--max-old-space-size=768
+
 COPY package*.json ./
 RUN npm install
 
