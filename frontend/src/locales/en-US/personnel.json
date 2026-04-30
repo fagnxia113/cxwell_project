@@ -48,6 +48,7 @@
     "name": "Name",
     "gender": "Gender",
     "phone": "Phone",
+    "phoneCountryCode": "Country Code",
     "email": "Email",
     "dept": "Department",
     "position": "Position",

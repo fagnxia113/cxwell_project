@@ -341,14 +341,33 @@ export default function EmployeeDetailPage() {
                       <div className="flex-1">
                         <label className="block text-[10px] text-slate-400 font-bold mb-0.5">{t('personnel.fields.phone')}</label>
                         {isEditing ? (
-                          <input
-                            type="text"
-                            value={editForm.phone || ''}
-                            onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                            className="w-full bg-slate-50 border border-slate-100 rounded-md px-3 py-1.5 text-xs font-bold focus:ring-4 focus:ring-blue-600/5 transition-all outline-none focus:border-blue-500"
-                          />
+                          <div className="flex gap-2">
+                            <select
+                              value={editForm.phoneCountryCode || '+86'}
+                              onChange={(e) => setEditForm({ ...editForm, phoneCountryCode: e.target.value })}
+                              className="w-24 bg-slate-50 border border-slate-100 rounded-md px-2 py-1.5 text-xs font-bold focus:ring-4 focus:ring-blue-600/5 transition-all outline-none focus:border-blue-500"
+                            >
+                              <option value="+86">+86</option>
+                              <option value="+971">+971</option>
+                              <option value="+966">+966</option>
+                              <option value="+66">+66</option>
+                              <option value="+65">+65</option>
+                              <option value="+60">+60</option>
+                              <option value="+84">+84</option>
+                              <option value="+62">+62</option>
+                              <option value="+63">+63</option>
+                              <option value="+81">+81</option>
+                              <option value="+1">+1</option>
+                            </select>
+                            <input
+                              type="text"
+                              value={editForm.phone || ''}
+                              onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                              className="flex-1 bg-slate-50 border border-slate-100 rounded-md px-3 py-1.5 text-xs font-bold focus:ring-4 focus:ring-blue-600/5 transition-all outline-none focus:border-blue-500"
+                            />
+                          </div>
                         ) : (
-                          <span className="text-xs font-bold text-slate-900">{employee.phone || '-'}</span>
+                          <span className="text-xs font-bold text-slate-900">{employee.phoneCountryCode ? `${employee.phoneCountryCode} ` : ''}{employee.phone || '-'}</span>
                         )}
                       </div>
                     </div>

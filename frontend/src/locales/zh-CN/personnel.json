@@ -61,6 +61,7 @@
     "name": "姓名",
     "gender": "性别",
     "phone": "手机号",
+    "phoneCountryCode": "国家代码",
     "email": "邮箱",
     "dept": "部门",
     "position": "岗位",

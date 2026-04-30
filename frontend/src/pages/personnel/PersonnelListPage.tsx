@@ -47,6 +47,7 @@ interface Employee {
   name: string
   gender: 'male' | 'female'
   phone: string
+  phoneCountryCode?: string
   email: string
   userId: string | null
   deptId: string | null
@@ -122,7 +123,7 @@ export default function PersonnelListPage() {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
   const [editFormData, setEditFormData] = useState({
-    name: '', phone: '', email: '', department: '', position: '', status: 'active'
+    name: '', phone: '', phoneCountryCode: '+86', email: '', department: '', position: '', status: 'active'
   })
 
   const [positions, setPositions] = useState<Position[]>([])
@@ -201,6 +202,7 @@ export default function PersonnelListPage() {
     setEditFormData({
       name: employee.name,
       phone: employee.phone || '',
+      phoneCountryCode: employee.phoneCountryCode || '+86',
       email: employee.email || '',
       department: employee.deptId || '',
       position: employee.position,
@@ -392,7 +394,7 @@ export default function PersonnelListPage() {
                     </div>
                     <div className="flex items-center gap-1.5 text-slate-400">
                       <Phone size={10} />
-                      <span className="text-[10px] font-medium">{emp.phone || '-'}</span>
+                      <span className="text-[10px] font-medium">{emp.phoneCountryCode ? `${emp.phoneCountryCode} ` : ''}{emp.phone || '-'}</span>
                     </div>
                   </div>
 
@@ -530,12 +532,31 @@ export default function PersonnelListPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
                       <label className="form-label">{t('personnel.fields.phone')}</label>
-                      <input
-                        type="tel"
-                        value={editFormData.phone}
-                        onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
-                        className="form-control"
-                      />
+                      <div className="flex gap-2">
+                        <select
+                          value={editFormData.phoneCountryCode || '+86'}
+                          onChange={(e) => setEditFormData({ ...editFormData, phoneCountryCode: e.target.value })}
+                          className="form-control w-28"
+                        >
+                          <option value="+86">+86</option>
+                          <option value="+971">+971</option>
+                          <option value="+966">+966</option>
+                          <option value="+66">+66</option>
+                          <option value="+65">+65</option>
+                          <option value="+60">+60</option>
+                          <option value="+84">+84</option>
+                          <option value="+62">+62</option>
+                          <option value="+63">+63</option>
+                          <option value="+81">+81</option>
+                          <option value="+1">+1</option>
+                        </select>
+                        <input
+                          type="tel"
+                          value={editFormData.phone}
+                          onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                          className="form-control flex-1"
+                        />
+                      </div>
                     </div>
                     <div className="col-span-2">
                       <label className="form-label">{t('personnel.fields.email')}</label>

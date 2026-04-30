@@ -417,6 +417,7 @@ export class OrganizationService {
     const updateData: any = {
       name: data.name,
       phone: data.phone,
+      phoneCountryCode: data.phoneCountryCode,
       email: data.email,
       deptId: data.deptId ? BigInt(data.deptId) : undefined,
       position: data.position,
