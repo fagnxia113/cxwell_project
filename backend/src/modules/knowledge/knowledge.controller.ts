@@ -44,16 +44,13 @@ export class KnowledgeController {
       }
     }),
     fileFilter: (req, file, cb) => {
-      const allowed = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.png', '.jpg', '.jpeg', '.zip', '.rar'];
-      const ext = extname(file.originalname).toLowerCase();
-      if (allowed.includes(ext)) cb(null, true);
-      else cb(new BadRequestException(`不支持的文件类型: ${ext}，仅支持 PDF、Office 文档、图片和压缩包`), false);
+      cb(null, true);
     },
-    limits: { fileSize: 20 * 1024 * 1024 }
+    limits: { fileSize: 200 * 1024 * 1024 }
   }))
   async upload(@UploadedFile() file: Express.Multer.File, @Body('parentId') parentId: string, @Request() req) {
     if (!file) {
-      throw new BadRequestException('请选择要上传的文件，文件大小不能超过 20MB');
+      throw new BadRequestException('请选择要上传的文件，文件大小不能超过 200MB');
     }
 
     const originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');

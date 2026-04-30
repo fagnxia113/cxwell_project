@@ -44,7 +44,7 @@
   "upload_title": "上传文档",
   "upload_subtitle": "支持拖拽或选择多个文件",
   "upload_drop_title": "点击或拖拽文件至此处",
-  "upload_drop_desc": "支持 PDF, Word, Excel, 图片等格式 (最大 20MB)",
+  "upload_drop_desc": "支持所有文件格式 (最大 200MB)",
   "upload_files": "点击或拖拽文件至此处",
   "upload_target": "上传至目录",
   "upload_submit": "开始上传",

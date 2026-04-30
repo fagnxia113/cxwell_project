@@ -42,7 +42,7 @@
   "upload_title": "Upload Documents",
   "upload_subtitle": "Drag and drop files to upload",
   "upload_drop_title": "Drop files here",
-  "upload_drop_desc": "Supports PDF, Word, Excel, Images (Max 20MB)",
+  "upload_drop_desc": "All file formats supported (Max 200MB)",
   "upload_files": "Click or drag files here to upload",
   "upload_target": "Upload to",
   "upload_submit": "Start Upload",
