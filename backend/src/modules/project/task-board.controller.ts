@@ -155,35 +155,33 @@ export class TaskBoardController {
 
       // --- 4. 计算全局统计数据 ---
       let pendingCount = 0;
-      let totalFlowCount = 0;
       
       try {
-        pendingCount = await this.prisma.flowTask.count({ where: { delFlag: '0' } });
-        totalFlowCount = await this.prisma.flowTask.count();
+        pendingCount = await this.prisma.flowTask.count({ where: { flowStatus: 'todo', delFlag: '0' } });
       } catch (flowErr) {
         // 统计失败
       }
 
+      const activeStatuses = ['2', '3'];
+      const completedStatuses = ['4', '5'];
+
       const stats = {
         projects: {
           total: projects.length,
-          inProgress: projects.filter(p => p.status === '1').length,
-          completed: projects.filter(p => p.status === '2').length
+          inProgress: projects.filter(p => activeStatuses.includes(p.status)).length,
+          completed: projects.filter(p => completedStatuses.includes(p.status)).length
         },
         approvals: {
           pending: pendingCount,
-          total: totalFlowCount
         },
-        dailyReports: {
-          submitted: projects.reduce((sum, p) => sum + p.reports.reduce((s, r) => s + (r.submittedCount || 0), 0), 0),
-          total: projects.reduce((sum, p) => sum + p.reports.reduce((s, r) => s + (r.copies || 0), 0), 0),
-          submissionRate: 0
-        }
+        milestoneCompletion: (() => {
+          const allRootMilestones = projects.flatMap(p => p.milestones || []);
+          if (allRootMilestones.length === 0) return 0;
+          const totalProgress = allRootMilestones.reduce((sum, m) => sum + (Number(m.progress) || 0), 0);
+          return Math.round(totalProgress / allRootMilestones.length);
+        })(),
+        riskAlert: projects.reduce((sum, p) => sum + (p.risks || []).filter((r: any) => r.status !== 'resolved' && r.status !== 'closed').length, 0)
       };
-
-      if (stats.dailyReports.total > 0) {
-        stats.dailyReports.submissionRate = Math.round((stats.dailyReports.submitted / stats.dailyReports.total) * 100);
-      }
 
       return { success: true, data: { stats, projects: result } };
     } catch (err) {

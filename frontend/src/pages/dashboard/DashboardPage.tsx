@@ -252,8 +252,9 @@ export default function DashboardPage() {
   const [data, setData] = useState<any>({
     stats: {
       projects: { total: 0, inProgress: 0, completed: 0 },
-      approvals: { pending: 0, total: 0 },
-      dailyReports: { submitted: 0, total: 0, submissionRate: 0 }
+      approvals: { pending: 0 },
+      milestoneCompletion: 0,
+      riskAlert: 0
     }
   })
   const [projects, setProjects] = useState<any[]>([])
@@ -281,7 +282,7 @@ export default function DashboardPage() {
         setProjects(projectList || []);
         
         const allRisks = (projectList || []).flatMap((p: any) => 
-          (p.risks || []).map((r: any) => ({ 
+          (p.risks || []).filter((r: any) => r.status !== 'resolved' && r.status !== 'closed').map((r: any) => ({ 
             ...r, 
             projectName: p.name || p.projectName 
           }))
@@ -325,8 +326,8 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard delay={0.1} title={t('dashboard.active')} value={data.stats.projects.inProgress} icon={Briefcase} color="emerald" />
         <StatCard delay={0.2} title={t('dashboard.pending')} value={data.stats.approvals.pending} icon={CheckCircle2} color="amber" />
-        <StatCard delay={0.3} title={t('dashboard.milestone_completion')} value={`${data.stats.dailyReports.submissionRate}%`} icon={Target} color="emerald" />
-        <StatCard delay={0.4} title={t('dashboard.risk_alert')} value={risks.length} icon={AlertCircle} color="rose" />
+        <StatCard delay={0.3} title={t('dashboard.milestone_completion')} value={`${data.stats.milestoneCompletion}%`} icon={Target} color="emerald" />
+        <StatCard delay={0.4} title={t('dashboard.risk_alert')} value={data.stats.riskAlert} icon={AlertCircle} color="rose" />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
