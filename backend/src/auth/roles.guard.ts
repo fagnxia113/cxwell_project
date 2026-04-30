@@ -17,7 +17,7 @@ export class RolesGuard implements CanActivate {
     if (!user) throw new ForbiddenException('无权访问');
 
     const userRole = user.role || '';
-    if (userRole === 'admin') return true;
+    if (userRole === 'admin' || userRole === 'general_manager') return true;
 
     return requiredRoles.some((role) => userRole === role);
   }

@@ -236,7 +236,7 @@ export default function EmployeeDetailPage() {
     return labels[education] || education
   }
 
-  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'root'
+  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'general_manager'
 
   if (loading) {
     return (

@@ -235,7 +235,7 @@ export default function KnowledgePage() {
 
   const canEditPermissions = (item: KnowledgeItem) => {
     if (!currentUser) return false;
-    if (currentUser.role === 'admin') return true;
+    if (currentUser.role === 'admin' || currentUser.role === 'general_manager') return true;
     if (item.createBy && currentUser.loginName && item.createBy === currentUser.loginName) return true;
     return false;
   }

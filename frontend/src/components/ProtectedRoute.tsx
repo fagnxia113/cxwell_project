@@ -47,14 +47,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
  * 管理员路由守卫
  */
 export const AdminRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => (
-  <ProtectedRoute requiredRoles={['admin', 'root']}>{children}</ProtectedRoute>
+  <ProtectedRoute requiredRoles={['admin', 'general_manager']}>{children}</ProtectedRoute>
 )
 
-/**
- * 管理层路由守卫（管理员 + 各类经理）
- */
 export const ManagerRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => (
-  <ProtectedRoute requiredRoles={['admin', 'project_manager', 'hr_manager', 'equipment_manager', 'root']}>
+  <ProtectedRoute requiredRoles={['admin', 'general_manager', 'project_manager', 'hr_manager', 'equipment_manager']}>
     {children}
   </ProtectedRoute>
 )

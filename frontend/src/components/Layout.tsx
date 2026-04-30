@@ -262,12 +262,12 @@ export default function Layout({ children }: { children: ReactNode }) {
     return menus
       .filter(item => {
         // 1. 检查管理员权限
-        if (item.adminOnly && user?.role !== 'admin' && user?.role !== 'root') return false
+        if (item.adminOnly && user?.role !== 'admin' && user?.role !== 'general_manager') return false
 
         // 2. 检查权限要求
         if (item.permission) {
           // 如果用户拥有通配符或该精确权限，直接通过
-          if (user?.role === 'admin' || user?.role === 'root' || allPermissions.includes('*')) return true
+          if (user?.role === 'admin' || user?.role === 'general_manager' || allPermissions.includes('*')) return true
           if (allPermissions.includes(item.permission)) return true
 
           // 智能降级：如果该权限码是模块级的（如 menu:project），则检查是否有任何 project: 开头的权限
@@ -507,7 +507,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-1.5 animate-in fade-in slide-in-from-top-2 z-50">
                   <div className="px-4 py-2.5 border-b border-slate-100">
                     <p className="text-xs font-bold text-slate-800 truncate">{user?.name || 'Admin'}</p>
-                    <p className="text-[10px] text-slate-500">{user?.role === 'admin' || user?.role === 'root' ? t('common.role.admin') : t('common.role.employee')}</p>
+                    <p className="text-[10px] text-slate-500">{user?.role === 'admin' || user?.role === 'general_manager' ? t('common.role.admin') : t('common.role.employee')}</p>
                   </div>
                   <button
                     onClick={() => { navigate('/settings/password'); setShowUserDropdown(false); }}

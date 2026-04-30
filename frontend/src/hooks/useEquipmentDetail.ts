@@ -77,7 +77,7 @@ export function useEquipmentDetail(id: string | undefined) {
     const userStr = localStorage.getItem('user');
     if (!userStr) return false;
     const user = JSON.parse(userStr);
-    return ['admin', 'root'].includes(user.role);
+    return ['admin', 'general_manager'].includes(user.role);
   }, []);
 
   // 1. Data Loading

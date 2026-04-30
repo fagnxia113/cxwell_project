@@ -68,22 +68,22 @@ export const PermissionProvider: React.FC<{ children: ReactNode }> = ({ children
   }, [])
 
   const hasPermission = (code: string): boolean => {
-    if (role === 'admin' || role === 'root' || permissions.includes('*')) return true
+    if (role === 'admin' || role === 'general_manager' || permissions.includes('*')) return true
     return permissions.includes(code)
   }
 
   const hasAnyPermission = (codes: string[]): boolean => {
-    if (role === 'admin' || role === 'root' || permissions.includes('*')) return true
+    if (role === 'admin' || role === 'general_manager' || permissions.includes('*')) return true
     return codes.some(code => permissions.includes(code))
   }
 
   const hasAllPermissions = (codes: string[]): boolean => {
-    if (role === 'admin' || role === 'root' || permissions.includes('*')) return true
+    if (role === 'admin' || role === 'general_manager' || permissions.includes('*')) return true
     return codes.every(code => permissions.includes(code))
   }
 
   const hasButton = (code: string): boolean => {
-    if (role === 'admin' || role === 'root' || permissions.includes('*')) return true
+    if (role === 'admin' || role === 'general_manager' || permissions.includes('*')) return true
     return buttons.includes(code)
   }
 

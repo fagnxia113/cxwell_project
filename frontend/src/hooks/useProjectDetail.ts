@@ -59,7 +59,7 @@ export function useProjectDetail(id: string | undefined) {
     }
   }, [])
 
-  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'root' || currentUser?.role === 'general_manager'
+  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'general_manager'
 
   // ---- 加载项目数据 ----
   const loadProjectData = useCallback(async () => {

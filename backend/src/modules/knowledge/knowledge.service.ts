@@ -30,7 +30,7 @@ export class KnowledgeService {
         },
       });
 
-      return roles.some(r => r.roleKey === 'admin' || r.roleKey === 'root');
+      return roles.some(r => r.roleKey === 'admin' || r.roleKey === 'general_manager');
     } catch {
       return false;
     }

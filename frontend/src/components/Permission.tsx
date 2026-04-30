@@ -101,7 +101,7 @@ export const AdminOnly: React.FC<{ children: ReactNode; fallback?: ReactNode }> 
   children,
   fallback = null
 }) => {
-  return <IfRole role="admin" fallback={fallback}>{children}</IfRole>
+  return <IfRole role={['admin', 'general_manager']} fallback={fallback}>{children}</IfRole>
 }
 
 export const ManagerOnly: React.FC<{ children: ReactNode; fallback?: ReactNode }> = ({
@@ -109,7 +109,7 @@ export const ManagerOnly: React.FC<{ children: ReactNode; fallback?: ReactNode }
   fallback = null
 }) => {
   return (
-    <IfRole role={['admin', 'project_manager', 'hr_manager', 'equipment_manager']} fallback={fallback}>
+    <IfRole role={['admin', 'general_manager', 'project_manager', 'hr_manager', 'equipment_manager']} fallback={fallback}>
       {children}
     </IfRole>
   )
