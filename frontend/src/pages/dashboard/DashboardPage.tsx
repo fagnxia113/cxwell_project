@@ -260,15 +260,27 @@ export default function DashboardPage() {
   const [projects, setProjects] = useState<any[]>([])
   const [risks, setRisks] = useState<any[]>([])
 
-  // Dynamic distribution calculation to support language switching
+  const statusLabels: Record<string, { zh: string; en: string }> = {
+    '1': { zh: '预研', en: 'Preliminary' },
+    '2': { zh: '立项', en: 'Initiated' },
+    '3': { zh: '进行中', en: 'In Progress' },
+    '4': { zh: '已完成', en: 'Completed' },
+    '5': { zh: '已归档', en: 'Archived' },
+  };
+
   const distribution = useMemo(() => {
-    const stats = data.stats;
-    return [
-      { name: t('dashboard.active'), value: stats?.projects?.inProgress || 0 },
-      { name: t('dashboard.completed'), value: stats?.projects?.completed || 0 },
-      { name: t('dashboard.pending'), value: (stats?.projects?.total || 0) - (stats?.projects?.inProgress || 0) - (stats?.projects?.completed || 0) }
-    ];
-  }, [data.stats, t, i18n.language]);
+    const statusCount: Record<string, number> = {};
+    projects.forEach(p => {
+      const s = p.status || '0';
+      statusCount[s] = (statusCount[s] || 0) + 1;
+    });
+    return Object.entries(statusCount)
+      .filter(([_, v]) => v > 0)
+      .map(([k, v]) => ({
+        name: i18n.language === 'zh' ? (statusLabels[k]?.zh || '其他') : (statusLabels[k]?.en || 'Other'),
+        value: v
+      }));
+  }, [projects, i18n.language]);
 
   useEffect(() => { loadDashboardData() }, [])
 
