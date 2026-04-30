@@ -67,15 +67,17 @@ export function useProjectList() {
     }
   }
 
-  // 计算统计数据
+  const activeStatuses = ['2', '3'];
+  const completedStatuses = ['4', '5'];
+
   const stats = {
-    totalCount: projects.length, // 注意：这里是当前页的数量，如果是全量统计建议后端返回
-    activeCount: projects.filter(p => ['initiated', 'in_progress'].includes(p.status)).length,
-    completedCount: projects.filter(p => p.status === 'completed').length,
+    totalCount: projects.length,
+    activeCount: projects.filter(p => activeStatuses.includes(p.status)).length,
+    completedCount: projects.filter(p => completedStatuses.includes(p.status)).length,
     avgProgress: projects.length > 0 
       ? Math.round(projects.reduce((acc, p) => acc + (p.progress || 0), 0) / projects.length) 
       : 0,
-    geographyCount: Array.from(new Set(projects.map(p => p.country))).length
+    geographyCount: Array.from(new Set(projects.map(p => p.country).filter(Boolean))).length
   }
 
   return {

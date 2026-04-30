@@ -43,7 +43,7 @@ export default function ProjectCompletionPage() {
       const data = await apiClient.get<any>('/api/data/projects')
       if (data) {
         const projectList = data.items || data.data || data || []
-        setProjects(projectList.filter((p: Project) => p.status === 'in_progress'))
+        setProjects(projectList.filter((p: Project) => ['2', '3'].includes(p.status)))
       }
     } catch (e: any) { 
       console.error(e)

@@ -71,7 +71,7 @@ export default function ProjectListGrid({ projects }: ProjectListGridProps) {
                       animate={{ width: `${project.progress}%` }}
                       className={cn(
                         "h-full relative transition-all duration-1000",
-                        project.status === 'completed' ? "bg-emerald-500" : isDelayed ? "bg-rose-500" : "bg-gradient-to-r from-blue-500 to-indigo-600"
+                        ['4', '5'].includes(project.status) ? "bg-emerald-500" : isDelayed ? "bg-rose-500" : "bg-gradient-to-r from-blue-500 to-indigo-600"
                       )}
                     >
                       <div className="absolute inset-0 bg-white/20 animate-pulse" />
