@@ -9,28 +9,18 @@ import React from 'react'
 import type { LucideIcon } from 'lucide-react'
 
 interface EditableFieldProps {
-  /** 字段标签 */
   label: string
-  /** 标签前的图标 */
   icon?: LucideIcon
-  /** 当前值（展示用） */
   value: string | number | undefined | null
-  /** 值后面的单位文字，如 m²、kW */
   unit?: string
-  /** 是否处于编辑模式 */
   isEditing: boolean
-  /** 输入框类型 */
-  inputType?: 'text' | 'number' | 'date' | 'textarea'
-  /** 编辑模式下的当前表单值 */
+  inputType?: 'text' | 'number' | 'date' | 'textarea' | 'select'
   editValue: string | number | undefined
-  /** 表单值变化回调 */
   onChange: (value: string | number) => void
-  /** 输入框占位文本 */
   placeholder?: string
-  /** 未设置时的默认展示文本 */
   emptyText?: string
-  /** 展示模式：'text' 正常文字, 'badge' 带背景的标签, 'metric' 大数字+单位, 'detailed' 大段文字卡片 */
   displayMode?: 'text' | 'badge' | 'metric' | 'detailed'
+  options?: { label: string; value: string | number }[]
 }
 
 export default function EditableField({
@@ -45,8 +35,9 @@ export default function EditableField({
   placeholder,
   emptyText = '--',
   displayMode = 'text',
+  options = [],
 }: EditableFieldProps) {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     onChange(inputType === 'number' ? Number(e.target.value) : e.target.value)
   }
 
@@ -62,7 +53,18 @@ export default function EditableField({
     return (
       <div className="group/spec">
         {labelEl}
-        {inputType === 'textarea' ? (
+        {inputType === 'select' ? (
+          <select
+            value={editValue ?? ''}
+            onChange={handleChange}
+            className="w-full bg-slate-50 border-none rounded-xl text-xs font-black p-2.5 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none"
+          >
+            <option value="">{placeholder || '--'}</option>
+            {options.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        ) : inputType === 'textarea' ? (
           <textarea
             value={editValue ?? ''}
             onChange={handleChange as any}

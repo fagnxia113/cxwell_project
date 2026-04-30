@@ -99,7 +99,9 @@
     "power_architecture": "例如：2N UPS 冗余，双路市电，配备备用发电机组...",
     "hvac_architecture": "例如：风冷冷冻水系统，N+2 冗余，配备蓄冷罐...",
     "fire_architecture": "例如：极早期烟雾探测 (VESDA)，FM200 气体灭火...",
-    "weak_electric_architecture": "例如：Spine-Leaf 网络架构，Cat6A 铜缆及单模光纤..."
+    "weak_electric_architecture": "例如：Spine-Leaf 网络架构，Cat6A 铜缆及单模光纤...",
+    "select_customer": "选择客户",
+    "select_manager": "选择项目经理"
   },
   "sections": {
     "base_info": "基本信息",

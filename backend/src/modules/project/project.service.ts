@@ -400,11 +400,13 @@ export class ProjectService {
         fireArchitecture: data.fire_architecture,
         weakElectricArchitecture: data.weak_electric_architecture,
       };
-    if (data.managerId !== undefined) {
-      updateData.managerId = data.managerId ? BigInt(data.managerId) : null;
+    if (data.managerId !== undefined || data.manager_id !== undefined) {
+      const mid = data.managerId || data.manager_id;
+      updateData.managerId = mid ? BigInt(mid) : null;
     }
-    if (data.customerId !== undefined) {
-      updateData.customerId = data.customerId ? BigInt(data.customerId) : null;
+    if (data.customerId !== undefined || data.customer_id !== undefined) {
+      const cid = data.customerId || data.customer_id;
+      updateData.customerId = cid ? BigInt(cid) : null;
     }
     if (data.budget !== undefined) {
       updateData.budget = data.budget;
@@ -415,11 +417,11 @@ export class ProjectService {
     if (data.address !== undefined) {
       updateData.address = data.address;
     }
-    const res = await this.prisma.project.update({
+    await this.prisma.project.update({
       where: { projectId: id },
       data: updateData
     });
-    return this.mapProject(res);
+    return this.getProjectDetail(id);
   }
 
   /**
@@ -443,7 +445,9 @@ export class ProjectService {
       name: project.projectName || '未命名项目',
       projectId: project.projectId.toString(),
       customerId: project.customerId?.toString(),
+      customer_name: project.customer?.name || null,
       managerId: project.managerId?.toString(),
+      manager_id: project.managerId?.toString(),
       budget: project.budget.toString(),
       // 前端需要的下划线格式字段
       building_area: project.buildingArea,

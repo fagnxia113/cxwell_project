@@ -2,7 +2,7 @@
 // 📦 项目详情页 - 概览 Tab
 // ============================================================
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { 
   FileText, ClipboardList, GitBranch, Wind, Flame, Cpu,
@@ -13,6 +13,8 @@ import { formatDate } from '../../types/project'
 import MilestoneTimeline from './MilestoneTimeline'
 import ProgressBar from '../ui/ProgressBar'
 import EditableField from './EditableField'
+import { customerApi } from '../../api/customerApi'
+import { apiClient } from '../../utils/apiClient'
 
 interface OverviewTabProps {
   project: Project
@@ -32,6 +34,20 @@ export default function OverviewTab({
   onEditFormChange
 }: OverviewTabProps) {
   const { t } = useTranslation()
+  const [customerOptions, setCustomerOptions] = useState<{ label: string; value: string | number }[]>([])
+  const [managerOptions, setManagerOptions] = useState<{ label: string; value: string | number }[]>([])
+
+  useEffect(() => {
+    customerApi.getCustomers({ pageNum: 1, pageSize: 1000 }).then(res => {
+      const list = res.data?.list || res.data || []
+      setCustomerOptions(list.map((c: any) => ({ label: c.name, value: String(c.id) })))
+    }).catch(() => {})
+
+    apiClient.get('/api/organization/employee/list', { params: { pageNum: 1, pageSize: 1000 } }).then(res => {
+      const list = res.data?.list || res.data || []
+      setManagerOptions(list.map((e: any) => ({ label: e.name, value: String(e.employeeId) })))
+    }).catch(() => {})
+  }, [])
 
   // 模拟报告的进度统计 (根据项目进度线性模拟报告数，总预估为 200)
   const estimatedTotalReports = 200;
@@ -73,9 +89,11 @@ export default function OverviewTab({
                   icon={Briefcase}
                   value={project.customer_name}
                   isEditing={isEditing}
-                  inputType="text"
-                  editValue={editForm.customer_name || ''}
-                  onChange={v => onEditFormChange({ customer_name: String(v) })}
+                  inputType="select"
+                  editValue={editForm.customerId || ''}
+                  onChange={v => onEditFormChange({ customerId: String(v) })}
+                  options={customerOptions}
+                  placeholder={t('project.placeholder.select_customer') || '选择客户'}
                 />
                 <EditableField
                   label={t('project.fields.location')}
@@ -91,9 +109,11 @@ export default function OverviewTab({
                   icon={User}
                   value={project.manager}
                   isEditing={isEditing}
-                  inputType="text"
-                  editValue={editForm.manager || ''}
-                  onChange={v => onEditFormChange({ manager: String(v) })}
+                  inputType="select"
+                  editValue={editForm.manager_id || ''}
+                  onChange={v => onEditFormChange({ manager_id: String(v) })}
+                  options={managerOptions}
+                  placeholder={t('project.placeholder.select_manager') || '选择项目经理'}
                 />
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-1.5">

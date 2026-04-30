@@ -99,7 +99,9 @@
     "power_architecture": "e.g.: 2N UPS redundancy, dual utility power, backup generator...",
     "hvac_architecture": "e.g.: Air-cooled chilled water system, N+2 redundancy, storage tank...",
     "fire_architecture": "e.g.: VESDA early smoke detection, FM200 gas fire suppression...",
-    "weak_electric_architecture": "e.g.: Spine-Leaf network architecture, Cat6A copper & single-mode fiber..."
+    "weak_electric_architecture": "e.g.: Spine-Leaf network architecture, Cat6A copper & single-mode fiber...",
+    "select_customer": "Select Customer",
+    "select_manager": "Select Project Manager"
   },
   "sections": {
     "base_info": "Basic Info",
