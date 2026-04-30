@@ -347,7 +347,7 @@ export default function RisksTab({ risks, milestones, onAddRisk, onUpdateRisk, o
                       </td>
                       <td className="px-4 py-4 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          {(isAdmin || isProjectManager) && (
+                          {(isAdmin || isProjectManager || isProjectMember) && (
                             <button
                               onClick={() => onDeleteRisk(risk.id)}
                               className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"

@@ -40,8 +40,8 @@ export class MilestoneService {
 
   async saveMilestones(projectId: bigint, milestones: any[], user: any) {
     const role = await this.checkUserProjectRole(projectId, user);
-    if (role !== 'manager') {
-      throw new ForbiddenException('只有项目经理可以编辑里程碑');
+    if (!role) {
+      throw new ForbiddenException('只有项目成员可以编辑里程碑');
     }
     // 获取项目当前的里程碑
     const existingMilestones = await this.prisma.projectMilestone.findMany({

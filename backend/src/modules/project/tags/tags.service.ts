@@ -57,8 +57,8 @@ export class TagsService {
     abnormalCount?: number;
   }, user: any) {
     const role = await this.checkUserProjectRole(data.projectId, user);
-    if (role !== 'manager') {
-      throw new ForbiddenException('只有项目经理可以创建标签');
+    if (!role) {
+      throw new ForbiddenException('只有项目成员可以创建标签');
     }
 
     const tag = await this.prisma.projectTag.create({
@@ -94,17 +94,6 @@ export class TagsService {
       throw new ForbiddenException('您不是该项目成员');
     }
 
-    // 项目经理可以更新所有字段
-    // 项目成员只能更新进度字段 (taggedCount, verifiedCount, abnormalCount)
-    if (role === 'member') {
-      if (data.tagType !== undefined || data.systemType !== undefined ||
-          data.requiredCount !== undefined || data.milestoneId !== undefined) {
-        throw new ForbiddenException('只有项目经理可以编辑标签详情');
-      }
-    } else if (role === 'manager') {
-      // 项目经理可以更新所有字段
-    }
-
     const updateData: any = { ...data };
     if (data.tagType !== undefined) updateData.tagType = data.tagType;
     if (data.systemType !== undefined) updateData.systemType = data.systemType;
@@ -126,8 +115,8 @@ export class TagsService {
     if (!tag) return null;
 
     const role = await this.checkUserProjectRole(tag.projectId, user);
-    if (role !== 'manager') {
-      throw new ForbiddenException('只有项目经理可以删除标签');
+    if (!role) {
+      throw new ForbiddenException('只有项目成员可以删除标签');
     }
 
     await this.prisma.projectTag.delete({ where: { id } });

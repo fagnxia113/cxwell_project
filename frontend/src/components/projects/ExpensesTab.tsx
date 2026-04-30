@@ -11,9 +11,10 @@ interface ExpensesTabProps {
   onDeleteExpense: (id: string) => void
   isAdmin: boolean
   isProjectManager?: boolean
+  isProjectMember?: boolean
 }
 
-export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteExpense, isAdmin, isProjectManager }: ExpensesTabProps) {
+export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteExpense, isAdmin, isProjectManager, isProjectMember }: ExpensesTabProps) {
   const { t } = useTranslation()
   const [showAddForm, setShowAddForm] = useState(false)
   const [newExpense, setNewExpense] = useState({ category: 'equipment', amount: 0, date: new Date().toISOString().split('T')[0], notes: '' })
@@ -201,7 +202,7 @@ export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteE
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {(isAdmin || isProjectManager) && (
+                    {(isAdmin || isProjectManager || isProjectMember) && (
                       <button
                         onClick={() => onDeleteExpense(item.id)}
                         className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-md transition-all opacity-0 group-hover:opacity-100"

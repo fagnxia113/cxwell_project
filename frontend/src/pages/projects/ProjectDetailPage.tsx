@@ -95,6 +95,7 @@ export default function ProjectDetailPage() {
       <ProjectHeader 
         project={project} 
         isAdmin={isAdmin} 
+        isProjectMember={isProjectManager || isProjectMember}
         isEditing={isEditing}
         onBack={() => navigate('/projects')}
         onEdit={handleEdit}
@@ -238,7 +239,7 @@ export default function ProjectDetailPage() {
                     tasks={tasks} 
                     onRefresh={loadProjectData} 
                     setMilestones={setMilestones} 
-                    canEdit={isAdmin || isProjectManager}
+                    canEdit={isAdmin || isProjectManager || isProjectMember}
                   />
                 )}
                 {activeTab === 'team' && (
@@ -246,7 +247,7 @@ export default function ProjectDetailPage() {
                     projectId={id!}
                     personnel={personnel}
                     isAdmin={isAdmin}
-                    isProjectManager={isProjectManager}
+                    isProjectManager={isProjectManager || isProjectMember}
                     onUpdatePermission={updatePersonnelPermission}
                     onAddPersonnel={addPersonnel}
                     onTransferPersonnel={transferPersonnel}
@@ -258,7 +259,7 @@ export default function ProjectDetailPage() {
                     risks={risks}
                     milestones={milestones}
                     isAdmin={isAdmin}
-                    isProjectManager={isProjectManager}
+                    isProjectManager={isProjectManager || isProjectMember}
                     isProjectMember={isProjectMember}
                     onAddRisk={addRisk}
                     onUpdateRisk={updateRisk}
@@ -270,17 +271,18 @@ export default function ProjectDetailPage() {
                     project={project}
                     expenses={expenses}
                     isAdmin={isAdmin}
-                    isProjectManager={isProjectManager}
+                    isProjectManager={isProjectManager || isProjectMember}
+                    isProjectMember={isProjectMember}
                     onAddExpense={addExpense}
                     onDeleteExpense={deleteExpense}
                   />
                 )}
                 {/* 占位符 */}
                 {activeTab === 'reports' && (
-                  <ReportsTab projectId={id!} milestones={milestones} isProjectManager={isProjectManager} />
+                  <ReportsTab projectId={id!} milestones={milestones} isProjectManager={isProjectManager || isProjectMember} />
                 )}
                 {activeTab === 'tags' && (
-                  <TagsTab projectId={id!} milestones={milestones} isProjectManager={isProjectManager} />
+                  <TagsTab projectId={id!} milestones={milestones} isProjectManager={isProjectManager || isProjectMember} />
                 )}
               </motion.div>
             </AnimatePresence>

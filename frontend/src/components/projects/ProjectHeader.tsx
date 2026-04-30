@@ -17,6 +17,7 @@ import { getCountryBilingual } from '../../utils/country'
 interface ProjectHeaderProps {
   project: Project
   isAdmin: boolean
+  isProjectMember: boolean
   isEditing: boolean
   onBack: () => void
   onEdit: () => void
@@ -29,6 +30,7 @@ interface ProjectHeaderProps {
 export default function ProjectHeader({
   project,
   isAdmin,
+  isProjectMember,
   isEditing,
   onBack,
   onEdit,
@@ -72,9 +74,9 @@ export default function ProjectHeader({
         </div>
       </div>
 
-      {/* 操作按钮 - 仅管理员可见 */}
+      {/* 操作按钮 - 管理员或项目成员可见 */}
       <div className="flex flex-wrap items-center gap-2">
-        {isAdmin && (
+        {(isAdmin || isProjectMember) && (
           <>
             {!isEditing ? (
               <>

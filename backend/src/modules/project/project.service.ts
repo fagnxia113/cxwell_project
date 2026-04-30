@@ -310,8 +310,8 @@ export class ProjectService {
    */
   async addMember(projectId: bigint, data: any, user: any) {
     const role = await this.getUserProjectRole(projectId.toString(), user);
-    if (role !== 'manager') {
-      throw new ForbiddenException('只有项目经理可以添加项目成员');
+    if (!role) {
+      throw new ForbiddenException('只有项目成员可以添加项目成员');
     }
 
     return this.prisma.projectMember.create({
@@ -330,8 +330,8 @@ export class ProjectService {
    */
   async removeMember(projectId: bigint, employeeId: bigint, user: any) {
     const role = await this.getUserProjectRole(projectId.toString(), user);
-    if (role !== 'manager') {
-      throw new ForbiddenException('只有项目经理可以移除项目成员');
+    if (!role) {
+      throw new ForbiddenException('只有项目成员可以移除项目成员');
     }
 
     return this.prisma.projectMember.delete({
@@ -349,8 +349,8 @@ export class ProjectService {
    */
   async transferMember(projectId: bigint, data: any, user: any) {
     const role = await this.getUserProjectRole(projectId.toString(), user);
-    if (role !== 'manager') {
-      throw new ForbiddenException('只有项目经理可以转移项目成员');
+    if (!role) {
+      throw new ForbiddenException('只有项目成员可以转移项目成员');
     }
 
     const employeeId = BigInt(data.employeeId);

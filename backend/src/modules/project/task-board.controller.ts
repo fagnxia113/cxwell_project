@@ -84,7 +84,7 @@ export class TaskBoardController {
             );
             if (membership) {
               userRole = 'member';
-              canEdit = membership.canEdit;
+              canEdit = true;
             }
           }
 

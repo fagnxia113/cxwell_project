@@ -64,7 +64,7 @@ export default function MilestoneGantt({ milestones, onProgressClick, title }: M
   const todayOffsetDays = todayDays - scaleStartDays
 
   const availableWidth = 800
-  const targetDaysPerPage = 120
+  const targetDaysPerPage = 45
   const dayWidth = (availableWidth / targetDaysPerPage) * zoomLevel
 
   const generateScale = () => {

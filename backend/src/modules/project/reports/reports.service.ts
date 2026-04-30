@@ -69,8 +69,8 @@ export class ReportsService {
     status: string;
   }, user: any) {
     const role = await this.checkUserProjectRole(data.projectId, user);
-    if (role !== 'manager') {
-      throw new ForbiddenException('只有项目经理可以新建报告');
+    if (!role) {
+      throw new ForbiddenException('只有项目成员可以新建报告');
     }
 
     const report = await this.prisma.projectReport.create({
@@ -92,8 +92,8 @@ export class ReportsService {
     if (!report) throw new NotFoundException('报告不存在');
 
     const role = await this.checkUserProjectRole(report.projectId, user);
-    if (role !== 'manager') {
-      throw new ForbiddenException('只有项目经理可以编辑报告');
+    if (!role) {
+      throw new ForbiddenException('只有项目成员可以编辑报告');
     }
 
     const updated = await this.prisma.projectReport.update({
@@ -134,8 +134,8 @@ export class ReportsService {
     if (!report) throw new NotFoundException('报告不存在');
 
     const role = await this.checkUserProjectRole(report.projectId, user);
-    if (role !== 'manager') {
-      throw new ForbiddenException('只有项目经理可以删除报告');
+    if (!role) {
+      throw new ForbiddenException('只有项目成员可以删除报告');
     }
 
     // Delete attachments first

@@ -82,6 +82,8 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
       const descendantIds = getDescendantIds(m);
       const relevantTags = tags.filter(r => r.milestone_id && descendantIds.includes(r.milestone_id));
       
+      if (relevantTags.length === 0) return;
+
       const required = relevantTags.reduce((sum, r) => sum + r.required_count, 0);
       const tagged = relevantTags.reduce((sum, r) => sum + r.tagged_count, 0);
       const verified = relevantTags.reduce((sum, r) => sum + r.verified_count, 0);
@@ -97,6 +99,25 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
     });
     return statsMap;
   }, [flattenedMilestones, tags]);
+
+  const unlinkedTags = useMemo(() => tags.filter(r => !r.milestone_id), [tags]);
+  const unlinkedStats = useMemo(() => {
+    if (unlinkedTags.length === 0) return null;
+    const required = unlinkedTags.reduce((sum, r) => sum + r.required_count, 0);
+    const tagged = unlinkedTags.reduce((sum, r) => sum + r.tagged_count, 0);
+    const verified = unlinkedTags.reduce((sum, r) => sum + r.verified_count, 0);
+    const abnormal = unlinkedTags.reduce((sum, r) => sum + r.abnormal_count, 0);
+    const progress = required > 0 ? Math.round((verified / required) * 100) : 0;
+    let status: TagRecord['status'] = 'pending';
+    if (abnormal > 0) status = 'verifying';
+    else if (verified >= required && required > 0) status = 'completed';
+    else if (tagged > 0) status = 'tagging';
+    return { required, tagged, verified, abnormal, progress, status };
+  }, [unlinkedTags]);
+
+  const milestonesWithTags = useMemo(() => {
+    return flattenedMilestones.filter(m => milestoneStats[m.id]);
+  }, [flattenedMilestones, milestoneStats]);
 
   const fetchTags = async () => {
     setLoading(true)
@@ -152,10 +173,8 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
       })
     } else {
       setEditingRecord(null)
-      // 默认选择第一个叶子节点或根节点
-      const defaultMilestone = flattenedMilestones.find(m => m.isLeaf) || flattenedMilestones[0];
       setFormData({
-        milestone_id: defaultMilestone?.id || '',
+        milestone_id: '',
         tag_type: 'red',
         system_type: '',
         required_count: 1,
@@ -170,7 +189,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
   }
 
   const handleSave = async () => {
-    if (!formData.milestone_id || !formData.tag_type) return
+    if (!formData.tag_type) return
     try {
       if (editingRecord) {
 
@@ -335,7 +354,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
                   </td>
                 </tr>
               ) : (
-                flattenedMilestones.map(m => {
+                milestonesWithTags.map(m => {
                   const stats = milestoneStats[m.id] || { required: 0, tagged: 0, verified: 0, abnormal: 0, progress: 0, status: 'pending' };
                   const mStatusInfo = statusConfig[stats.status as keyof typeof statusConfig] || statusConfig.pending;
                   const MStatusIcon = mStatusInfo.icon;
@@ -470,6 +489,115 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
                   )
                 })
               )}
+              {unlinkedTags.length > 0 && unlinkedStats && (
+                <React.Fragment>
+                  <tr className="bg-slate-50/50 border-b border-slate-100">
+                    <td className="px-4 py-2" colSpan={3}>
+                      <span className="text-xs font-black text-slate-500">{t('project.tag.no_milestone') || '未关联里程碑'}</span>
+                    </td>
+                    <td className="px-4 py-2 text-center font-black text-slate-600 text-xs">{unlinkedStats.required}</td>
+                    <td className="px-4 py-2 text-center font-black text-amber-600 text-xs">{unlinkedStats.tagged}</td>
+                    <td className="px-4 py-2 text-center font-black text-emerald-600 text-xs">{unlinkedStats.verified}</td>
+                    <td className="px-4 py-2 text-center font-black text-rose-600 text-xs">{unlinkedStats.abnormal}</td>
+                    <td className="px-4 py-2">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${unlinkedStats.progress}%` }} />
+                        </div>
+                        <span className="text-[10px] font-black text-slate-500">{unlinkedStats.progress}%</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-2 text-center">
+                      {(() => {
+                        const sInfo = statusConfig[unlinkedStats.status as keyof typeof statusConfig] || statusConfig.pending;
+                        const SIcon = sInfo.icon;
+                        return (
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest ${sInfo.bgColor} ${sInfo.color}`}>
+                            <SIcon size={10} />
+                            {t(sInfo.label)}
+                          </span>
+                        );
+                      })()}
+                    </td>
+                    <td className="px-4 py-2 text-center">-</td>
+                  </tr>
+                  {unlinkedTags.map(record => {
+                    const tagInfo = tagTypeConfig[record.tag_type] || tagTypeConfig.red
+                    const statusInfo = statusConfig[record.status] || statusConfig.pending
+                    const StatusIcon = statusInfo.icon
+                    return (
+                      <tr
+                        key={record.id}
+                        className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors"
+                      >
+                        <td className="px-4 py-3"></td>
+                        <td className="px-4 py-3 text-center">
+                          <span className="text-xs font-bold text-slate-900">{record.system_type || '-'}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full ${tagInfo.dotColor}`}></span>
+                            <span className={`text-xs font-bold ${tagInfo.color}`}>{t(tagInfo.label)}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className="text-xs font-black text-slate-600">{record.required_count}</span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className="text-xs font-black text-amber-600">{record.tagged_count}</span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className="text-xs font-black text-emerald-600">{record.verified_count}</span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className="text-xs font-black text-rose-600">{record.abnormal_count}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${record.progress}%` }} />
+                            </div>
+                            <span className="text-[10px] font-black text-slate-500">{record.progress}%</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest ${statusInfo.bgColor} ${statusInfo.color}`}>
+                            <StatusIcon size={10} />
+                            {t(statusInfo.label)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={(e) => handleOpenProgress(e, record)}
+                              className="p-1.5 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-all"
+                              title="更新进展"
+                            >
+                              <Save size={14} />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleOpenModal(record); }}
+                              className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                              title="编辑"
+                              style={{ display: isProjectManager ? '' : 'none' }}
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button
+                              onClick={(e) => handleDelete(e, record.id)}
+                              className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                              title="删除"
+                              style={{ display: isProjectManager ? '' : 'none' }}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </React.Fragment>
+              )}
             </tbody>
           </table>
         </div>
@@ -566,7 +694,7 @@ export default function TagsTab({ projectId, milestones, isProjectManager }: Tag
               <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex gap-3">
                 <button
                   onClick={handleSave}
-                  disabled={!formData.milestone_id}
+                  disabled={!formData.tag_type}
                   className="flex-1 py-2.5 bg-emerald-500 text-white rounded-lg text-xs font-bold hover:bg-emerald-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {editingRecord ? t('common.save') : t('common.create')}

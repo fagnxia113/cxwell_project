@@ -116,13 +116,6 @@ export class ProjectExtensionService {
       throw new ForbiddenException('您不是该项目成员');
     }
 
-    // 成员只能更新 progressNote
-    if (role === 'member') {
-      if (Object.keys(data).some(k => k !== 'progressNote' && k !== 'progress_note')) {
-        throw new ForbiddenException('项目成员只能更新风险进度备注');
-      }
-    }
-
     const mId = data.milestoneId || data.milestone_id;
     const oName = data.ownerName || data.owner_name;
     const dLine = data.deadline;
@@ -158,8 +151,8 @@ export class ProjectExtensionService {
     if (!risk) throw new NotFoundException('风险不存在');
 
     const role = await this.checkUserProjectRole(risk.projectId, user);
-    if (role !== 'manager') {
-      throw new ForbiddenException('只有项目经理可以删除风险');
+    if (!role) {
+      throw new ForbiddenException('您不是该项目成员');
     }
 
     await this.prisma.projectRisk.delete({ where: { id } });
@@ -202,8 +195,8 @@ export class ProjectExtensionService {
     if (!expense) throw new NotFoundException('费用不存在');
 
     const role = await this.checkUserProjectRole(expense.projectId, user);
-    if (role !== 'manager') {
-      throw new ForbiddenException('只有项目经理可以删除费用');
+    if (!role) {
+      throw new ForbiddenException('您不是该项目成员');
     }
 
     await this.prisma.projectExpense.delete({ where: { id } });
@@ -225,8 +218,8 @@ export class ProjectExtensionService {
 
   async addStaffingPlan(projectId: bigint, data: any, user: any) {
     const role = await this.checkUserProjectRole(projectId, user);
-    if (role !== 'manager') {
-      throw new ForbiddenException('只有项目经理可以添加人员计划');
+    if (!role) {
+      throw new ForbiddenException('只有项目成员可以添加人员计划');
     }
 
     const res = await this.prisma.projectStaffingPlan.create({
@@ -245,8 +238,8 @@ export class ProjectExtensionService {
     if (!plan) throw new NotFoundException('人员计划不存在');
 
     const role = await this.checkUserProjectRole(plan.projectId, user);
-    if (role !== 'manager') {
-      throw new ForbiddenException('只有项目经理可以删除人员计划');
+    if (!role) {
+      throw new ForbiddenException('只有项目成员可以删除人员计划');
     }
 
     await this.prisma.projectStaffingPlan.delete({ where: { id } });
@@ -256,8 +249,8 @@ export class ProjectExtensionService {
   // ---- Personnel Permissions ----
   async updatePersonnelPermission(projectId: bigint, employeeId: bigint, canEdit: boolean, user: any) {
     const role = await this.checkUserProjectRole(projectId, user);
-    if (role !== 'manager') {
-      throw new ForbiddenException('只有项目经理可以修改成员权限');
+    if (!role) {
+      throw new ForbiddenException('只有项目成员可以修改成员权限');
     }
 
     const res = await this.prisma.projectMember.update({
