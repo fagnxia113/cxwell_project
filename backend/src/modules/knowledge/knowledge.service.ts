@@ -14,7 +14,7 @@ export class KnowledgeService {
   }
 
   private async isAdmin(userId: string, roleFromToken?: string): Promise<boolean> {
-    if (roleFromToken === 'admin') return true;
+    if (roleFromToken === 'admin' || roleFromToken === 'general_manager') return true;
     if (userId === '1') return true;
 
     try {

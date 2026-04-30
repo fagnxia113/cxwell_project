@@ -9,7 +9,7 @@ export class TagsService {
     const userId = user?.sub || user?.userId;
     if (!userId) return null;
 
-    if (userId === '1' || userId === 1) return 'manager';
+    if (userId === '1' || userId === 1 || user?.role === 'admin' || user?.role === 'general_manager') return 'manager';
 
     const project = await this.prisma.project.findUnique({
       where: { projectId },

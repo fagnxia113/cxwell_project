@@ -16,7 +16,7 @@ export class ReportsService {
     if (!userId) return null;
 
     // 超级管理员
-    if (userId === '1' || userId === 1) return 'manager';
+    if (userId === '1' || userId === 1 || user?.role === 'admin' || user?.role === 'general_manager') return 'manager';
 
     // 检查是否是项目经理
     const project = await this.prisma.project.findUnique({

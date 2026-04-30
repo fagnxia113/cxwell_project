@@ -14,7 +14,7 @@ export class ProjectService {
     if (!userId) return null;
 
     // 超级管理员
-    if (userId === '1' || userId === 1) return 'manager';
+    if (userId === '1' || userId === 1 || user?.role === 'admin' || user?.role === 'general_manager') return 'manager';
 
     // 获取用户的员工记录
     const employee = await this.prisma.sysEmployee.findFirst({
@@ -225,11 +225,12 @@ export class ProjectService {
   async applyDataScope(user: any): Promise<any> {
     const userId = user?.sub || user?.userId;
     const loginName = user?.loginName;
-    console.log('[applyDataScope] user:', JSON.stringify({ userId, loginName, role: user?.role }));
-    if (!userId) return { createBy: 'none' }; // 未登录拒绝访问
-    if (userId === '1' || userId === 1) {
-      console.log('[applyDataScope] => admin, returning all');
-      return {}; // 如果是 1 (超级管理员)，拥有全部权限
+    const userRole = user?.role || user?.roleKey;
+    console.log('[applyDataScope] user:', JSON.stringify({ userId, loginName, role: userRole }));
+    if (!userId) return { createBy: 'none' };
+    if (userId === '1' || userId === 1 || userRole === 'admin' || userRole === 'general_manager') {
+      console.log('[applyDataScope] => admin/general_manager, returning all');
+      return {};
     }
 
     // 获取员工ID用于权限过滤
