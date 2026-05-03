@@ -152,18 +152,20 @@ export default function MilestoneGantt({ milestones, onProgressClick, title }: M
     const startDate = milestone.planned_start_date
     const endDate = milestone.planned_end_date
     const dateRange = getChildDateRange(milestone.children || [], startDate, endDate)
-    const startDays = getDateDays(new Date(dateRange.start || ''))
-    const endDays = getDateDays(new Date(dateRange.end || ''))
+
+    const startMs = dateRange.start ? new Date(dateRange.start).getTime() : NaN
+    const endMs = dateRange.end ? new Date(dateRange.end).getTime() : NaN
+    const startDays = isNaN(startMs) ? scaleStartDays : getDateDays(new Date(startMs))
+    const endDays = isNaN(endMs) ? scaleStartDays : getDateDays(new Date(endMs))
 
     const left = (startDays - scaleStartDays) * dayWidth
-    const width = (endDays - startDays + 1) * dayWidth
+    const width = Math.max((endDays - startDays + 1) * dayWidth, 2)
     const progress = milestone.progress || 0
-    const isDelayed = today > new Date(dateRange.end || '') && progress < 100
+    const isDelayed = !isNaN(endMs) && today.getTime() > endMs && progress < 100
     const isCompleted = hasChildren ? progress === 100 : milestone.status === 'completed'
 
     return (
       <React.Fragment key={milestone.id}>
-        {/* 里程碑行 */}
         <div className="h-14 relative">
           <div
             className={cn(
@@ -173,7 +175,7 @@ export default function MilestoneGantt({ milestones, onProgressClick, title }: M
               isDelayed ? "bg-rose-500/10 border border-rose-500/20" :
               "bg-blue-500/10 border border-blue-500/20"
             )}
-            style={{ left: `${left}px`, width: `${Math.max(width, 2)}px` }}
+            style={{ left: `${left}px`, width: `${width}px` }}
           >
             <div
               className={cn(
@@ -193,18 +195,8 @@ export default function MilestoneGantt({ milestones, onProgressClick, title }: M
               </span>
             )}
           </div>
-
-          {todayDays >= minDateDays && todayDays <= maxDateDays && (
-            <div
-              className="absolute top-0 bottom-0 w-[2px] bg-rose-400 z-10 transition-all shadow-[0_0_8px_rgba(251,113,133,0.4)]"
-              style={{ left: `${todayOffsetDays * dayWidth}px` }}
-            >
-              <div className="absolute -top-1 -left-[3px] w-2 h-2 rounded-full bg-rose-500 border-2 border-white shadow-sm" />
-            </div>
-          )}
         </div>
 
-        {/* 子里程碑 */}
         {hasChildren && isExpanded(milestone.id) && (
           <div className="divide-y divide-slate-100">
             {milestone.children!.map(child => renderMilestoneRow(child, level + 1))}
@@ -227,7 +219,7 @@ export default function MilestoneGantt({ milestones, onProgressClick, title }: M
     return (
       <React.Fragment key={milestone.id}>
         <div className={cn(
-          "h-12 flex items-center px-4 gap-3 bg-white transition-all border-b border-slate-50 group",
+          "h-14 flex items-center px-4 gap-3 bg-white transition-all border-b border-slate-50 group",
           level === 0 ? "text-slate-700" : "text-slate-500 bg-slate-50/5"
         )}>
           {/* 1. 极简展开标识：默认近乎透明 */}
@@ -345,7 +337,7 @@ export default function MilestoneGantt({ milestones, onProgressClick, title }: M
           style={{ width: '280px' }}
         >
           <div className="sticky top-0 z-20 bg-slate-50 border-b border-slate-100">
-            <div className="h-[40px] flex items-center px-4 gap-3 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+            <div className="h-[42px] flex items-center px-4 gap-3 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
               <span className="w-5" /> {/* 展开占位 */}
               <span className="flex-1">{t('project.fields.name')}</span>
               <span className="w-10 text-center">{t('project.milestone.weight')}</span>
@@ -395,8 +387,18 @@ export default function MilestoneGantt({ milestones, onProgressClick, title }: M
               </div>
             </div>
 
-            <div className="divide-y divide-slate-100">
-              {rootMilestones.map(milestone => renderMilestoneRow(milestone))}
+            <div className="relative">
+              {todayDays >= minDateDays && todayDays <= maxDateDays && (
+                <div
+                  className="absolute top-0 bottom-0 w-[2px] bg-rose-400 z-10 pointer-events-none shadow-[0_0_8px_rgba(251,113,133,0.4)]"
+                  style={{ left: `${todayOffsetDays * dayWidth}px` }}
+                >
+                  <div className="absolute -top-1 -left-[3px] w-2 h-2 rounded-full bg-rose-500 border-2 border-white shadow-sm" />
+                </div>
+              )}
+              <div className="divide-y divide-slate-100">
+                {rootMilestones.map(milestone => renderMilestoneRow(milestone))}
+              </div>
             </div>
           </div>
         </div>
