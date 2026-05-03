@@ -242,7 +242,7 @@ export default function KnowledgePage() {
 
   const currentContent = useMemo(() => {
     const findFolder = (list: KnowledgeItem[]): KnowledgeItem | undefined => {
-      for (const item of list) {
+      for (const item of list) { 
         if (item.id === currentFolderId) return item;
         if (item.children) {
           const found = findFolder(item.children);

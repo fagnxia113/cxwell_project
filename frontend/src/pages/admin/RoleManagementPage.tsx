@@ -278,9 +278,9 @@ export default function RoleManagementPage() {
       {/* Analytics Dashboard */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard title={t('common.total')} value={stats.total} icon={Shield} color="blue" delay={0.1} />
-        <StatCard title={t('personnel.status_labels.active') || '有效角色'} value={stats.active} icon={ShieldCheck} color="emerald" delay={0.2} />
-        <StatCard title={t('common.system') || '系统角色'} value={stats.system} icon={ShieldAlert} color="amber" delay={0.3} />
-        <StatCard title={t('common.last_update') || '最近更新'} value={stats.lastUpdate} icon={ActivityIcon} color="indigo" delay={0.4} />
+        <StatCard title={t('common.status_labels.active')} value={stats.active} icon={ShieldCheck} color="emerald" delay={0.2} />
+        <StatCard title={t('common.system')} value={stats.system} icon={ShieldAlert} color="amber" delay={0.3} />
+        <StatCard title={t('common.last_update')} value={stats.lastUpdate} icon={ActivityIcon} color="indigo" delay={0.4} />
       </div>
 
       {/* Filter Bar */}

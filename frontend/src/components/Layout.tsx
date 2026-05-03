@@ -117,6 +117,7 @@ const getSubPathName = (parentPath: string | undefined, subPath: string | undefi
     'admin': {
       'data': t('sidebar.systemAdmin'),
       'users': t('sidebar.users'),
+      'roles': t('sidebar.roles'),
       'workflow-monitor': t('sidebar.monitoring')
     },
     'reports': {
