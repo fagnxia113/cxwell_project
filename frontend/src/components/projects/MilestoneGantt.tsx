@@ -44,14 +44,20 @@ export default function MilestoneGantt({ milestones, onProgressClick, title }: M
 
   // 收集所有日期（包括子里程碑）
   const collectAllDates = (milestones: Milestone[]): Date[] => {
-    return milestones.flatMap(m => [
-      new Date(m.planned_start_date || ''),
-      new Date(m.planned_end_date || ''),
-      ...(m.children ? collectAllDates(m.children) : [])
-    ])
+    return milestones.flatMap(m => {
+      const dates: Date[] = []
+      if (m.planned_start_date) dates.push(new Date(m.planned_start_date))
+      if (m.planned_end_date) dates.push(new Date(m.planned_end_date))
+      if (m.children) dates.push(...collectAllDates(m.children))
+      return dates
+    }).filter(d => !isNaN(d.getTime()))
   }
 
   const allDates = collectAllDates(milestones)
+  if (allDates.length === 0) {
+    return <p className="text-center py-10 text-slate-300 font-bold text-xs">{t('common.noData')}</p>
+  }
+
   const minDate = new Date(Math.min(...allDates.map(d => d.getTime())))
   const maxDate = new Date(Math.max(...allDates.map(d => d.getTime())))
 
@@ -68,9 +74,11 @@ export default function MilestoneGantt({ milestones, onProgressClick, title }: M
   const dayWidth = (availableWidth / targetDaysPerPage) * zoomLevel
 
   const generateScale = () => {
-    const scale: { type: 'year' | 'month'; label: string; width: number }[] = []
+    const scale: { type: 'year' | 'quarter' | 'month'; label: string; width: number; months: number }[] = []
     let currentDate = new Date(minDate.getFullYear(), minDate.getMonth(), 1)
     const endDate = new Date(maxDate.getFullYear(), maxDate.getMonth(), maxDate.getDate())
+
+    const minMonthWidth = 28
 
     while (currentDate <= endDate) {
       const year = currentDate.getFullYear()
@@ -79,18 +87,45 @@ export default function MilestoneGantt({ milestones, onProgressClick, title }: M
       const dayOfMonth = currentDate.getDate()
       const daysRemaining = getDateDays(endDate) - getDateDays(currentDate) + 1
       const daysToUse = Math.min(daysInMonth - dayOfMonth + 1, daysRemaining)
+      const monthWidth = daysToUse * dayWidth
 
-      if (month === 0) {
+      if (monthWidth < minMonthWidth) {
+        const quarterStart = Math.floor(month / 3) * 3
+        if (month === quarterStart || scale.length === 0 || scale[scale.length - 1].type !== 'quarter') {
+          let quarterDays = 0
+          for (let qm = quarterStart; qm < quarterStart + 3; qm++) {
+            if (new Date(year, qm, 1) > endDate) break
+            const qDayOfMonth = (qm === quarterStart && month === quarterStart) ? dayOfMonth : 1
+            const qDaysInMonth = getMonthDays(year, qm)
+            const qDaysRemaining = getDateDays(endDate) - getDateDays(new Date(year, qm, qDayOfMonth)) + 1
+            quarterDays += Math.min(qDaysInMonth - qDayOfMonth + 1, qDaysRemaining)
+          }
+          scale.push({
+            type: 'quarter',
+            label: `Q${Math.floor(quarterStart / 3) + 1}`,
+            width: quarterDays * dayWidth,
+            months: 1
+          })
+        } else {
+          const qDaysInMonth = getMonthDays(year, month)
+          const qDaysRemaining = getDateDays(endDate) - getDateDays(currentDate) + 1
+          const qDaysToUse = Math.min(qDaysInMonth - dayOfMonth + 1, qDaysRemaining)
+          scale[scale.length - 1].width += qDaysToUse * dayWidth
+          scale[scale.length - 1].months++
+        }
+      } else if (month === 0) {
         scale.push({
           type: 'year',
           label: String(year),
-          width: daysToUse * dayWidth
+          width: monthWidth,
+          months: 1
         })
       } else {
         scale.push({
           type: 'month',
           label: String(month + 1).padStart(2, '0'),
-          width: daysToUse * dayWidth
+          width: monthWidth,
+          months: 1
         })
       }
 
@@ -101,7 +136,7 @@ export default function MilestoneGantt({ milestones, onProgressClick, title }: M
   }
 
   const scale = generateScale()
-  const totalWidth = totalDays * dayWidth
+  const totalWidth = Math.max(totalDays * dayWidth, scale.reduce((sum, item) => sum + Math.max(item.width, item.type === 'month' ? 28 : 40), 0))
 
   const handleZoomIn = () => {
     setZoomLevel(prev => Math.min(prev * 1.25, 4))
@@ -366,21 +401,25 @@ export default function MilestoneGantt({ milestones, onProgressClick, title }: M
                       "flex flex-col items-center border-r last:border-r-0 flex-shrink-0",
                       item.type === 'year'
                         ? "border-slate-300 bg-emerald-50"
+                        : item.type === 'quarter'
+                        ? "border-slate-200 bg-blue-50"
                         : "border-slate-200"
                     )}
-                    style={{ width: `${item.width}px` }}
+                    style={{ width: `${item.width}px`, minWidth: `${item.type === 'month' ? 28 : 40}px` }}
                   >
                     <span className={cn(
-                      "py-1 font-bold",
+                      "py-1 font-bold whitespace-nowrap overflow-hidden",
                       item.type === 'year'
                         ? "text-[11px] text-emerald-700 bg-emerald-100 w-full text-center border-b border-emerald-200"
+                        : item.type === 'quarter'
+                        ? "text-[10px] text-blue-600"
                         : "text-[10px] text-slate-500"
                     )}>
                       {item.label}
                     </span>
                     <div className={cn(
                       "w-px",
-                      item.type === 'year' ? "h-4 bg-emerald-300" : "h-2 bg-slate-200"
+                      item.type === 'year' ? "h-4 bg-emerald-300" : item.type === 'quarter' ? "h-3 bg-blue-300" : "h-2 bg-slate-200"
                     )} />
                   </div>
                 ))}

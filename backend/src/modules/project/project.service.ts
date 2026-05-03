@@ -137,10 +137,16 @@ export class ProjectService {
           orderBy: { startDate: 'asc' }
         },
         milestones: {
+          where: { parentId: null },
           orderBy: { plannedDate: 'asc' },
           include: {
             children: {
-              orderBy: { plannedDate: 'asc' }
+              orderBy: { plannedDate: 'asc' },
+              include: {
+                children: {
+                  orderBy: { plannedDate: 'asc' }
+                }
+              }
             }
           }
         }
