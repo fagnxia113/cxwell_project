@@ -41,6 +41,7 @@
   "folder_create_success": "目录创建成功",
   "folder_error": "目录创建失败",
   "folder_delete_confirm": "确定要删除该项吗？删除文件夹将同步删除其内部所有内容。",
+  "delete_confirm_desc": "确定要删除该文件吗？此操作不可恢复。",
   "upload_title": "上传文档",
   "upload_subtitle": "支持拖拽或选择多个文件",
   "upload_drop_title": "点击或拖拽文件至此处",

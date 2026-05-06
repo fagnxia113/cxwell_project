@@ -664,6 +664,8 @@ model BizKnowledge {
   type           String                   @default("Document") @db.VarChar(50)
   content        String?                  @db.LongText
   fileUrl        String?                  @map("file_url") @db.VarChar(500)
+  fileSize       Int?                     @map("file_size")
+  fileType       String?                  @map("file_type") @db.VarChar(50)
   isFolder       Boolean                  @default(false) @map("is_folder")
   parentId       BigInt?                  @map("parent_id")
   visibilityType String                   @default("everyone") @map("visibility_type") @db.VarChar(20)

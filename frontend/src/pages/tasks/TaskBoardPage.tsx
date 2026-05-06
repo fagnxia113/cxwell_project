@@ -248,25 +248,36 @@ function ProjectCard({ project, activeTab, t, navigate, handleUpdateStatus, idx 
           {activeTab === 'expense' && (
             <motion.div key="expense" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
               <div className="space-y-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                <div>
-                  <div className="flex justify-between text-[9px] font-black text-slate-400 uppercase mb-1.5">
-                    <span>{t('project.stats.spent')}</span>
-                    <span>{Math.round((project.expenses?.total / project.budget) * 100) || 0}%</span>
-                  </div>
-                  <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500" style={{ width: `${Math.min(100, (project.expenses?.total / project.budget) * 100)}%` }} />
-                  </div>
-                </div>
-                <div className="flex justify-between items-end">
-                   <div>
-                      <p className="text-[8px] font-black text-slate-400 uppercase mb-1">{t('project.task_board.total_spent')}</p>
-                      <p className="text-sm font-black text-slate-900">¥{project.expenses?.total?.toLocaleString()}</p>
-                   </div>
-                   <div className="text-right">
-                      <p className="text-[8px] font-black text-slate-400 uppercase mb-1">{t('project.fields.budget')}</p>
-                      <p className="text-xs font-bold text-slate-500">¥{project.budget?.toLocaleString()}</p>
-                   </div>
-                </div>
+                {(() => {
+                  const spentInYuan = project.expenses?.total || 0
+                  const spentInWan = spentInYuan / 10000
+                  const budgetInWan = project.budget || 0
+                  const budgetInYuan = budgetInWan * 10000
+                  const pct = budgetInWan > 0 ? Math.min(100, Math.round((spentInWan / budgetInWan) * 100)) : 0
+                  return (
+                    <>
+                      <div>
+                        <div className="flex justify-between text-[9px] font-black text-slate-400 uppercase mb-1.5">
+                          <span>{t('project.stats.spent')}</span>
+                          <span>{pct}%</span>
+                        </div>
+                        <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-emerald-500" style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-end">
+                        <div>
+                          <p className="text-[8px] font-black text-slate-400 uppercase mb-1">{t('project.task_board.total_spent')}</p>
+                          <p className="text-sm font-black text-slate-900">¥{spentInYuan?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[8px] font-black text-slate-400 uppercase mb-1">{t('project.fields.budget')}</p>
+                          <p className="text-xs font-bold text-slate-500">{budgetInWan?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{t('common.unit_ten_thousand')}</p>
+                        </div>
+                      </div>
+                    </>
+                  )
+                })()}
               </div>
             </motion.div>
           )}

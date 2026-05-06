@@ -6,12 +6,18 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { KnowledgeService } from './knowledge.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { ConfigService } from '@nestjs/config';
 import { FileUploadExceptionFilter } from '../../common/filters/file-upload.filter';
+
+const UPLOAD_PATH = process.env.UPLOAD_PATH || './uploads';
 
 @Controller('knowledge')
 @UseFilters(FileUploadExceptionFilter)
 export class KnowledgeController {
-  constructor(private readonly knowledgeService: KnowledgeService) {}
+  constructor(
+    private readonly knowledgeService: KnowledgeService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Get('tree')
   async getTree(@Request() req) {
@@ -36,7 +42,11 @@ export class KnowledgeController {
   @Post('upload')
   @UseInterceptors(FileInterceptor('file', {
     storage: diskStorage({
-      destination: './uploads/knowledge',
+      destination: (req, file, cb) => {
+        const dir = `${UPLOAD_PATH}/knowledge`;
+        require('fs').mkdirSync(dir, { recursive: true });
+        cb(null, dir);
+      },
       filename: (req, file, cb) => {
         const randomName = Array(32).fill(null).map(() => (Math.round(Math.random() * 16)).toString(16)).join('');
         const ext = extname(file.originalname);
@@ -46,19 +56,23 @@ export class KnowledgeController {
     fileFilter: (req, file, cb) => {
       cb(null, true);
     },
-    limits: { fileSize: 200 * 1024 * 1024 }
+    limits: { fileSize: 500 * 1024 * 1024 }
   }))
   async upload(@UploadedFile() file: Express.Multer.File, @Body('parentId') parentId: string, @Request() req) {
     if (!file) {
-      throw new BadRequestException('请选择要上传的文件，文件大小不能超过 200MB');
+      throw new BadRequestException('请选择要上传的文件，文件大小不能超过 500MB');
     }
 
     const originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
+    const ext = extname(originalname).replace('.', '').toLowerCase();
+    const fileUrlPrefix = this.configService.get<string>('FILE_URL_PREFIX') || '/api/files';
 
     const data = {
       title: originalname,
       type: 'Document',
-      fileUrl: `/api/files/knowledge/${file.filename}`,
+      fileUrl: `${fileUrlPrefix}/knowledge/${file.filename}`,
+      fileSize: file.size,
+      fileType: ext || 'unknown',
       isFolder: false,
       parentId: parentId || null
     };

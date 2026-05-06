@@ -22,7 +22,7 @@ export class FileUploadExceptionFilter implements ExceptionFilter {
       switch (exception.code) {
         case 'LIMIT_FILE_SIZE':
           status = 413;
-          message = '文件大小超过限制，最大允许 200MB';
+          message = '文件大小超过限制，最大允许 500MB';
           break;
         case 'LIMIT_FILE_COUNT':
           status = 400;

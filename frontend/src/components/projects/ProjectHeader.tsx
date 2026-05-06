@@ -19,6 +19,8 @@ interface ProjectHeaderProps {
   isAdmin: boolean
   isProjectMember: boolean
   isEditing: boolean
+  editForm?: Partial<Project>
+  onEditFormChange?: (updates: Partial<Project>) => void
   onBack: () => void
   onEdit: () => void
   onDelete: () => void
@@ -32,6 +34,8 @@ export default function ProjectHeader({
   isAdmin,
   isProjectMember,
   isEditing,
+  editForm,
+  onEditFormChange,
   onBack,
   onEdit,
   onDelete,
@@ -52,7 +56,16 @@ export default function ProjectHeader({
         </button>
         <div className="space-y-1.5">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{project.name}</h1>
+            {isEditing ? (
+              <input
+                type="text"
+                value={editForm?.name || project.name}
+                onChange={(e) => onEditFormChange?.({ name: e.target.value })}
+                className="text-2xl font-bold text-slate-900 tracking-tight bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1 outline-none focus:ring-2 focus:ring-emerald-500 w-80"
+              />
+            ) : (
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{project.name}</h1>
+            )}
             <StatusBadge status={project.status} />
           </div>
           <div className="flex items-center gap-3 text-slate-400 font-bold text-[11px] uppercase tracking-wider">

@@ -78,9 +78,11 @@ export class DefinitionService {
     nodes: Array<{
       nodeCode: string;
       nodeName: string;
-      nodeType: number; // 0=开始 1=中间 2=结束 3=网关
+      nodeType: number;
       permissionFlag?: string;
       coordinate?: string;
+      handlerType?: string;
+      handlerPath?: string;
     }>;
     skips: Array<{
       nowNodeCode: string;
@@ -94,11 +96,9 @@ export class DefinitionService {
     if (!def) throw new BadRequestException('流程定义不存在');
 
     return this.prisma.$transaction(async (tx) => {
-      // 清除旧的节点与跳转定义
       await tx.flowNode.deleteMany({ where: { definitionId } });
       await tx.flowSkip.deleteMany({ where: { definitionId } });
 
-      // 批量写入新节点
       for (const node of design.nodes) {
         const nodeId = BigInt(Date.now()) + BigInt(Math.floor(Math.random() * 10000));
         await tx.flowNode.create({
@@ -110,6 +110,8 @@ export class DefinitionService {
             nodeType: node.nodeType,
             permissionFlag: node.permissionFlag ?? '',
             coordinate: node.coordinate ?? '',
+            handlerType: node.handlerType ?? null,
+            handlerPath: node.handlerPath ?? null,
             version: def.version,
             createBy: operator,
             createTime: new Date(),

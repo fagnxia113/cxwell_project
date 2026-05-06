@@ -97,6 +97,8 @@ export default function ProjectDetailPage() {
         isAdmin={isAdmin} 
         isProjectMember={isProjectManager || isProjectMember}
         isEditing={isEditing}
+        editForm={editForm}
+        onEditFormChange={setEditForm}
         onBack={() => navigate('/projects')}
         onEdit={handleEdit}
         onDelete={handleDelete}

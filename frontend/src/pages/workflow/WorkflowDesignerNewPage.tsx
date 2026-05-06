@@ -101,22 +101,25 @@ export default function WorkflowDesignerNewPage() {
           return { type: 'user', value: flag }
         }
 
-        const adaptedNodes = rawNodes.map((n: any) => ({
-          id: n.nodeCode,
-          type: nodeTypeMap[n.nodeType] || 'userTask',
-          position: n.coordinate ? JSON.parse(n.coordinate) : { x: 100, y: 100 },
-          data: {
-            label: n.nodeName,
-            approvalConfig: n.permissionFlag ? {
-              approvalMode: 'or_sign',
-              approverSource: parsePermissionFlag(n.permissionFlag)
-            } : undefined,
-            serviceConfig: n.handlerType === 'service' && n.handlerPath ? {
-              handlerType: n.handlerType,
-              handlerPath: n.handlerPath
-            } : undefined,
+        const adaptedNodes = rawNodes.map((n: any) => {
+          const isService = n.handlerType === 'service' && n.handlerPath
+          return {
+            id: n.nodeCode,
+            type: isService ? 'serviceTask' : (nodeTypeMap[n.nodeType] || 'userTask'),
+            position: n.coordinate ? JSON.parse(n.coordinate) : { x: 100, y: 100 },
+            data: {
+              label: n.nodeName,
+              approvalConfig: !isService && n.permissionFlag ? {
+                approvalMode: 'or_sign',
+                approverSource: parsePermissionFlag(n.permissionFlag)
+              } : undefined,
+              serviceConfig: isService ? {
+                handlerType: n.handlerType,
+                handlerPath: n.handlerPath
+              } : undefined,
+            }
           }
-        }));
+        });
 
         const adaptedEdges = rawSkips.map((s: any) => ({
           id: `edge_${s.nowNodeCode}_${s.nextNodeCode}`,

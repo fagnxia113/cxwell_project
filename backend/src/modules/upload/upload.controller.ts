@@ -5,12 +5,12 @@ import { extname } from 'path';
 import * as iconv from 'iconv-lite';
 import { ConfigService } from '@nestjs/config';
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || 'uploads';
+const UPLOAD_PATH = process.env.UPLOAD_PATH || './uploads';
 
 function recoverUtf8FromLatin1(str: string): string {
   try {
     const buf = Buffer.from(str, 'binary');
-    const decoded = iconv.decode(buf, 'utf-8');
+    const decoded = iconv.decode(buf, 'utf8');
     if (decoded && /[\u4e00-\u9fa5]/.test(decoded)) return decoded;
   } catch {}
   return str;
@@ -24,12 +24,13 @@ export class UploadController {
   @UseInterceptors(FileInterceptor('file', {
     storage: diskStorage({
       destination: (req, file, cb) => {
-        cb(null, UPLOAD_DIR);
+        require('fs').mkdirSync(UPLOAD_PATH, { recursive: true });
+        cb(null, UPLOAD_PATH);
       },
       filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
         const ext = extname(file.originalname);
-        cb(null, uniqueSuffix + ext);
+        cb(null, `${uniqueSuffix}${ext}`);
       },
     }),
     fileFilter: (req, file, cb) => {
@@ -38,12 +39,12 @@ export class UploadController {
       if (blocked.includes(ext)) cb(new BadRequestException('不允许上传可执行文件'), false);
       else cb(null, true);
     },
-    limits: { fileSize: 50 * 1024 * 1024 },
+    limits: { fileSize: 500 * 1024 * 1024 },
   }))
   async upload(@UploadedFile() file: Express.Multer.File) {
     if (!file) throw new BadRequestException('请选择文件');
     const originalName = recoverUtf8FromLatin1(file.originalname);
-    const fileUrlPrefix = this.configService.get<string>('FILE_URL_PREFIX') || 'http://localhost:3000/api/files';
+    const fileUrlPrefix = this.configService.get<string>('FILE_URL_PREFIX') || '/api/files';
     const fileUrl = `${fileUrlPrefix}/${file.filename}`;
     return { url: fileUrl, fileUrl, fileName: originalName, fileSize: file.size };
   }

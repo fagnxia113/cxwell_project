@@ -69,7 +69,9 @@ export class ReportsController {
     storage: diskStorage({
       destination: (req, file, cb) => {
         const uploadPath = process.env.UPLOAD_PATH || './uploads';
-        cb(null, `${uploadPath}/reports`);
+        const dir = `${uploadPath}/reports`;
+        require('fs').mkdirSync(dir, { recursive: true });
+        cb(null, dir);
       },
       filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);

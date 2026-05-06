@@ -1,17 +1,9 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import * as fs from 'fs';
-import * as path from 'path';
 
 @Injectable()
 export class KnowledgeService {
-  private readonly uploadPath = path.join(process.cwd(), 'uploads', 'knowledge');
-
-  constructor(private prisma: PrismaService) {
-    if (!fs.existsSync(this.uploadPath)) {
-      fs.mkdirSync(this.uploadPath, { recursive: true });
-    }
-  }
+  constructor(private prisma: PrismaService) {}
 
   private async isAdmin(userId: string, roleFromToken?: string): Promise<boolean> {
     if (roleFromToken === 'admin' || roleFromToken === 'general_manager') return true;
@@ -152,6 +144,9 @@ export class KnowledgeService {
         parentId: (rest.parentId && rest.parentId !== 'null' && rest.parentId !== 'undefined') ? BigInt(rest.parentId) : null,
         visibilityType: rest.visibilityType || 'everyone',
         createBy: user?.loginName,
+        fileUrl: rest.fileUrl || null,
+        fileSize: rest.fileSize || null,
+        fileType: rest.fileType || null,
       },
     });
 

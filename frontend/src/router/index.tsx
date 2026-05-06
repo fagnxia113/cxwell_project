@@ -85,6 +85,7 @@ export const routes: RouteObject[] = [
             { path: 'new', element: <NewProcessPage /> },
             { path: 'workflow/:definitionKey', element: <WorkflowFormPage /> },
             { path: 'handle/:taskId', element: <WorkflowDetailPage /> },
+            { path: 'detail/:instanceId', element: <WorkflowDetailPage /> },
             { path: 'instance/:instanceId', element: <WorkflowDetailPage /> },
         ]
     },

@@ -1,5 +1,23 @@
 version: '3.8'
 
+# ============================================================
+# 文件存储迁移说明
+# ============================================================
+# 当前方案：本地磁盘存储（bind mount）
+#   上传文件存储在主机 ./data/uploads/ 目录
+#   容器内映射到 /app/uploads
+#
+# 迁移到云盘/NFS：
+#   1. 先把 ./data/uploads/ 下的文件复制到新位置
+#   2. 修改下面的 volumes bind mount 路径为新的挂载点，例如：
+#      - /mnt/cloud-drive/uploads:/app/uploads
+#   3. 重启服务即可，数据库中的 fileUrl 无需修改
+#
+# 迁移到对象存储（OSS/S3/COS）：
+#   需要额外开发 FileStorageService 抽象层，
+#   当前 FILE_URL_PREFIX 环境变量已预留，切换时只需改此前缀
+# ============================================================
+
 services:
   db:
     image: mysql:8.0
@@ -25,10 +43,23 @@ services:
       DATABASE_URL: mysql://${DB_USER:-cxwell_user}:${DB_PASSWORD:-cxwell_password}@db:3306/${DB_NAME:-cxwell_db}
       JWT_SECRET: ${JWT_SECRET:-secret}
       PORT: 3000
+      # ---- 文件存储配置 ----
+      UPLOAD_PATH: ${UPLOAD_PATH:-./uploads}
+      FILE_URL_PREFIX: ${FILE_URL_PREFIX:-/api/files}
+      # ---- 钉钉配置 ----
+      DINGTALK_APP_KEY: ${DINGTALK_APP_KEY:-}
+      DINGTALK_APP_SECRET: ${DINGTALK_APP_SECRET:-}
+      DINGTALK_AGENT_ID: ${DINGTALK_AGENT_ID:-}
+      # ---- 前端地址（用于钉钉消息跳转）----
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
     depends_on:
       - db
     ports:
       - "3000:3000"
+    # bind mount：主机目录 -> 容器目录
+    # 换云盘时只需改左边的主机路径即可
+    volumes:
+      - ./data/uploads:/app/uploads
 
   frontend:
     build:

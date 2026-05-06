@@ -310,8 +310,8 @@ async function main() {
       { name: 'departmentId', label: '入职部门', type: 'select', required: true, dynamicOptions: 'department', group: 'onboarding_info' },
       { name: 'position', label: '入职岗位', type: 'select', required: true, dynamicOptions: 'post', group: 'onboarding_info' },
       { name: 'entryDate', label: '入职日期', type: 'date', required: true, group: 'onboarding_info' },
-      { name: 'education', label: '学历', type: 'select', required: true, options: [{ label: '博士', value: 'phd' }, { label: '硕士', value: 'master' }, { label: '本科', value: 'bachelor' }, { label: '大专', value: 'college' }, { label: '高中及以下', value: 'other' }], group: 'education_info' },
-      { name: 'graduationSchool', label: '毕业院校', type: 'text', required: true, group: 'education_info' },
+      { name: 'education', label: '学历', type: 'select', required: false, options: [{ label: '博士', value: 'phd' }, { label: '硕士', value: 'master' }, { label: '本科', value: 'bachelor' }, { label: '大专', value: 'college' }, { label: '高中及以下', value: 'other' }], group: 'education_info' },
+      { name: 'graduationSchool', label: '毕业院校', type: 'text', required: false, group: 'education_info' },
     ],
     nodes: [
       { id: 1001n, type: 0, code: 'start', name: '开始', coord: { x: 250, y: 50 } },
