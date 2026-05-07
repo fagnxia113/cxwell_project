@@ -1,9 +1,15 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { FileStorageService } from '../../common/services/file-storage.service';
 
 @Injectable()
 export class KnowledgeService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(KnowledgeService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private fileStorage: FileStorageService,
+  ) {}
 
   private async isAdmin(userId: string, roleFromToken?: string): Promise<boolean> {
     if (roleFromToken === 'admin' || roleFromToken === 'general_manager') return true;
@@ -203,10 +209,34 @@ export class KnowledgeService {
       throw new ForbiddenException('只有管理员或创建人可以删除');
     }
 
+    if (item.fileUrl) {
+      const filePath = this.extractFilePath(item.fileUrl);
+      if (filePath) {
+        const deleted = await this.fileStorage.delete(filePath);
+        if (!deleted) {
+          this.logger.warn(`Failed to delete storage file: ${filePath}`);
+        }
+      }
+    }
+
     return this.prisma.bizKnowledge.update({
       where: { id: BigInt(id) },
       data: { delFlag: '1' },
     });
+  }
+
+  private extractFilePath(fileUrl: string): string | null {
+    try {
+      const url = new URL(fileUrl);
+      const pathname = url.pathname;
+      return pathname.startsWith('/') ? pathname.substring(1) : pathname;
+    } catch {
+      const prefix = this.fileStorage.getFileUrlPrefix();
+      if (fileUrl.startsWith(prefix + '/')) {
+        return fileUrl.substring(prefix.length + 1);
+      }
+      return null;
+    }
   }
 
   async getPermissions(id: string) {
