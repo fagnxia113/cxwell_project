@@ -23,6 +23,7 @@ import { DingtalkModule } from './modules/dingtalk/dingtalk.module';
 import { AttendanceModule } from './modules/attendance/attendance.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
+import { FileStorageModule } from './common/services/file-storage.module';
 
 import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
@@ -44,6 +45,7 @@ import { ScheduleModule } from '@nestjs/schedule';
       },
     }),
     PrismaModule,
+    FileStorageModule,
     AuthModule,
     UserModule,
     DeptModule,

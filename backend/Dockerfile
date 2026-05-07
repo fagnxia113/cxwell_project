@@ -5,6 +5,8 @@ WORKDIR /app
 
 ENV NODE_OPTIONS=--max-old-space-size=768
 
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources
+
 RUN apt-get update && apt-get install -y openssl python3 make g++ && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
@@ -22,7 +24,8 @@ FROM node:20-slim AS runner
 
 WORKDIR /app
 
-# Install openssl for Prisma
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources
+
 RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/package*.json ./

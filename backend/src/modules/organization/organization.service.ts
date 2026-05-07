@@ -59,21 +59,31 @@ export class OrganizationService {
         currentEmployeeId = currentEmployee.employeeId;
       }
 
-      // 如果传入了 projectId，检查用户是否是该项目经理
-      let isProjectManager = false;
+      // 如果传入了 projectId，检查用户是否是项目经理或项目成员
+      let canViewAllEmployees = false;
       if (projectId && currentEmployeeId) {
         const project = await this.prisma.project.findUnique({
           where: { projectId: BigInt(projectId) },
           select: { managerId: true }
         });
         if (project?.managerId && project.managerId.toString() === currentEmployeeId.toString()) {
-          isProjectManager = true;
+          canViewAllEmployees = true;
+        } else {
+          const membership = await this.prisma.projectMember.findFirst({
+            where: { 
+              projectId: BigInt(projectId),
+              employeeId: currentEmployeeId as any
+            }
+          });
+          if (membership) {
+            canViewAllEmployees = true;
+          }
         }
       }
 
-      // 如果是项目经理（针对指定项目），可以查看公司所有员工
-      if (isProjectManager) {
-        // 不添加任何人员限制，项目经理可以看到所有员工
+      // 如果是项目经理或项目成员（针对指定项目），可以查看公司所有员工
+      if (canViewAllEmployees) {
+        // 不添加任何人员限制，项目经理和项目成员可以看到所有员工
       } else {
         // 获取当前用户参与的项目中的所有员工ID
         let projectMemberIds: BigInt[] = [];

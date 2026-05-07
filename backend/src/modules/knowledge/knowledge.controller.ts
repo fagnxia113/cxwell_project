@@ -4,19 +4,16 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { KnowledgeService } from './knowledge.service';
-import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { ConfigService } from '@nestjs/config';
 import { FileUploadExceptionFilter } from '../../common/filters/file-upload.filter';
-
-const UPLOAD_PATH = process.env.UPLOAD_PATH || './uploads';
+import { FileStorageService } from '../../common/services/file-storage.service';
 
 @Controller('knowledge')
 @UseFilters(FileUploadExceptionFilter)
 export class KnowledgeController {
   constructor(
     private readonly knowledgeService: KnowledgeService,
-    private readonly configService: ConfigService,
+    private readonly fileStorage: FileStorageService,
   ) {}
 
   @Get('tree')
@@ -41,21 +38,6 @@ export class KnowledgeController {
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file', {
-    storage: diskStorage({
-      destination: (req, file, cb) => {
-        const dir = `${UPLOAD_PATH}/knowledge`;
-        require('fs').mkdirSync(dir, { recursive: true });
-        cb(null, dir);
-      },
-      filename: (req, file, cb) => {
-        const randomName = Array(32).fill(null).map(() => (Math.round(Math.random() * 16)).toString(16)).join('');
-        const ext = extname(file.originalname);
-        return cb(null, `${randomName}${ext}`);
-      }
-    }),
-    fileFilter: (req, file, cb) => {
-      cb(null, true);
-    },
     limits: { fileSize: 500 * 1024 * 1024 }
   }))
   async upload(@UploadedFile() file: Express.Multer.File, @Body('parentId') parentId: string, @Request() req) {
@@ -65,13 +47,14 @@ export class KnowledgeController {
 
     const originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
     const ext = extname(originalname).replace('.', '').toLowerCase();
-    const fileUrlPrefix = this.configService.get<string>('FILE_URL_PREFIX') || '/api/files';
+
+    const result = await this.fileStorage.upload(file, 'knowledge');
 
     const data = {
       title: originalname,
       type: 'Document',
-      fileUrl: `${fileUrlPrefix}/knowledge/${file.filename}`,
-      fileSize: file.size,
+      fileUrl: result.url,
+      fileSize: result.size,
       fileType: ext || 'unknown',
       isFolder: false,
       parentId: parentId || null
@@ -79,17 +62,11 @@ export class KnowledgeController {
     return this.knowledgeService.create(data, req.user.sub || req.user.userId, req.user.role);
   }
 
-  /**
-   * 获取节点的权限配置
-   */
   @Get(':id/permissions')
   async getPermissions(@Param('id') id: string) {
     return this.knowledgeService.getPermissions(id);
   }
 
-  /**
-   * 更新节点的权限配置
-   */
   @Put(':id/permissions')
   async updatePermissions(
     @Param('id') id: string,

@@ -170,6 +170,9 @@ export class KnowledgeService {
       visibilityType: created.visibilityType,
       createBy: created.createBy,
       createTime: created.createTime,
+      fileUrl: created.fileUrl,
+      fileSize: created.fileSize,
+      fileType: created.fileType,
     };
   }
 

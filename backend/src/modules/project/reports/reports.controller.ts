@@ -4,15 +4,14 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ReportsService } from './reports.service';
-import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { ConfigService } from '@nestjs/config';
+import { FileStorageService } from '../../../common/services/file-storage.service';
 
 @Controller('reports')
 export class ReportsController {
   constructor(
     private readonly reportsService: ReportsService,
-    private configService: ConfigService
+    private readonly fileStorage: FileStorageService
   ) {}
 
   @Get()
@@ -66,24 +65,14 @@ export class ReportsController {
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file', {
-    storage: diskStorage({
-      destination: (req, file, cb) => {
-        const uploadPath = process.env.UPLOAD_PATH || './uploads';
-        const dir = `${uploadPath}/reports`;
-        require('fs').mkdirSync(dir, { recursive: true });
-        cb(null, dir);
-      },
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
-      },
-    }),
+    limits: { fileSize: 500 * 1024 * 1024 }
   }))
   async uploadFile(@UploadedFile() file: Express.Multer.File, @Body('report_id') reportId: string) {
+    const result = await this.fileStorage.upload(file, 'reports');
     const data = await this.reportsService.addAttachment(
       BigInt(reportId),
       file.originalname,
-      file.filename
+      result.path
     );
     return { success: true, data };
   }

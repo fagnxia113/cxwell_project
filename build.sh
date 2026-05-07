@@ -6,7 +6,7 @@ echo "===== cxwell_project Docker 构建脚本 (低资源优化) ====="
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$PROJECT_DIR"
 
-export DOCKER_BUILDKIT=1
+export DOCKER_BUILDKIT=0
 
 echo ""
 echo "[0/4] 停止所有运行中的容器，释放内存..."
