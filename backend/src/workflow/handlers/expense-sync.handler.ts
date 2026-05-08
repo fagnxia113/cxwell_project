@@ -36,13 +36,17 @@ export class ExpenseSyncHandler implements IWorkflowHandler {
           const itemAmount = Number(item.amount || 0);
 
           if (itemProjectId && itemAmount > 0) {
+            let notes = String(item.item_reason || item.reason || formData.reason || `明细同步: ${businessId}`);
+            if (item.attachment) {
+              notes += ` (含附件)`;
+            }
             await tx.projectExpense.create({
               data: {
                 projectId: BigInt(itemProjectId),
                 category: String(item.category || 'travel'),
                 amount: itemAmount,
-                date: item.expense_date || item.date || item.travel_date ? new Date(item.expense_date || item.date || item.travel_date) : new Date(),
-                notes: String(item.item_reason || formData.reason || `明细同步: ${businessId}`),
+                date: item.expense_date || item.expenseDate || item.date || item.travel_date ? new Date(item.expense_date || item.expenseDate || item.date || item.travel_date) : new Date(),
+                notes,
                 sourceType: 'workflow',
                 sourceId: inst.id
               }

@@ -1,5 +1,5 @@
 import React from 'react'
-import { FileText, Calendar, User, Zap, Database, Maximize } from 'lucide-react'
+import { FileText, Calendar, User, Zap, Database, Maximize, Paperclip } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { ProcessInstance, FormField } from '../../hooks/useProcessInstance'
 import EquipmentTransferForm from '../equipment/EquipmentTransferForm'
@@ -107,23 +107,45 @@ export default function ProcessFormViewer({ instance, formFields, dynamicOptions
             <table className="min-w-full divide-y divide-slate-100">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-4 py-2 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">类别</th>
-                  <th className="px-4 py-2 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">项目</th>
-                  <th className="px-4 py-2 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">金额</th>
-                  <th className="px-4 py-2 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">事由</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">类别</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">项目</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest w-[100px]">金额</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">事由</th>
+                  <th className="px-3 py-2 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest w-[50px]">附件</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 bg-white">
-                {value.map((item: any, i: number) => (
-                  <tr key={i} className="text-xs">
-                    <td className="px-4 py-2 font-bold text-slate-700">{item.category}</td>
-                    <td className="px-4 py-2 text-slate-500">
-                      {(dynamicOptions['project'] || []).find(o => String(o.value) === String(item.project_id))?.label || item.project_id || '-'}
-                    </td>
-                    <td className="px-4 py-2 font-black text-blue-600">¥{Number(item.amount).toLocaleString()}</td>
-                    <td className="px-4 py-2 text-slate-500 italic">{item.item_reason || '-'}</td>
-                  </tr>
-                ))}
+                {value.map((item: any, i: number) => {
+                  const itemFiles: { name: string; url: string }[] = (() => {
+                    if (!item.attachment) return []
+                    if (typeof item.attachment === 'string') { try { return JSON.parse(item.attachment) } catch { return [] } }
+                    if (Array.isArray(item.attachment)) return item.attachment
+                    return []
+                  })()
+                  return (
+                    <tr key={i} className="text-xs">
+                      <td className="px-3 py-2 font-bold text-slate-700">{item.category}</td>
+                      <td className="px-3 py-2 text-slate-500">
+                        {(dynamicOptions['project'] || []).find(o => String(o.value) === String(item.projectId || item.project_id))?.label || item.projectId || item.project_id || '-'}
+                      </td>
+                      <td className="px-3 py-2 font-black text-blue-600 w-[100px]">¥{Number(item.amount).toLocaleString()}</td>
+                      <td className="px-3 py-2 text-slate-500 italic">{item.reason || item.item_reason || '-'}</td>
+                      <td className="px-3 py-2 text-center w-[50px]">
+                        {itemFiles.length > 0 ? (
+                          <div className="flex items-center justify-center gap-0.5">
+                            {itemFiles.map((f: any, fi: number) => (
+                              <a key={fi} href={f.url} target="_blank" rel="noopener noreferrer" title={f.name}>
+                                <Paperclip size={12} className="text-slate-400 hover:text-primary" />
+                              </a>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-slate-300">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

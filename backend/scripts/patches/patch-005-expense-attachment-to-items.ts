@@ -3,10 +3,9 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('开始执行补丁脚本 patch-002...');
+  console.log('开始执行补丁脚本 patch-005...');
 
-  // ==================== 费用报销流程表单修复 ====================
-  console.log('\n--- 修复费用报销流程表单结构 ---');
+  console.log('\n--- 更新费用报销表单：附件移至明细行 + 修复项目选择 ---');
 
   const expenseDefId = BigInt('20240419006');
 
@@ -53,21 +52,21 @@ async function main() {
     where: { templateKey: 'expense_reimbursement' },
     data: {
       fields: JSON.stringify(expenseFields),
-      version: 2
+      version: 3
     }
   });
-  console.log('✅ 费用报销表单模板已更新');
+  console.log('✅ 费用报销表单模板已更新 (v3: 附件移至明细行)');
 
   await prisma.flowDefinition.update({
     where: { id: expenseDefId },
     data: {
       ext: JSON.stringify({ form_schema: expenseFields }),
-      version: '2.0'
+      version: '3.0'
     }
   });
-  console.log('✅ 费用报销流程定义已更新');
+  console.log('✅ 费用报销流程定义已更新 (v3.0)');
 
-  console.log('\n✅ 补丁脚本 patch-002 执行完成！');
+  console.log('\n✅ 补丁脚本 patch-005 执行完成！');
 }
 
 main()

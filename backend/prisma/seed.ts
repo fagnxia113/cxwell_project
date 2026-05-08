@@ -457,15 +457,15 @@ async function main() {
     flowName: '费用报销审批流',
     category: 'finance',
     formSchema: [
-      { name: 'totalAmount', label: '总金额', type: 'number', required: true, group: 'basic_info', description: '明细金额合计' },
+      { name: 'totalAmount', label: '总金额', type: 'number', required: true, readonly: true, group: 'basic_info', description: '明细金额合计' },
       { name: 'remark', label: '备注', type: 'textarea', required: false, group: 'basic_info' },
-      { name: 'attachment', label: '上传附件', type: 'file', required: false, group: 'basic_info' },
       { name: 'items', label: '报销明细', type: 'subform', required: true, group: 'detail_info', columns: [
         { name: 'projectId', label: '关联项目', type: 'select', dataSource: 'project' },
         { name: 'category', label: '费用类别', type: 'select', options: [{ label: '差旅费', value: 'travel' }, { label: '办公费', value: 'office' }, { label: '招待费', value: 'entertainment' }, { label: '其他', value: 'other' }] },
         { name: 'amount', label: '金额', type: 'number' },
         { name: 'expenseDate', label: '发生日期', type: 'date' },
-        { name: 'reason', label: '事由', type: 'text' }
+        { name: 'reason', label: '事由', type: 'text' },
+        { name: 'attachment', label: '附件', type: 'file' }
       ]},
     ],
     nodes: [

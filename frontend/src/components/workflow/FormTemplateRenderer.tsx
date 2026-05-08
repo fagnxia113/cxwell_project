@@ -116,8 +116,9 @@ const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
       // 如果是子表单，也要预加载子表单字段的选项
       if (f.type === 'subform' && f.columns) {
         f.columns.forEach((col: any) => {
-          if (['user', 'department', 'project', 'customer', 'position'].includes(col.type)) {
-            fetchOptions(col.type)
+          const fetchKey = col.dataSource || col.dynamicOptions || col.type
+          if (fetchKey && ['user', 'employee', 'department', 'project', 'customer', 'position'].includes(fetchKey)) {
+            fetchOptions(fetchKey)
           }
         })
       }
@@ -127,13 +128,14 @@ const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
   // 特殊逻辑：如果是报销明细，自动计算总金额
   React.useEffect(() => {
     const items = data['items']
-    if (Array.isArray(items) && fields.some(f => f.name === 'amount' && f.readonly)) {
+    if (Array.isArray(items)) {
       const total = items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
-      if (data['amount'] !== total) {
-        onFieldChange('amount', total)
+      const totalField = fields.find(f => f.name === 'totalAmount' || (f.name === 'amount' && f.readonly))
+      if (totalField && data[totalField.name] !== total) {
+        onFieldChange(totalField.name, total)
       }
     }
-  }, [data['items'], fields, onFieldChange, data['amount']])
+  }, [data['items'], fields, onFieldChange, data['totalAmount'], data['amount']])
 
   const renderFieldInput = (field: FormField) => {
     const val = data[field.name] ?? ''
