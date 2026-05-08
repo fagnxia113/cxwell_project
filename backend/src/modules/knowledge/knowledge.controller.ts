@@ -3,8 +3,10 @@ import {
   UseInterceptors, UploadedFile, Request, BadRequestException, UseFilters
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
 import { KnowledgeService } from './knowledge.service';
-import { extname } from 'path';
+import { extname, join } from 'path';
+import * as fs from 'fs';
 import { FileUploadExceptionFilter } from '../../common/filters/file-upload.filter';
 import { FileStorageService } from '../../common/services/file-storage.service';
 
@@ -38,6 +40,18 @@ export class KnowledgeController {
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file', {
+    storage: diskStorage({
+      destination: (_req, _file, cb) => {
+        const tmpDir = join(process.cwd(), 'uploads', 'tmp');
+        if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+        cb(null, tmpDir);
+      },
+      filename: (_req, file, cb) => {
+        const randomName = Array(32).fill(null).map(() => Math.round(Math.random() * 16).toString(16)).join('');
+        const ext = extname(file.originalname);
+        cb(null, `${randomName}${ext}`);
+      },
+    }),
     limits: { fileSize: 500 * 1024 * 1024 }
   }))
   async upload(@UploadedFile() file: Express.Multer.File, @Body('parentId') parentId: string, @Request() req) {
@@ -48,7 +62,9 @@ export class KnowledgeController {
     const originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
     const ext = extname(originalname).replace('.', '').toLowerCase();
 
-    const result = await this.fileStorage.upload(file, 'knowledge');
+    const result = await this.fileStorage.uploadFromPath(file.path, 'knowledge', file.originalname, file.size);
+
+    try { fs.unlinkSync(file.path); } catch {}
 
     const data = {
       title: originalname,

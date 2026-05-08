@@ -33,11 +33,15 @@ const FileUploadField: React.FC<FileUploadFieldProps> = ({ value, onChange, read
         const fd = new FormData()
         fd.append('file', selectedFiles[i])
         const uploadUrl = '/api/upload/upload'
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 1200000)
         const res = await fetch(uploadUrl, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
           body: fd,
+          signal: controller.signal,
         })
+        clearTimeout(timeoutId)
         if (!res.ok) {
           const text = await res.text()
           console.error('Upload HTTP error:', res.status, text)

@@ -37,11 +37,11 @@ export class FileStorageService {
     const bucket = this.configService.get<string>('OSS_BUCKET');
 
     if (!region || !accessKeyId || !accessKeySecret || !bucket) {
-      this.logger.error('OSS configuration is incomplete, falling back to local storage');
-      this.storageType = 'local';
-      this.ensureUploadDir();
-      return;
+      this.logger.error('OSS configuration is incomplete! STORAGE_TYPE=oss but required env vars are missing. Set OSS_REGION, OSS_BUCKET, OSS_ACCESS_KEY_ID, OSS_ACCESS_KEY_SECRET or switch STORAGE_TYPE=local.');
+      throw new Error('OSS configuration is incomplete. Check your environment variables.');
     }
+
+    const useInternal = this.configService.get<string>('OSS_INTERNAL') === 'true';
 
     try {
       this.ossClient = new OSS({
@@ -49,14 +49,14 @@ export class FileStorageService {
         accessKeyId,
         accessKeySecret,
         bucket,
-        internal: this.configService.get<string>('OSS_INTERNAL') !== 'false',
+        internal: useInternal,
         secure: true,
+        timeout: 120000,
       });
-      this.logger.log(`OSS client initialized: bucket=${bucket}, region=${region}`);
+      this.logger.log(`OSS client initialized: bucket=${bucket}, region=${region}, internal=${useInternal}`);
     } catch (error) {
-      this.logger.error('Failed to initialize OSS client, falling back to local storage', error);
-      this.storageType = 'local';
-      this.ensureUploadDir();
+      this.logger.error('Failed to initialize OSS client! Please check your OSS configuration.', error);
+      throw new Error('Failed to initialize OSS client. Check your OSS credentials and region.');
     }
   }
 
@@ -72,60 +72,150 @@ export class FileStorageService {
     filename?: string
   ): Promise<UploadResult> {
     if (this.storageType === 'oss') {
-      return this.uploadToOSS(file, subDir, filename);
+      return this.uploadToOSS(file.buffer, subDir, filename || file.originalname, file.size);
     }
-    return this.uploadToLocal(file, subDir, filename);
+    return this.uploadToLocal(file.buffer, subDir, filename || file.originalname, file.size);
+  }
+
+  async uploadFromPath(
+    filePath: string,
+    subDir: string,
+    originalName: string,
+    fileSize: number,
+  ): Promise<UploadResult> {
+    if (this.storageType === 'oss') {
+      return this.uploadFileToOSS(filePath, subDir, originalName, fileSize);
+    }
+    return this.copyFileToLocal(filePath, subDir, originalName, fileSize);
   }
 
   private async uploadToLocal(
-    file: Express.Multer.File,
+    buffer: Buffer,
     subDir: string,
-    filename?: string
+    originalName: string,
+    fileSize: number,
   ): Promise<UploadResult> {
     const dir = path.join(this.uploadPath, subDir);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    const finalFilename = filename || this.generateFilename(file.originalname);
+    const finalFilename = this.generateFilename(originalName);
     const filePath = path.join(dir, finalFilename);
     const relativePath = `${subDir}/${finalFilename}`;
 
-    fs.writeFileSync(filePath, file.buffer);
+    fs.writeFileSync(filePath, buffer);
 
     return {
       url: `${this.fileUrlPrefix}/${relativePath}`,
       path: relativePath,
-      size: file.size,
+      size: fileSize,
     };
   }
 
   private async uploadToOSS(
-    file: Express.Multer.File,
+    content: Buffer,
     subDir: string,
-    filename?: string
+    originalName: string,
+    fileSize: number,
   ): Promise<UploadResult> {
     if (!this.ossClient) {
-      throw new Error('OSS client not initialized');
+      throw new Error('OSS client not initialized. Cannot upload file.');
     }
 
-    const finalFilename = filename || this.generateFilename(file.originalname);
+    const finalFilename = this.generateFilename(originalName);
     const ossPath = `${subDir}/${finalFilename}`;
 
     try {
-      await this.ossClient.put(ossPath, file.buffer, {
+      const options: any = {
         headers: { 'x-oss-object-acl': 'public-read' },
-      });
-      
+      };
+
+      if (fileSize > 10 * 1024 * 1024) {
+        this.logger.log(`Large file (${(fileSize / 1024 / 1024).toFixed(2)}MB), using multipart upload: ${ossPath}`);
+        await this.ossClient.multipartUpload(ossPath, content, {
+          ...options,
+          partSize: 5 * 1024 * 1024,
+          parallel: 3,
+        });
+      } else {
+        await this.ossClient.put(ossPath, content, options);
+      }
+
       return {
         url: `${this.fileUrlPrefix}/${ossPath}`,
         path: ossPath,
-        size: file.size,
+        size: fileSize,
       };
     } catch (error) {
-      this.logger.error('Failed to upload to OSS, falling back to local', error);
-      return this.uploadToLocal(file, subDir, filename);
+      this.logger.error(`OSS upload failed for "${ossPath}": ${error.message}`, error.stack);
+      throw new Error(`文件上传到 OSS 失败，请重试。错误: ${error.message}`);
     }
+  }
+
+  private async uploadFileToOSS(
+    filePath: string,
+    subDir: string,
+    originalName: string,
+    fileSize: number,
+  ): Promise<UploadResult> {
+    if (!this.ossClient) {
+      throw new Error('OSS client not initialized. Cannot upload file.');
+    }
+
+    const finalFilename = this.generateFilename(originalName);
+    const ossPath = `${subDir}/${finalFilename}`;
+
+    try {
+      const options: any = {
+        headers: { 'x-oss-object-acl': 'public-read' },
+      };
+
+      if (fileSize > 10 * 1024 * 1024) {
+        this.logger.log(`Large file (${(fileSize / 1024 / 1024).toFixed(2)}MB), using multipart upload from stream: ${ossPath}`);
+        const stream = fs.createReadStream(filePath);
+        await this.ossClient.multipartUpload(ossPath, stream, {
+          ...options,
+          partSize: 5 * 1024 * 1024,
+          parallel: 3,
+        });
+      } else {
+        await this.ossClient.put(ossPath, filePath, options);
+      }
+
+      return {
+        url: `${this.fileUrlPrefix}/${ossPath}`,
+        path: ossPath,
+        size: fileSize,
+      };
+    } catch (error) {
+      this.logger.error(`OSS upload failed for "${ossPath}": ${error.message}`, error.stack);
+      throw new Error(`文件上传到 OSS 失败，请重试。错误: ${error.message}`);
+    }
+  }
+
+  private async copyFileToLocal(
+    filePath: string,
+    subDir: string,
+    originalName: string,
+    fileSize: number,
+  ): Promise<UploadResult> {
+    const dir = path.join(this.uploadPath, subDir);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    const finalFilename = this.generateFilename(originalName);
+    const destPath = path.join(dir, finalFilename);
+    const relativePath = `${subDir}/${finalFilename}`;
+
+    fs.copyFileSync(filePath, destPath);
+
+    return {
+      url: `${this.fileUrlPrefix}/${relativePath}`,
+      path: relativePath,
+      size: fileSize,
+    };
   }
 
   async delete(filePath: string): Promise<boolean> {
@@ -150,7 +240,8 @@ export class FileStorageService {
 
   private async deleteFromOSS(filePath: string): Promise<boolean> {
     if (!this.ossClient) {
-      return this.deleteFromLocal(filePath);
+      this.logger.error('Cannot delete from OSS: client not initialized');
+      return false;
     }
 
     try {

@@ -303,6 +303,7 @@ export default function KnowledgePage() {
   const handleBatchUpload = async () => {
     if (files.length === 0) return
     setUploading(true)
+    const failedFiles: string[] = []
     try {
       const targetId = uploadTargetFolder === 'current' ? currentFolderId : uploadTargetFolder;
       for (const file of files) {
@@ -310,11 +311,25 @@ export default function KnowledgePage() {
         formData.append('file', file)
         formData.append('parentId', targetId || '')
         formData.append('title', file.name)
-        await knowledgeApi.upload(formData)
+        try {
+          await knowledgeApi.upload(formData)
+        } catch (err: any) {
+          failedFiles.push(file.name)
+          console.error(`Upload failed for ${file.name}:`, err)
+        }
       }
-      success(t('knowledge.upload_success'))
-      setIsUploadModalOpen(false)
-      setFiles([])
+      if (failedFiles.length === 0) {
+        success(t('knowledge.upload_success'))
+        setIsUploadModalOpen(false)
+        setFiles([])
+      } else if (failedFiles.length < files.length) {
+        success(t('knowledge.upload_success'))
+        showError(`${failedFiles.join(', ')} ${t('knowledge.upload_partial_fail') || '上传失败'}`)
+        setIsUploadModalOpen(false)
+        setFiles([])
+      } else {
+        showError(`${t('knowledge.upload_error')}: ${failedFiles.join(', ')}`)
+      }
       loadData()
     } catch (error: any) {
       showError(error.message || t('knowledge.upload_error'))

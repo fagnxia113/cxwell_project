@@ -30,39 +30,47 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { ScheduleModule } from '@nestjs/schedule';
 
+const isLocalStorage = process.env.STORAGE_TYPE !== 'oss';
+
+const commonImports = [
+  ScheduleModule.forRoot(),
+  ConfigModule.forRoot({
+    isGlobal: true,
+  }),
+  ThrottlerModule.forRoot([{ ttl: 60000, limit: 1000 }]),
+  ...(isLocalStorage
+    ? [
+        ServeStaticModule.forRoot({
+          rootPath: join(process.cwd(), process.env.UPLOAD_PATH || 'uploads'),
+          serveRoot: '/api/files',
+          serveStaticOptions: {
+            index: false,
+          },
+        }),
+      ]
+    : []),
+  PrismaModule,
+  FileStorageModule,
+  AuthModule,
+  UserModule,
+  DeptModule,
+  RoleModule,
+  MenuModule,
+  WorkflowModule,
+  ProjectModule,
+  CustomerModule,
+  OrganizationModule,
+  FormModule,
+  DashboardModule,
+  NotificationModule,
+  KnowledgeModule,
+  UploadModule,
+  DingtalkModule,
+  AttendanceModule,
+];
+
 @Module({
-  imports: [
-    ScheduleModule.forRoot(),
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 1000 }]),
-    ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), process.env.UPLOAD_PATH || 'uploads'),
-      serveRoot: '/api/files',
-      serveStaticOptions: {
-        index: false,
-      },
-    }),
-    PrismaModule,
-    FileStorageModule,
-    AuthModule,
-    UserModule,
-    DeptModule,
-    RoleModule,
-    MenuModule,
-    WorkflowModule,
-    ProjectModule,
-    CustomerModule,
-    OrganizationModule,
-    FormModule,
-    DashboardModule,
-    NotificationModule,
-    KnowledgeModule,
-    UploadModule,
-    DingtalkModule,
-    AttendanceModule,
-  ],
+  imports: commonImports,
   controllers: [AppController],
   providers: [
     AppService,
