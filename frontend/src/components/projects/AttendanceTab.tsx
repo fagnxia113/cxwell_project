@@ -80,7 +80,7 @@ export default function AttendanceTab({ projectId, month }: { projectId?: string
           </div>
           <div>
             <h3 className="text-sm font-bold text-slate-800">{t('project.team.attendance_details') || 'Attendance Details'}</h3>
-            <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">{t('project.attendance.dingtalk_synced') || 'Synced via DingTalk'}</p>
+            <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">{t('project.attendance.dingtalk_synced')}</p>
           </div>
         </div>
 

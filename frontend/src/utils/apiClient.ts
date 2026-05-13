@@ -27,6 +27,43 @@ class ApiError extends Error {
   }
 }
 
+const BACKEND_MSG_TO_KEY: Record<string, string> = {
+  '您不是该项目成员': 'api.errors.not_project_member',
+  '任务不存在': 'api.errors.task_not_found',
+  '您不是当前任务的处理人，无法审批': 'api.errors.not_task_handler',
+  '您不是当前任务的处理人，无法驳回': 'api.errors.not_task_handler',
+  '您不是当前任务的处理人，无法退回': 'api.errors.not_task_handler',
+  '风险不存在': 'api.errors.risk_not_found',
+  '费用不存在': 'api.errors.expense_not_found',
+  '人员计划不存在': 'api.errors.plan_not_found',
+  '只有项目成员可以添加人员计划': 'api.errors.member_only_add_plan',
+  '只有项目成员可以删除人员计划': 'api.errors.member_only_delete_plan',
+  '只有项目成员可以修改成员权限': 'api.errors.member_only_edit_permission',
+  '只有项目成员可以添加项目成员': 'api.errors.member_only_add_member',
+  '只有项目成员可以移除项目成员': 'api.errors.member_only_remove_member',
+  '只有项目成员可以转移项目成员': 'api.errors.member_only_transfer_member',
+  '只有项目成员可以编辑里程碑': 'api.errors.member_only_edit_milestone',
+  '只有项目成员可以创建标签': 'api.errors.member_only_create_tag',
+  '您没有修改此内容的权限': 'api.errors.no_permission_edit_content',
+  '文件上传失败': 'api.errors.file_upload_failed',
+  '未登录或登录已过期': 'api.errors.not_logged_in',
+  '无权访问': 'api.errors.no_access',
+  'Attachment not found': 'api.errors.attachment_not_found',
+  '只有项目成员可以新建报告': 'api.errors.member_only_add_report',
+}
+
+function translateErrorMessage(msg: string, statusCode?: number): string {
+  if (BACKEND_MSG_TO_KEY[msg]) {
+    return i18n.t(BACKEND_MSG_TO_KEY[msg], { defaultValue: msg })
+  }
+  if (statusCode === 403) return i18n.t('api.forbidden', { defaultValue: msg })
+  if (statusCode === 404) return i18n.t('api.not_found', { defaultValue: msg })
+  if (statusCode === 500) return i18n.t('api.server_error', { defaultValue: msg })
+  if (statusCode === 400) return i18n.t('api.bad_request', { defaultValue: msg })
+  if (statusCode === 409) return i18n.t('api.conflict', { defaultValue: msg })
+  return msg
+}
+
 // 全局错误与成功处理回调
 let onUnauthorized: (() => void) | null = null
 let onGlobalError: ((error: ApiError) => void) | null = null
@@ -134,12 +171,13 @@ class ApiClient {
       }
       
       if (!response.ok) {
+        const rawMsg = bodyData?.error || bodyData?.message || text || i18n.t('api.request_failed')
+        const translatedMsg = translateErrorMessage(rawMsg, response.status)
         const error = new ApiError(
-          bodyData?.error || bodyData?.message || text || i18n.t('api.request_failed'),
+          translatedMsg,
           response.status,
           bodyData?.error
         )
-        // 触发全局错误处理
         if (onGlobalError) onGlobalError(error)
         throw error
       }
@@ -252,8 +290,10 @@ class ApiClient {
       }
 
       if (!response.ok) {
+        const rawMsg = bodyData?.message || bodyData?.error || i18n.t('api.upload_failed')
+        const translatedMsg = translateErrorMessage(rawMsg, response.status)
         const error = new ApiError(
-          bodyData?.message || bodyData?.error || i18n.t('api.upload_failed'),
+          translatedMsg,
           response.status,
           bodyData?.error
         )

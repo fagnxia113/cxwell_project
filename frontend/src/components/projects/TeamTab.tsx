@@ -78,13 +78,13 @@ export default function TeamTab({
       setSyncing(true)
       const res = await apiClient.post<any>('/api/personnel/attendance/sync/dingtalk')
       if (res?.success) {
-        success(res.message || t('personnel.sync_success') || 'DingTalk attendance synced successfully')
+        success(res.message || t('personnel.sync_success'))
         if (activeView === 'attendance') {
           loadAttendance()
         }
       }
     } catch (err: any) {
-      showError(err.message || 'Sync failed')
+      showError(err.message || t('common.error.operation_failed'))
     } finally {
       setSyncing(false)
     }
@@ -254,10 +254,10 @@ export default function TeamTab({
               setSyncing(true)
               try {
                 await apiClient.post('/api/personnel/attendance/sync/dingtalk')
-                success(t('personnel.error.sync_success', { count: '' }) || 'Sync Success')
+                success(t('personnel.error.sync_success', { count: '' }))
                 loadAttendance()
               } catch (err) {
-                showError(t('personnel.error.sync_failed') || 'Sync Failed')
+                showError(t('personnel.error.sync_failed'))
               } finally {
                 setSyncing(false)
               }

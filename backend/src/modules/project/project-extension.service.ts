@@ -42,7 +42,7 @@ export class ProjectExtensionService {
   async getRisks(projectId: bigint, user: any) {
     const role = await this.checkUserProjectRole(projectId, user);
     if (!role) {
-      throw new ForbiddenException('您不是该项目成员');
+      return [];
     }
 
     const list = await this.prisma.projectRisk.findMany({
@@ -268,7 +268,7 @@ export class ProjectExtensionService {
   async getPersonnel(projectId: bigint, user: any) {
     const role = await this.checkUserProjectRole(projectId, user);
     if (!role) {
-      throw new ForbiddenException('您不是该项目成员');
+      return [];
     }
 
     const members = await this.prisma.projectMember.findMany({
