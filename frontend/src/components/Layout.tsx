@@ -272,18 +272,18 @@ export default function Layout({ children }: { children: ReactNode }) {
           if (allPermissions.includes(item.permission)) return true
 
           // 智能降级：如果该权限码是模块级的（如 menu:project），则检查是否有任何 project: 开头的权限
-          const moduleMap: Record<string, string> = {
-            'menu:project': 'project:',
-            'menu:workflow': 'workflow:',
-            'menu:personnel': 'personnel:',
-            'menu:organization': 'org:',
-            'menu:admin': 'system:',
-            'menu:knowledge': 'knowledge:'
+          const moduleMap: Record<string, string[]> = {
+            'menu:project': ['project:'],
+            'menu:workflow': ['workflow:'],
+            'menu:personnel': ['personnel:'],
+            'menu:organization': ['personnel:', 'org:'],
+            'menu:admin': ['system:'],
+            'menu:knowledge': ['knowledge:']
           }
 
-          const prefix = moduleMap[item.permission]
-          if (prefix) {
-            return allPermissions.some(p => p.startsWith(prefix))
+          const prefixes = moduleMap[item.permission]
+          if (prefixes) {
+            return prefixes.some(prefix => allPermissions.some(p => p.startsWith(prefix)))
           }
 
           return false

@@ -160,9 +160,14 @@ async function main() {
     { ptype: 'p', v0: 'role:general_manager', v1: 'menu:personnel', v2: 'allow' },
     { ptype: 'p', v0: 'role:general_manager', v1: 'menu:organization', v2: 'allow' },
     { ptype: 'p', v0: 'role:general_manager', v1: 'menu:knowledge', v2: 'allow' },
+    { ptype: 'p', v0: 'role:general_manager', v1: 'menu:admin', v2: 'allow' },
     { ptype: 'p', v0: 'role:general_manager', v1: 'workflow:*', v2: 'allow' },
     { ptype: 'p', v0: 'role:general_manager', v1: 'project:*', v2: 'allow' },
-    { ptype: 'p', v0: 'role:general_manager', v1: 'personnel:view', v2: 'allow' },
+    { ptype: 'p', v0: 'role:general_manager', v1: 'personnel:*', v2: 'allow' },
+    { ptype: 'p', v0: 'role:general_manager', v1: 'expense:*', v2: 'allow' },
+    { ptype: 'p', v0: 'role:general_manager', v1: 'equipment:*', v2: 'allow' },
+    { ptype: 'p', v0: 'role:general_manager', v1: 'knowledge:*', v2: 'allow' },
+    { ptype: 'p', v0: 'role:general_manager', v1: 'system:*', v2: 'allow' },
 
     { ptype: 'p', v0: 'role:hr_manager', v1: 'menu:dashboard', v2: 'allow' },
     { ptype: 'p', v0: 'role:hr_manager', v1: 'menu:project', v2: 'allow' },
@@ -174,6 +179,7 @@ async function main() {
     { ptype: 'p', v0: 'role:hr_manager', v1: 'workflow:create', v2: 'allow' },
     { ptype: 'p', v0: 'role:hr_manager', v1: 'workflow:approve', v2: 'allow' },
     { ptype: 'p', v0: 'role:hr_manager', v1: 'personnel:*', v2: 'allow' },
+    { ptype: 'p', v0: 'role:hr_manager', v1: 'system:*', v2: 'allow' },
 
     { ptype: 'p', v0: 'role:project_manager', v1: 'menu:dashboard', v2: 'allow' },
     { ptype: 'p', v0: 'role:project_manager', v1: 'menu:project', v2: 'allow' },
@@ -192,6 +198,7 @@ async function main() {
     { ptype: 'p', v0: 'role:equipment_manager', v1: 'menu:admin', v2: 'allow' },
     { ptype: 'p', v0: 'role:equipment_manager', v1: 'workflow:create', v2: 'allow' },
     { ptype: 'p', v0: 'role:equipment_manager', v1: 'equipment:*', v2: 'allow' },
+    { ptype: 'p', v0: 'role:equipment_manager', v1: 'system:*', v2: 'allow' },
 
     { ptype: 'p', v0: 'role:finance', v1: 'menu:dashboard', v2: 'allow' },
     { ptype: 'p', v0: 'role:finance', v1: 'menu:project', v2: 'allow' },

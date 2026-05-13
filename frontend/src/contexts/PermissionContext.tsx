@@ -67,24 +67,40 @@ export const PermissionProvider: React.FC<{ children: ReactNode }> = ({ children
     refreshPermissions()
   }, [])
 
+  const isSuperUser = (): boolean => {
+    return role === 'admin' || role === 'general_manager' || permissions.includes('*')
+  }
+
+  const matchPermission = (code: string, list: string[]): boolean => {
+    if (list.includes(code)) return true
+    const parts = code.split(':')
+    if (parts.length > 1) {
+      for (let i = parts.length - 1; i >= 1; i--) {
+        const wildcard = parts.slice(0, i).join(':') + ':*'
+        if (list.includes(wildcard)) return true
+      }
+    }
+    return false
+  }
+
   const hasPermission = (code: string): boolean => {
-    if (role === 'admin' || role === 'general_manager' || permissions.includes('*')) return true
-    return permissions.includes(code)
+    if (isSuperUser()) return true
+    return matchPermission(code, permissions)
   }
 
   const hasAnyPermission = (codes: string[]): boolean => {
-    if (role === 'admin' || role === 'general_manager' || permissions.includes('*')) return true
-    return codes.some(code => permissions.includes(code))
+    if (isSuperUser()) return true
+    return codes.some(code => matchPermission(code, permissions))
   }
 
   const hasAllPermissions = (codes: string[]): boolean => {
-    if (role === 'admin' || role === 'general_manager' || permissions.includes('*')) return true
-    return codes.every(code => permissions.includes(code))
+    if (isSuperUser()) return true
+    return codes.every(code => matchPermission(code, permissions))
   }
 
   const hasButton = (code: string): boolean => {
-    if (role === 'admin' || role === 'general_manager' || permissions.includes('*')) return true
-    return buttons.includes(code)
+    if (isSuperUser()) return true
+    return matchPermission(code, buttons) || matchPermission(code, permissions)
   }
 
   return (
