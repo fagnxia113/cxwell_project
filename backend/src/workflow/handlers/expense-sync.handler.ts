@@ -63,7 +63,7 @@ export class ExpenseSyncHandler implements IWorkflowHandler {
         return;
       }
 
-      const amountValue = formData.final_amount || formData.amount || formData.total_amount || 0;
+      const amountValue = formData.final_amount || formData.amount || formData.estimated_amount || formData.total_amount || 0;
       const amount = Number(amountValue);
 
       if (isNaN(amount) || amount <= 0) {

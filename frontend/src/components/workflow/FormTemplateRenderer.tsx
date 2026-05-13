@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import { 
   User, Calendar, Type, Hash, FileText, Mail, Phone, 
   Layers, Package, Archive, Info, Search, X, CheckCircle,
-  Briefcase, Upload, DollarSign, GraduationCap, Building
+  Briefcase, Upload, DollarSign, GraduationCap, Building, CreditCard
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../../utils/cn'
@@ -69,13 +69,17 @@ const GROUP_KEY_MAP: Record<string, string> = {
   '教育信息': 'education_info',
   '申请详情': 'basic_info',
   '金额详情': 'business_info',
-  '报销明细': 'business_info',
   '调动信息': 'transfer_info',
   '请假信息': 'leave_info',
   '学历与教育': 'education_info',
   '补充材料': 'other_info',
   '其他信息': 'other_info',
-  '其他': 'other_info'
+  '其他': 'other_info',
+  '预订员信息': 'booker_info',
+  '财务信息': 'booking_finance_info',
+  '收款信息': 'payment_info',
+  '明细信息': 'detail_info',
+  '报销明细': 'detail_info'
 }
 
 const GROUP_ICONS: Record<string, any> = {
@@ -90,7 +94,10 @@ const GROUP_ICONS: Record<string, any> = {
   'leave_info': Calendar,
   'education_info': GraduationCap,
   'other_info': Info,
-  'expense_items': Package
+  'expense_items': Package,
+  'booker_info': Briefcase,
+  'booking_finance_info': DollarSign,
+  'payment_info': CreditCard
 }
 
 const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
@@ -150,8 +157,8 @@ const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
       const getDisplayValue = () => {
         if (field.options) {
           const opt = field.options.find(o => o.value === val)
-          const displayLabel = opt ? opt.label : val
-          return t(displayLabel, { defaultValue: displayLabel })
+          const displayLabel = opt ? t(`workflow.form.option.${opt.value}`, { defaultValue: opt.label }) : val
+          return displayLabel
         }
         const dynamicType = field.dataSource || field.dynamicOptions || field.type
         const currentOptions = optionsMap[dynamicType]
@@ -185,7 +192,11 @@ const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
       case 'project':
       case 'customer':
       case 'position':
-        const currentOptions = field.options || optionsMap[field.dataSource || field.dynamicOptions || field.type] || []
+        const rawOptions = field.options || optionsMap[field.dataSource || field.dynamicOptions || field.type] || []
+        const currentOptions = rawOptions.map((opt: any) => ({
+          ...opt,
+          label: t(`workflow.form.option.${opt.value}`, { defaultValue: opt.label })
+        }))
         return (
           <SearchableDropdown
             label={fieldLabel}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { API_URL } from '../config/api'
+import { API_URL, parseJWTToken } from '../config/api'
 import { apiClient } from '../utils/apiClient'
 import { useMessage } from './useMessage'
 import { useConfirm } from './useConfirm'
@@ -79,13 +79,20 @@ export function useProcessInstance(instanceId: string | undefined) {
   const [tasks, setTasks] = useState<Task[]>([])
   const [logs, setLogs] = useState<ExecutionLog[]>([])
   const [currentTask, setCurrentTask] = useState<Task | null>(null)
+  const [isAssignee, setIsAssignee] = useState(false)
   const [dynamicOptions, setDynamicOptions] = useState<Record<string, { label: string; value: any }[]>>({})
   const [currentUser, setCurrentUser] = useState<any>(null)
+  const [currentUserId, setCurrentUserId] = useState<string>('')
 
   useEffect(() => {
     const userStr = localStorage.getItem('user')
     if (userStr) {
       setCurrentUser(JSON.parse(userStr))
+    }
+    const token = localStorage.getItem('token')
+    if (token) {
+      const decoded = parseJWTToken(token)
+      if (decoded?.loginName) setCurrentUserId(decoded.loginName)
     }
   }, [])
 
@@ -165,13 +172,23 @@ export function useProcessInstance(instanceId: string | undefined) {
       const logsData = logsRes?.data || logsRes
       setLogs(logsData || [])
 
-      // 寻找当前用户的待办任务
-      const userStr = localStorage.getItem('user')
-      const userId = userStr ? JSON.parse(userStr).id : null
-      const pendingTask = (tasksData || []).find(
-        (t: Task) => t.assignee_id === userId && ['assigned', 'in_progress'].includes(t.status)
-      )
+      const loginName = (() => {
+        const token = localStorage.getItem('token')
+        if (token) {
+          const decoded = parseJWTToken(token)
+          if (decoded?.loginName) return decoded.loginName
+        }
+        return ''
+      })()
+
+      const pendingTask = loginName
+        ? (tasksData || []).find((t: any) => {
+            if (t.assignees && Array.isArray(t.assignees) && t.assignees.includes(loginName)) return true
+            return t.assignee_id === loginName
+          })
+        : null
       setCurrentTask(pendingTask || null)
+      setIsAssignee(!!pendingTask)
 
     } catch (err) {
       console.error(t('workflow.error.load_failed'), err)
@@ -228,6 +245,7 @@ export function useProcessInstance(instanceId: string | undefined) {
     logs,
     loading,
     currentTask,
+    isAssignee,
     dynamicOptions,
     currentUser,
     loadInstanceData,

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { ArrowLeft, User, Calendar, RotateCcw, ChevronLeft, Hash, Clock, MoreHorizontal, ChevronDown } from 'lucide-react'
+import { ArrowLeft, User, Users, Calendar, RotateCcw, ChevronLeft, Hash, Clock, MoreHorizontal, ChevronDown } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { WorkflowInstance, WorkflowTask, getStatusConfig, getProcessTypeLabels, formatDate } from '../../../types/workflow-instance'
 
@@ -8,6 +8,7 @@ interface WorkflowHeaderProps {
   processTitle?: string
   currentTask: WorkflowTask | null
   currentUserId: string
+  isAssignee?: boolean
   t: any
   onActionClick: (type: string) => void
   onWithdraw: () => void
@@ -16,6 +17,7 @@ interface WorkflowHeaderProps {
   applyDate?: string
   applicantName?: string
   activeActionType?: string
+  currentAssigneeNames?: string[]
 }
 
 export const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
@@ -23,6 +25,7 @@ export const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
   processTitle,
   currentTask,
   currentUserId,
+  isAssignee = false,
   t,
   onActionClick,
   onWithdraw,
@@ -30,7 +33,8 @@ export const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
   documentNo,
   applyDate,
   applicantName,
-  activeActionType
+  activeActionType,
+  currentAssigneeNames
 }) => {
   const navigate = useNavigate()
   const statusConfig = getStatusConfig(t)[instance.status] || getStatusConfig(t)['pending']
@@ -49,8 +53,8 @@ export const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const mainActions = nodeActions.filter(a => a.type === 'approve' || a.type === 'reject')
-  const moreActions = nodeActions.filter(a => a.type !== 'approve' && a.type !== 'reject')
+  const mainActions = isAssignee ? nodeActions.filter(a => a.type === 'approve' || a.type === 'reject') : []
+  const moreActions = isAssignee ? nodeActions.filter(a => a.type !== 'approve' && a.type !== 'reject') : []
 
   return (
     <div className="mb-4">
@@ -108,6 +112,12 @@ export const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
                 <span className="flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded-md border border-blue-100/50 text-xs">
                   <Clock className="w-3 h-3" />
                   <span className="font-semibold">{instance.current_node_name}</span>
+                </span>
+              )}
+              {currentAssigneeNames && currentAssigneeNames.length > 0 && (
+                <span className="flex items-center gap-1 px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-md border border-indigo-100/50 text-xs">
+                  {currentAssigneeNames.length > 1 ? <Users className="w-3 h-3" /> : <User className="w-3 h-3" />}
+                  <span className="font-medium">{currentAssigneeNames.join(', ')}</span>
                 </span>
               )}
             </div>

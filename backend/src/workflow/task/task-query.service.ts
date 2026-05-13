@@ -426,6 +426,29 @@ export class TaskQueryService {
       if (u.processedBy) taskUserMap.get(tid)!.push(u.processedBy);
     });
 
+    const allLoginNames = new Set<string>();
+    flowUsers.forEach(u => { if (u.processedBy) allLoginNames.add(u.processedBy); });
+    history.forEach(h => { if (h.approver) allLoginNames.add(h.approver); });
+    
+    const userNameMap = new Map<string, string>();
+    if (allLoginNames.size > 0) {
+      const users = await this.prisma.sysUser.findMany({
+        where: { loginName: { in: Array.from(allLoginNames) } },
+        select: { loginName: true, userName: true, userId: true }
+      });
+      for (const u of users) {
+        if (u.userName) {
+          userNameMap.set(u.loginName, u.userName);
+        } else if (u.userId) {
+          const emp = await this.prisma.sysEmployee.findFirst({
+            where: { userId: u.userId },
+            select: { name: true }
+          });
+          if (emp?.name) userNameMap.set(u.loginName, emp.name);
+        }
+      }
+    }
+
     let formData = {};
     try {
       formData = instance.ext ? JSON.parse(instance.ext) : {};
@@ -460,7 +483,7 @@ export class TaskQueryService {
         node_name: h.nodeName,
         status: h.flowStatus,
         operator_id: h.approver,
-        operator_name: h.approver,
+        operator_name: userNameMap.get(h.approver || '') || h.approver,
         comment: h.message,
         cooperateType: h.cooperateType,
         skipType: h.skipType,
@@ -472,6 +495,7 @@ export class TaskQueryService {
         definitionId: t.definitionId.toString(),
         instanceId: t.instanceId.toString(),
         assignees: taskUserMap.get(t.id.toString()) || [],
+        assignee_names: (taskUserMap.get(t.id.toString()) || []).map(ln => userNameMap.get(ln) || ln),
       })),
     };
   }

@@ -173,6 +173,11 @@ export class WorkflowEngineService {
     const task = await this.prisma.flowTask.findUnique({ where: { id: taskId } });
     if (!task) throw new BadRequestException('任务不存在');
 
+    const assignee = await this.prisma.flowUser.findFirst({
+      where: { associated: taskId, processedBy: approver, type: '1' }
+    });
+    if (!assignee) throw new BadRequestException('您不是当前任务的处理人，无法审批');
+
     const nodes = await this.prisma.flowNode.findMany({ where: { definitionId: task.definitionId } });
     const skips = await this.prisma.flowSkip.findMany({ where: { definitionId: task.definitionId, nowNodeCode: task.nodeCode } });
 
@@ -336,6 +341,11 @@ export class WorkflowEngineService {
       throw new BadRequestException('任务不存在');
     }
 
+    const assignee = await this.prisma.flowUser.findFirst({
+      where: { associated: taskId, processedBy: approver, type: '1' }
+    });
+    if (!assignee) throw new BadRequestException('您不是当前任务的处理人，无法驳回');
+
     return this.prisma.$transaction(async (tx) => {
       await tx.flowTask.delete({ where: { id: taskId } });
       await this.archiveTask(tx, task, null, approver, 'reject', comment, null, 1);
@@ -370,6 +380,11 @@ export class WorkflowEngineService {
       this.logger.error(`退回失败: 任务 [${taskId}] 不存在`);
       throw new BadRequestException('任务不存在');
     }
+
+    const assignee = await this.prisma.flowUser.findFirst({
+      where: { associated: taskId, processedBy: approver, type: '1' }
+    });
+    if (!assignee) throw new BadRequestException('您不是当前任务的处理人，无法退回');
 
     const nodes = await this.prisma.flowNode.findMany({ where: { definitionId: task.definitionId } });
     let rollbackNode: any;

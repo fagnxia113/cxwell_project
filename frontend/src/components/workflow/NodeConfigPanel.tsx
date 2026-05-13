@@ -212,11 +212,13 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onUpdate, onDel
               <option value="">{t('common.select')}</option>
               <option value="admin">超级管理员</option>
               <option value="general_manager">总经理</option>
-              <option value="hr">人事主管</option>
-              <option value="pm">项目经理</option>
+              <option value="hr_manager">人事主管</option>
+              <option value="project_manager">项目经理</option>
+              <option value="project_director">项目总监</option>
               <option value="finance">财务主管</option>
               <option value="dept_manager">部门经理</option>
-              <option value="epy">员工</option>
+              <option value="equipment_manager">设备管理员</option>
+              <option value="user">员工</option>
             </select>
           </div>
         )}

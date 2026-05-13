@@ -1,28 +1,54 @@
-import { PrismaClient } from '@prisma/client';
-
+const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('开始执行补丁脚本...');
 
-  // ==================== 0. Schema 升级：添加 approval_mode 字段 ====================
   console.log('\n--- 添加 flowNode.approval_mode 字段 ---');
   try {
-    await prisma.$executeRawUnsafe(`
-      ALTER TABLE flow_node ADD COLUMN IF NOT EXISTS approval_mode VARCHAR(20) DEFAULT 'or_sign';
-    `);
+    await prisma.$executeRawUnsafe(`ALTER TABLE flow_node ADD COLUMN approval_mode VARCHAR(20) DEFAULT 'or_sign';`);
     console.log('✅ flowNode.approval_mode 字段已添加');
-  } catch (e: any) {
-    if (e.message?.includes('already exists') || e.message?.includes('Duplicate')) {
+  } catch (e) {
+    if (e.message?.includes('Duplicate column') || e.message?.includes('already exists')) {
       console.log('⏭️ flowNode.approval_mode 字段已存在，跳过');
     } else {
       console.warn('⚠️ 添加字段时出现警告:', e.message);
     }
   }
 
-  // ==================== 1. 机票预订流程修复 ====================
-  console.log('\n--- 修复机票预订流程 ---');
+  console.log('\n--- 添加 project_director 角色 ---');
+  try {
+    await prisma.sysRole.upsert({
+      where: { roleId: 9n },
+      update: { roleName: '项目总监', roleKey: 'project_director', sort: 9, scope: '1' },
+      create: { roleId: 9n, roleName: '项目总监', roleKey: 'project_director', sort: 9, scope: '1', delFlag: '0', createTime: new Date() }
+    });
+    console.log('✅ 项目总监角色已添加');
+  } catch (e) {
+    console.warn('⚠️ 添加角色时出现警告:', e.message);
+  }
 
+  console.log('\n--- 添加 project_director Casbin 权限 ---');
+  const casbinRules = [
+    { ptype: 'p', v0: 'role:project_director', v1: 'menu:dashboard', v2: 'allow' },
+    { ptype: 'p', v0: 'role:project_director', v1: 'menu:project', v2: 'allow' },
+    { ptype: 'p', v0: 'role:project_director', v1: 'menu:workflow', v2: 'allow' },
+    { ptype: 'p', v0: 'role:project_director', v1: 'menu:personnel', v2: 'allow' },
+    { ptype: 'p', v0: 'role:project_director', v1: 'menu:knowledge', v2: 'allow' },
+    { ptype: 'p', v0: 'role:project_director', v1: 'workflow:approve', v2: 'allow' },
+    { ptype: 'p', v0: 'role:project_director', v1: 'project:*', v2: 'allow' },
+  ];
+  for (const rule of casbinRules) {
+    try {
+      const exists = await prisma.casbinRule.findFirst({ where: { ptype: rule.ptype, v0: rule.v0, v1: rule.v1, v2: rule.v2 } });
+      if (!exists) {
+        await prisma.casbinRule.create({ data: rule });
+      }
+    } catch (e) { }
+  }
+  console.log('✅ 项目总监 Casbin 权限已添加');
+
+  console.log('\n--- 更新机票预订表单模板 ---');
   const flightBookingFields = [
     { name: 'travelers', label: '出行人员', type: 'employee', required: true, multi: true, group: 'basic_info' },
     { name: 'departure', label: '出发地', type: 'text', required: true, group: 'basic_info' },
@@ -40,10 +66,7 @@ async function main() {
   await prisma.$transaction(async (tx) => {
     await tx.bizFormTemplate.updateMany({
       where: { templateKey: 'flight_booking' },
-      data: {
-        fields: JSON.stringify(flightBookingFields),
-        version: 3
-      }
+      data: { fields: JSON.stringify(flightBookingFields), version: 3 }
     });
     console.log('✅ 机票预订表单模板已更新');
 
@@ -96,69 +119,12 @@ async function main() {
     console.log('✅ 机票预订流程跳转已更新');
   });
 
-  // ==================== 2. 项目立项审批表单位修复 ====================
-  console.log('\n--- 修复项目立项审批表单位 ---');
-
-  const projectApprovalDefId = BigInt('20240419002');
-
-  const projectApprovalFields = [
-    { name: 'projectName', label: '项目名称', type: 'text', required: true, group: 'basic_info' },
-    { name: 'country', label: '国家/地区', type: 'select', required: true, group: 'basic_info', options: [
-      { label: 'common.countries.china', value: 'China' },
-      { label: 'common.countries.singapore', value: 'Singapore' },
-      { label: 'common.countries.thailand', value: 'Thailand' },
-      { label: 'common.countries.vietnam', value: 'Vietnam' },
-      { label: 'common.countries.indonesia', value: 'Indonesia' },
-      { label: 'common.countries.malaysia', value: 'Malaysia' },
-      { label: 'common.countries.philippines', value: 'Philippines' },
-      { label: 'common.countries.japan', value: 'Japan' },
-      { label: 'common.countries.usa', value: 'USA' }
-    ] },
-    { name: 'address', label: '项目地址', type: 'text', required: false, group: 'basic_info' },
-    
-    { name: 'managerId', label: '项目经理', type: 'select', required: true, dynamicOptions: 'employee', group: 'mgmt_info' },
-    { name: 'customerId', label: '关联客户', type: 'select', required: false, dynamicOptions: 'customer', group: 'mgmt_info' },
-    { name: 'startDate', label: '计划开工日期', type: 'date', required: true, group: 'mgmt_info' },
-    { name: 'endDate', label: '计划完工日期', type: 'date', required: false, group: 'mgmt_info' },
-    
-    { name: 'budget', label: '预算金额（万元）', type: 'number', required: false, group: 'finance_info' },
-    { name: 'buildingArea', label: '建筑面积（平方米）', type: 'number', required: false, group: 'scale_info' },
-    { name: 'itCapacity', label: 'IT容量（兆瓦）', type: 'number', required: false, group: 'scale_info' },
-    { name: 'cabinetCount', label: '机柜数量（架）', type: 'number', required: false, group: 'scale_info' },
-    { name: 'cabinetPower', label: '机柜功率（千瓦）', type: 'number', required: false, group: 'scale_info' },
-    
-    { name: 'powerArchitecture', label: '供电架构', type: 'textarea', required: false, group: 'tech_arch' },
-    { name: 'hvacArchitecture', label: '暖通架构', type: 'textarea', required: false, group: 'tech_arch' },
-    { name: 'fireArchitecture', label: '消防架构', type: 'textarea', required: false, group: 'tech_arch' },
-    { name: 'weakElectricArchitecture', label: '弱电架构', type: 'textarea', required: false, group: 'tech_arch' },
-    
-    { name: 'description', label: '项目描述', type: 'textarea', required: false, group: 'other_info' },
-  ];
-
-  await prisma.bizFormTemplate.updateMany({
-    where: { templateKey: 'project_approval' },
-    data: {
-      fields: JSON.stringify(projectApprovalFields),
-      version: 2
-    }
-  });
-  console.log('✅ 项目立项表单模板已更新');
-
-  await prisma.flowDefinition.update({
-    where: { id: projectApprovalDefId },
-    data: {
-      ext: JSON.stringify({ form_schema: projectApprovalFields }),
-      version: '2.0'
-    }
-  });
-  console.log('✅ 项目立项流程定义已更新');
-
   console.log('\n✅ 补丁脚本执行完成！');
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error('❌ 补丁脚本执行失败:', e);
     process.exit(1);
   })
   .finally(async () => {

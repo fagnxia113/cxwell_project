@@ -17,6 +17,7 @@ interface ApprovalTabProps {
   currentTask: WorkflowTask | null
   workflowLoading: boolean
   currentUser: UserInfo | null
+  isAssignee?: boolean
   onApproveAction: (type: 'approve' | 'reject', comment: string) => Promise<boolean>
   onWithdraw: () => void
   onNavigateToNewRequest: () => void
@@ -28,6 +29,7 @@ export default function ApprovalTab({
   currentTask,
   workflowLoading,
   currentUser,
+  isAssignee = false,
   onApproveAction,
   onWithdraw,
   onNavigateToNewRequest
@@ -110,7 +112,7 @@ export default function ApprovalTab({
       </div>
 
       {/* 当前待办任务区 */}
-      {currentTask && (
+      {currentTask && isAssignee && (
         <div className="bg-slate-900 rounded-lg border-none p-8 shadow-xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-8 text-blue-500/10 group-hover:scale-125 transition-transform duration-700">
             <CheckCircle size={100} />

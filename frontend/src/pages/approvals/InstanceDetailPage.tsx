@@ -200,6 +200,7 @@ export default function InstanceDetailPage() {
         nodeName={currentNodeName}
         orderType={instance?.process_type || instance?.definition_key}
         handlerName={userMap[instance?.current_assignee_id] || userMap[instance?.current_assignee_name] || currentTask?.assignee_name || currentTask?.approver}
+        handlerNames={currentTasks.flatMap((t: any) => (t.assignees || []).map((a: string) => userMap[a] || a)).filter(Boolean)}
         formTemplate={formTemplate}
         formData={formData}
         readOnly={true}

@@ -9,7 +9,7 @@ async function upsertFlow(data: {
   flowName: string;
   category: string;
   formSchema: any[];
-  nodes: { id: bigint; type: number; code: string; name: string; flag?: string; coord: { x: number; y: number }; handlerType?: string; handlerPath?: string }[];
+  nodes: { id: bigint; type: number; code: string; name: string; flag?: string; coord: { x: number; y: number }; handlerType?: string; handlerPath?: string; approvalMode?: string }[];
   skips: { id: bigint; now: string; next: string; name: string; type: string }[];
 }) {
   const { id, flowCode, flowName, category, formSchema, nodes, skips } = data;
@@ -39,7 +39,8 @@ async function upsertFlow(data: {
         coordinate: JSON.stringify(node.coord), 
         handlerType: node.handlerType || null, 
         handlerPath: node.handlerPath || null,
-        permissionFlag: node.flag || ''
+        permissionFlag: node.flag || '',
+        approvalMode: node.approvalMode || 'or_sign'
       },
       create: { 
         id: node.id, 
@@ -52,7 +53,8 @@ async function upsertFlow(data: {
         version: '1.0', 
         createTime: new Date(), 
         handlerType: node.handlerType || null, 
-        handlerPath: node.handlerPath || null 
+        handlerPath: node.handlerPath || null,
+        approvalMode: node.approvalMode || 'or_sign'
       }
     });
   }
@@ -137,6 +139,7 @@ async function main() {
     { id: 6n, name: '财务主管', key: 'finance', sort: 6, scope: '1' },
     { id: 7n, name: '部门经理', key: 'dept_manager', sort: 7, scope: '2' },
     { id: 8n, name: '设备管理员', key: 'equipment_manager', sort: 8, scope: '1' },
+    { id: 9n, name: '项目总监', key: 'project_director', sort: 9, scope: '1' },
   ];
 
   for (const r of roles) {
@@ -205,6 +208,14 @@ async function main() {
     { ptype: 'p', v0: 'role:dept_manager', v1: 'menu:knowledge', v2: 'allow' },
     { ptype: 'p', v0: 'role:dept_manager', v1: 'workflow:approve', v2: 'allow' },
     { ptype: 'p', v0: 'role:dept_manager', v1: 'personnel:view', v2: 'allow' },
+
+    { ptype: 'p', v0: 'role:project_director', v1: 'menu:dashboard', v2: 'allow' },
+    { ptype: 'p', v0: 'role:project_director', v1: 'menu:project', v2: 'allow' },
+    { ptype: 'p', v0: 'role:project_director', v1: 'menu:workflow', v2: 'allow' },
+    { ptype: 'p', v0: 'role:project_director', v1: 'menu:personnel', v2: 'allow' },
+    { ptype: 'p', v0: 'role:project_director', v1: 'menu:knowledge', v2: 'allow' },
+    { ptype: 'p', v0: 'role:project_director', v1: 'workflow:approve', v2: 'allow' },
+    { ptype: 'p', v0: 'role:project_director', v1: 'project:*', v2: 'allow' },
 
     { ptype: 'p', v0: 'role:user', v1: 'menu:dashboard', v2: 'allow' },
     { ptype: 'p', v0: 'role:user', v1: 'menu:project', v2: 'allow' },
@@ -459,6 +470,9 @@ async function main() {
     formSchema: [
       { name: 'totalAmount', label: '总金额', type: 'number', required: true, readonly: true, group: 'basic_info', description: '明细金额合计' },
       { name: 'remark', label: '备注', type: 'textarea', required: false, group: 'basic_info' },
+      { name: 'payeeName', label: '收款人', type: 'text', required: true, group: 'payment_info' },
+      { name: 'bankAccount', label: '账户', type: 'text', required: true, group: 'payment_info' },
+      { name: 'bankName', label: '开户行', type: 'text', required: true, group: 'payment_info' },
       { name: 'items', label: '报销明细', type: 'subform', required: true, group: 'detail_info', columns: [
         { name: 'projectId', label: '关联项目', type: 'select', dataSource: 'project' },
         { name: 'category', label: '费用类别', type: 'select', options: [{ label: '差旅费', value: 'travel' }, { label: '办公费', value: 'office' }, { label: '招待费', value: 'entertainment' }, { label: '其他', value: 'other' }] },
@@ -492,21 +506,30 @@ async function main() {
       { name: 'departure', label: '出发地', type: 'text', required: true, group: 'basic_info' },
       { name: 'destination', label: '目的地', type: 'text', required: true, group: 'basic_info' },
       { name: 'travel_date', label: '出行日期', type: 'date', required: true, group: 'basic_info' },
+      { name: 'flight_no', label: '航班号', type: 'text', required: true, group: 'basic_info' },
+      { name: 'has_luggage', label: '是否有行李', type: 'select', required: true, options: [{ label: '有行李', value: 'yes' }, { label: '无行李', value: 'no' }], group: 'basic_info' },
+      { name: 'estimated_amount', label: '预计金额', type: 'number', required: true, group: 'basic_info' },
       { name: 'reason', label: '出行原因', type: 'textarea', required: true, group: 'basic_info' },
       { name: 'project_id', label: '关联项目', type: 'select', required: false, dynamicOptions: 'project', group: 'basic_info' },
-      { name: 'amount', label: '费用', type: 'number', required: false, readonly: true, description: '由预订员填写', group: 'booker_info' },
-      { name: 'attachment', label: '附件', type: 'file', required: false, readonly: true, description: '由预订员上传', group: 'booker_info' }
+      { name: 'amount', label: '实际金额', type: 'number', required: false, readonly: true, description: '由财务填写', group: 'booking_finance_info' },
+      { name: 'attachment', label: '附件', type: 'file', required: false, readonly: true, description: '由财务上传', group: 'booking_finance_info' }
     ],
     nodes: [
       { id: 9401n, type: 0, code: 'start', name: '发起申请', coord: { x: 250, y: 50 } },
-      { id: 9402n, type: 1, code: 'manager_approve', name: '部门经理审批', flag: 'reportTo:deptLeader', coord: { x: 250, y: 150 } },
-      { id: 9403n, type: 1, code: 'booker_process', name: '预订员处理', flag: 'role:booker', coord: { x: 250, y: 250 } },
-      { id: 9404n, type: 2, code: 'end', name: '预订成功', coord: { x: 250, y: 350 } },
+      { id: 9402n, type: 1, code: 'pm_approve', name: '项目经理审批', flag: 'project:manager', approvalMode: 'or_sign', coord: { x: 250, y: 130 } },
+      { id: 9405n, type: 1, code: 'director_approve', name: '项目总监审批', flag: 'role:project_director', approvalMode: 'or_sign', coord: { x: 250, y: 210 } },
+      { id: 9406n, type: 1, code: 'gm_approve', name: '总经理审批', flag: 'role:general_manager', approvalMode: 'or_sign', coord: { x: 250, y: 290 } },
+      { id: 9403n, type: 1, code: 'finance_approve', name: '财务审批', flag: 'role:finance', approvalMode: 'or_sign', coord: { x: 250, y: 370 } },
+      { id: 9407n, type: 1, code: 'initiator_confirm', name: '发起人确认', flag: 'initiator:self', coord: { x: 250, y: 450 } },
+      { id: 9404n, type: 2, code: 'end', name: '预订成功', coord: { x: 250, y: 530 } },
     ],
     skips: [
-      { id: 9501n, now: 'start', next: 'manager_approve', name: '提交申请', type: 'pass' },
-      { id: 9502n, now: 'manager_approve', next: 'booker_process', name: '同意', type: 'pass' },
-      { id: 9503n, now: 'booker_process', next: 'end', name: '确认出票', type: 'pass' },
+      { id: 9501n, now: 'start', next: 'pm_approve', name: '提交申请', type: 'pass' },
+      { id: 9504n, now: 'pm_approve', next: 'director_approve', name: '同意', type: 'pass' },
+      { id: 9505n, now: 'director_approve', next: 'gm_approve', name: '同意', type: 'pass' },
+      { id: 9506n, now: 'gm_approve', next: 'finance_approve', name: '同意', type: 'pass' },
+      { id: 9503n, now: 'finance_approve', next: 'initiator_confirm', name: '确认出票', type: 'pass' },
+      { id: 9507n, now: 'initiator_confirm', next: 'end', name: '确认', type: 'pass' },
     ]
   });
 

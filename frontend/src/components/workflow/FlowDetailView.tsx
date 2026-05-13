@@ -1,5 +1,5 @@
 import React from 'react'
-import { Clock, User, History, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Clock, User, Users, History, CheckCircle2, AlertCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '../../utils/cn'
 import FormTemplateRenderer from './FormTemplateRenderer'
@@ -14,6 +14,7 @@ interface FlowDetailViewProps {
   currentNodeName?: string
   orderType?: string
   handlerName?: string
+  handlerNames?: string[]
   formTemplate?: any
   formData?: any
   readOnly?: boolean
@@ -61,6 +62,7 @@ export default function FlowDetailView({
   currentNodeName,
   orderType,
   handlerName,
+  handlerNames,
   formTemplate,
   formData = {},
   readOnly = false,
@@ -122,12 +124,25 @@ export default function FlowDetailView({
                 {nodeName || currentNodeName || '-'}
               </div>
             </div>
-            {handlerName && (
+            {(handlerName || (handlerNames && handlerNames.length > 0)) && (
               <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">{t('workflow.fields.handler')}</p>
                 <div className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                  <User size={12} className="text-indigo-500" />
-                  {handlerName}
+                  {handlerNames && handlerNames.length > 1 ? (
+                    <>
+                      <Users size={12} className="text-indigo-500" />
+                      <div className="flex flex-wrap gap-1">
+                        {handlerNames.map((name, i) => (
+                          <span key={i} className="inline-flex items-center px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded text-xs font-medium">{name}</span>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <User size={12} className="text-indigo-500" />
+                      {handlerNames?.[0] || handlerName}
+                    </>
+                  )}
                 </div>
               </div>
             )}

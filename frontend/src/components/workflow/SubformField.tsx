@@ -170,7 +170,7 @@ const SubformField: React.FC<SubformFieldProps> = ({ value = [], onChange, colum
         >
           <option value="">{readonly ? '-' : '请选择'}</option>
           {opts.map((opt: any) => (
-            <option key={opt.value} value={opt.value}>{t(opt.label, { defaultValue: opt.label })}</option>
+            <option key={opt.value} value={opt.value}>{t(`workflow.form.option.${opt.value}`, { defaultValue: opt.label })}</option>
           ))}
         </select>
       )
@@ -238,7 +238,7 @@ const SubformField: React.FC<SubformFieldProps> = ({ value = [], onChange, colum
                   "px-3 py-2 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest",
                   COL_WIDTH_MAP[col.name] || ''
                 )}>
-                  {col.label}
+                  {t(`workflow.form.column.${col.name}`, { defaultValue: t(`workflow.form.field.${col.name}`, { defaultValue: col.label }) })}
                 </th>
               ))}
               {!readonly && <th className="w-10 px-1"></th>}

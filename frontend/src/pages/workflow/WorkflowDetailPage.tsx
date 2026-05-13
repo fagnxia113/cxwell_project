@@ -32,7 +32,7 @@ export default function WorkflowDetailPage() {
   const navigate = useNavigate()
   const { hasButton } = usePermission()
   const {
-    loading, instance, definition, tasks, logs, currentTask, currentUserId,
+    loading, instance, definition, tasks, logs, currentTask, isAssignee, currentUserId,
     formFields, activeFormData, setActiveFormData, masterData, transferOrder,
     submitAction, handleWithdraw, confirm,
     warning
@@ -166,15 +166,20 @@ export default function WorkflowDetailPage() {
     assignee_name: masterData.users[task.assignee_id || ''] || masterData.users[task.assignee_name || ''] || task.assignee_name
   }))
 
-  const enrichedCurrentTask = enrichedTasks.find(t => 
-    t.assignees?.includes(currentUserId) || 
-    t.assignee_id === currentUserId
-  ) || (enrichedTasks.length > 0 ? enrichedTasks[0] : null)
+  const currentAssigneeNames = [...new Set(
+    enrichedTasks.flatMap(t => 
+      (t as any).assignee_names && (t as any).assignee_names.length > 0
+        ? (t as any).assignee_names
+        : (t.assignees || []).map((loginName: string) => masterData.users[loginName] || loginName)
+    )
+  )]
 
-  const isAssignee = !!enrichedCurrentTask && (
-    enrichedCurrentTask.assignees?.includes(currentUserId) || 
-    enrichedCurrentTask.assignee_id === currentUserId
-  )
+  const enrichedCurrentTask = isAssignee
+    ? (enrichedTasks.find(t => 
+        (t.assignees && Array.isArray(t.assignees) && t.assignees.includes(currentUserId)) ||
+        t.assignee_id === currentUserId
+      ) || null)
+    : null
 
   const documentNo = activeFormData?._documentNo || (enrichedInstance?.business_id) || (enrichedInstance?.id?.substring(0, 8).toUpperCase()) || '-'
   const applyDate = activeFormData?._applyDate ? formatLocalDateTime(activeFormData._applyDate) : formatLocalDateTime(enrichedInstance?.start_time)
@@ -190,9 +195,9 @@ export default function WorkflowDetailPage() {
     { type: 'cc', label: t('workflow.action.cc') || '抄送', icon: <ClipboardCopy className="w-4 h-4" />, className: 'bg-indigo-600 shadow-indigo-200', perm: 'workflow:cc' },
   ]
 
-  const enabledActions = primaryActions.filter(a => isAssignee || hasButton(a.perm))
+  const enabledActions = isAssignee ? primaryActions : []
 
-  const isBookerExecute = enrichedInstance?.definition_key === 'flight_booking' && (enrichedCurrentTask?.node_id === 'BOOKER_EXECUTE' || enrichedCurrentTask?.name === '预定员处理')
+  const isBookerExecute = enrichedInstance?.definition_key === 'flight_booking' && (enrichedCurrentTask?.node_id === 'BOOKER_EXECUTE' || enrichedCurrentTask?.node_id === 'booker_process' || enrichedCurrentTask?.node_id === 'finance_approve' || enrichedCurrentTask?.name === '预定员处理' || enrichedCurrentTask?.name === '预订员处理' || enrichedCurrentTask?.name === '财务审批')
   const editableFields = isBookerExecute ? ['amount', 'attachment'] : []
 
   const renderFormTab = () => (
@@ -243,6 +248,7 @@ export default function WorkflowDetailPage() {
             processTitle={processTitle}
             currentTask={enrichedCurrentTask}
             currentUserId={currentUserId}
+            isAssignee={isAssignee}
             t={t}
             onActionClick={(type) => setActionType(type === actionType ? '' : type)}
             onWithdraw={handleWithdraw}
@@ -251,6 +257,7 @@ export default function WorkflowDetailPage() {
             applyDate={applyDate}
             applicantName={applicantName}
             activeActionType={actionType}
+            currentAssigneeNames={currentAssigneeNames}
           />
         )}
 
@@ -322,6 +329,7 @@ export default function WorkflowDetailPage() {
               definition={definition}
               t={t}
               renderFormTab={renderFormTab}
+              currentAssigneeNames={currentAssigneeNames}
             />
           </div>
         </div>

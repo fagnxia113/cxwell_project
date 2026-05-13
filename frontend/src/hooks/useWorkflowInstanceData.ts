@@ -26,6 +26,7 @@ export function useWorkflowInstanceData() {
   const [tasks, setTasks] = useState<WorkflowTask[]>([])
   const [logs, setLogs] = useState<WorkflowLog[]>([])
   const [currentTask, setCurrentTask] = useState<WorkflowTask | null>(null)
+  const [isAssignee, setIsAssignee] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string>('')
   const [formFields, setFormFields] = useState<any[]>([])
   const [activeFormData, setActiveFormData] = useState<any>({})
@@ -239,6 +240,18 @@ export function useWorkflowInstanceData() {
     loadInstanceData()
   }, [loadInstanceData])
 
+  useEffect(() => {
+    if (!currentUserId || tasks.length === 0) {
+      setIsAssignee(false)
+      return
+    }
+    const myTask = tasks.find(t =>
+      (t.assignees && Array.isArray(t.assignees) && t.assignees.includes(currentUserId)) ||
+      t.assignee_id === currentUserId
+    )
+    setIsAssignee(!!myTask)
+  }, [tasks, currentUserId])
+
   const getNodeActions = () => {
     if (!currentTask) return []
     return [
@@ -299,7 +312,7 @@ export function useWorkflowInstanceData() {
   }
 
   return {
-    loading, instance, definition, tasks, logs, currentTask, currentUserId,
+    loading, instance, definition, tasks, logs, currentTask, isAssignee, currentUserId,
     formFields, activeFormData, setActiveFormData, masterData, transferOrder, repairOrder,
     loadInstanceData, getNodeActions, submitAction, handleWithdraw, confirm,
     success, error, warning, t

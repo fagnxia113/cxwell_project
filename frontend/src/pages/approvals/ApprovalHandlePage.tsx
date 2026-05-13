@@ -18,7 +18,9 @@ import FlowDetailView from '../../components/workflow/FlowDetailView'
 
 const NODE_EDITABLE_FIELDS: Record<string, Record<string, string[]>> = {
     'flight_booking': {
-      'BOOKER_EXECUTE': ['amount', 'attachment']
+      'BOOKER_EXECUTE': ['amount', 'attachment'],
+      'booker_process': ['amount', 'attachment'],
+      'finance_approve': ['amount', 'attachment']
     }
   }
 
@@ -33,6 +35,7 @@ export default function ApprovalHandlePage() {
   const [submitting, setSubmitting] = useState(false)
   const [task, setTask] = useState<any>(null)
   const [timeline, setTimeline] = useState<any[]>([])
+  const [activeTasks, setActiveTasks] = useState<any[]>([])
   const [formTemplate, setFormTemplate] = useState<any>(null)
   const [formData, setFormData] = useState<any>({})
   const [opinion, setOpinion] = useState('')
@@ -63,6 +66,8 @@ export default function ApprovalHandlePage() {
 
       const timelineRes = await workflowApi.getTimeline(currentTask.instanceId)
       setTimeline(timelineRes.data.timeline || [])
+      const currentActiveTasks = timelineRes.data.currentTasks || []
+      setActiveTasks(currentActiveTasks)
 
       const templateRes = await formApi.getTemplate(currentTask.process_type)
       setFormTemplate(templateRes.data)
@@ -85,8 +90,7 @@ export default function ApprovalHandlePage() {
       // If we don't have currentTasks with assignees, we can check backend, 
       // but let's do a simple check. If they loaded it from pending, they should be authorized.
       // A more robust way is to check the `getTimeline` currentTasks if it matches the current user.
-      const activeTasks = timelineRes.data.currentTasks || []
-      const activeTask = activeTasks.find((t: any) => t.id === taskId)
+      const activeTask = currentActiveTasks.find((t: any) => t.id === taskId)
       if (activeTask && activeTask.assignees && Array.isArray(activeTask.assignees)) {
         setIsAuthorized(activeTask.assignees.includes(currentUser))
       } else {
@@ -153,6 +157,7 @@ export default function ApprovalHandlePage() {
         nodeName={task.nodeName || task.node_name}
         orderType={task.process_type}
         handlerName={task.assignee_name || task.current_assignee_name}
+        handlerNames={activeTasks.flatMap((t: any) => (t.assignees || []).map((a: string) => a)).filter(Boolean)}
         formTemplate={formTemplate}
         formData={formData}
         readOnly={true}

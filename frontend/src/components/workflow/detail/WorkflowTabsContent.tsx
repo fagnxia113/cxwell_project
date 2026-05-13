@@ -12,6 +12,7 @@ interface WorkflowTabsContentProps {
   definition: any
   t: any
   renderFormTab: () => React.ReactNode
+  currentAssigneeNames?: string[]
 }
 
 export const WorkflowTabsContent: React.FC<WorkflowTabsContentProps> = ({
@@ -21,7 +22,8 @@ export const WorkflowTabsContent: React.FC<WorkflowTabsContentProps> = ({
   logs,
   definition,
   t,
-  renderFormTab
+  renderFormTab,
+  currentAssigneeNames
 }) => {
   if (activeTab === 'form') {
     return renderFormTab()
@@ -73,7 +75,9 @@ export const WorkflowTabsContent: React.FC<WorkflowTabsContentProps> = ({
           <WorkflowPredictor 
             instanceId={instance.id} 
             variables={instance.variables} 
-            t={t} 
+            t={t}
+            currentNodeName={instance.current_node_name}
+            currentAssigneeNames={currentAssigneeNames}
           />
         )}
 

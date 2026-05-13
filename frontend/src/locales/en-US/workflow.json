@@ -184,6 +184,7 @@
   "approver_source_type_reportTo_n2": "N+2 Manager",
   "approver_source_type_department_manager": "Dept. Manager (Old)",
   "approver_source_type_project_manager": "Project Manager",
+  "approver_source_type_project_director": "Project Director",
   "approver_source_type_initiator": "Initiator",
   "approver_source_type_form_field": "Form Field",
   "approver_source_type_expression": "Expression",
@@ -247,7 +248,11 @@
       "expense_info": "Expense Details",
       "travel_info": "Travel Info",
       "leave_info": "Leave Details",
-      "items": "Item List"
+      "items": "Item List",
+      "booker_info": "Booking Agent Info",
+      "booking_finance_info": "Finance Info",
+      "payment_info": "Payment Info",
+      "detail_info": "Expense Details"
     },
     "field": {
       "projectName": "Project Name",
@@ -285,15 +290,46 @@
       "days": "Total Days",
       "category": "Category",
       "amount": "Amount",
-      "expenseDate": "Date",
+      "expenseDate": "Expense Date",
       "items": "Items",
+      "payeeName": "Payee Name",
+      "bankAccount": "Bank Account",
+      "bankName": "Bank Name",
       "departure": "Departure",
       "destination": "Destination",
       "date": "Date",
+      "flight_no": "Flight No.",
+      "has_luggage": "Luggage",
+      "estimated_amount": "Estimated Amount",
+      "amount": "Actual Amount",
       "idCard": "ID Card No.",
       "purpose": "Purpose",
       "document_no": "Document No.",
-      "apply_date": "Apply Date"
+      "apply_date": "Apply Date",
+      "travelers": "Travelers",
+      "travel_date": "Travel Date",
+      "reason": "Reason",
+      "project_id": "Project",
+      "totalAmount": "Total Amount",
+      "remark": "Remark",
+      "items": "Expense Items",
+      "attachment": "Attachment"
+    },
+    "option": {
+      "yes": "With Luggage",
+      "no": "No Luggage",
+      "travel": "Travel Expense",
+      "office": "Office Expense",
+      "entertainment": "Entertainment",
+      "other": "Other"
+    },
+    "column": {
+      "projectId": "Project",
+      "category": "Category",
+      "amount": "Amount",
+      "expenseDate": "Expense Date",
+      "reason": "Reason",
+      "attachment": "Attachment"
     }
   },
   "status": {

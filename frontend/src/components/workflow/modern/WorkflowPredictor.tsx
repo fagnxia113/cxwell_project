@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { GitBranch, ChevronRight, HelpCircle, CheckCircle2 } from 'lucide-react'
+import { GitBranch, ChevronRight, HelpCircle, CheckCircle2, Clock, User } from 'lucide-react'
 import { taskService } from '../../../services/taskService'
 
 interface PredictedNode {
@@ -19,9 +19,11 @@ interface WorkflowPredictorProps {
   instanceId: string
   variables?: any
   t: any
+  currentNodeName?: string
+  currentAssigneeNames?: string[]
 }
 
-export const WorkflowPredictor: React.FC<WorkflowPredictorProps> = ({ instanceId, variables, t }) => {
+export const WorkflowPredictor: React.FC<WorkflowPredictorProps> = ({ instanceId, variables, t, currentNodeName, currentAssigneeNames }) => {
   const [prediction, setPrediction] = useState<PredictedNode[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -56,6 +58,33 @@ export const WorkflowPredictor: React.FC<WorkflowPredictorProps> = ({ instanceId
       </h4>
 
       <div className="space-y-4">
+        {currentNodeName && (
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-indigo-100 border-2 border-indigo-300 text-indigo-500">
+                <Clock className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="flex-1 p-3 rounded-xl bg-indigo-50/80 border border-indigo-200 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-bold text-indigo-700">{currentNodeName}</span>
+                <span className="px-2 py-0.5 rounded-md bg-indigo-200 text-indigo-800 text-[10px] font-bold">{t('workflow.fields.current_node')}</span>
+              </div>
+              {currentAssigneeNames && currentAssigneeNames.length > 0 && (
+                <div className="flex flex-wrap gap-2 items-center">
+                  <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-tighter">{t('workflow.prediction.approvers')}:</span>
+                  {currentAssigneeNames.map((name, idx) => (
+                    <div key={`current-${idx}`} className="px-2 py-1 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-md border border-indigo-200 flex items-center gap-1">
+                      <User className="w-2.5 h-2.5" />
+                      {name}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {prediction.map((node, index) => (
           <div key={`${node.nodeCode}-${index}`} className="flex items-center gap-4">
             {/* Connector Line */}

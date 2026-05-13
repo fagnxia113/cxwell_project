@@ -184,6 +184,7 @@
   "approver_source_type_reportTo_n2": "上2级上级",
   "approver_source_type_department_manager": "部门负责人(旧)",
   "approver_source_type_project_manager": "项目经理",
+  "approver_source_type_project_director": "项目总监",
   "approver_source_type_initiator": "发起人",
   "approver_source_type_form_field": "表单字段",
   "approver_source_type_expression": "表达式",
@@ -247,7 +248,11 @@
       "expense_info": "费用详情",
       "travel_info": "行程信息",
       "leave_info": "请假详情",
-      "items": "明细列表"
+      "items": "明细列表",
+      "booker_info": "预订员信息",
+      "booking_finance_info": "财务信息",
+      "payment_info": "收款信息",
+      "detail_info": "报销明细"
     },
     "field": {
       "projectName": "项目名称",
@@ -287,13 +292,44 @@
       "amount": "金额",
       "expenseDate": "发生日期",
       "items": "明细",
+      "payeeName": "收款人",
+      "bankAccount": "账户",
+      "bankName": "开户行",
       "departure": "出发地",
       "destination": "目的地",
       "date": "日期",
+      "flight_no": "航班号",
+      "has_luggage": "是否有行李",
+      "estimated_amount": "预计金额",
+      "amount": "实际金额",
       "idCard": "证件号",
       "purpose": "出差事由",
       "document_no": "单据编号",
-      "apply_date": "申请日期"
+      "apply_date": "申请日期",
+      "travelers": "出行人员",
+      "travel_date": "出行日期",
+      "reason": "出行原因",
+      "project_id": "关联项目",
+      "totalAmount": "总金额",
+      "remark": "备注",
+      "items": "报销明细",
+      "attachment": "附件"
+    },
+    "option": {
+      "yes": "有行李",
+      "no": "无行李",
+      "travel": "差旅费",
+      "office": "办公费",
+      "entertainment": "招待费",
+      "other": "其他"
+    },
+    "column": {
+      "projectId": "关联项目",
+      "category": "费用类别",
+      "amount": "金额",
+      "expenseDate": "发生日期",
+      "reason": "事由",
+      "attachment": "附件"
     }
   },
   "status": {

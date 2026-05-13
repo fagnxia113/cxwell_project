@@ -490,6 +490,7 @@ model FlowNode {
   nodeCode       String    @map("node_code") @db.VarChar(100)
   nodeName       String?   @map("node_name") @db.VarChar(100)
   permissionFlag String?   @map("permission_flag") @db.VarChar(200)
+  approvalMode   String?   @map("approval_mode") @db.VarChar(20)
   nodeRatio      Decimal?  @map("node_ratio") @db.Decimal(6, 3)
   coordinate     String?   @db.VarChar(100)
   anyNodeSkip    String?   @map("any_node_skip") @db.VarChar(100)

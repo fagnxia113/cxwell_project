@@ -30,6 +30,7 @@ export default function ProcessInstanceDetailPage() {
     logs,
     loading,
     currentTask,
+    isAssignee,
     dynamicOptions,
     currentUser,
     loadInstanceData,
@@ -84,7 +85,7 @@ export default function ProcessInstanceDetailPage() {
         {/* 右侧辅助/操作�?*/}
         <div className="space-y-6">
           {/* 4. 审批操作面板：仅在有活跃待办任务时显示。在这里打字不会导致整个表单刷新�?*/}
-          {currentTask && (
+          {currentTask && isAssignee && (
             <ProcessApprovalPanel 
               onComplete={async (action, comment) => {
                 const res = await completeTask(action, comment)
