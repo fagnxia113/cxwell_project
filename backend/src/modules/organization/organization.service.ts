@@ -595,6 +595,51 @@ export class OrganizationService {
     });
   }
 
+  /**
+   * 获取全员轮岗计划
+   */
+  async getAllRotationPlan(yearMonth: string) {
+    const startOfMonth = new Date(`${yearMonth.slice(0, 4)}-${yearMonth.slice(4, 6)}-01T00:00:00Z`);
+    const endOfMonth = new Date(startOfMonth);
+    endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+
+    // 获取所有在职员工
+    const employees = await this.prisma.sysEmployee.findMany({
+      where: { status: '0' },
+      select: { employeeId: true, name: true, position: true, deptId: true }
+    });
+
+    const employeeIds = employees.map(e => e.employeeId);
+
+    // 获取这些员工在当月的轮岗记录
+    const rotations = await this.prisma.personnelRotation.findMany({
+      where: {
+        employeeId: { in: employeeIds },
+        OR: [
+          { startDate: { gte: startOfMonth, lt: endOfMonth } },
+          { endDate: { gte: startOfMonth, lt: endOfMonth } },
+          { AND: [{ startDate: { lt: startOfMonth } }, { endDate: { gte: endOfMonth } }] }
+        ]
+      }
+    });
+
+    return employees.map(emp => {
+      const empRotations = rotations.filter(r => r.employeeId === emp.employeeId);
+      return {
+        employeeId: emp.employeeId.toString(),
+        employeeName: emp.name,
+        position: emp.position,
+        deptId: emp.deptId?.toString(),
+        segments: empRotations.map(r => ({
+          startDate: r.startDate.toISOString().split('T')[0],
+          endDate: r.endDate.toISOString().split('T')[0],
+          type: r.type,
+          projectId: r.projectId?.toString()
+        }))
+      };
+    });
+  }
+
   async getRotationPlan(employeeId: string, yearMonth: string) {
     const startOfMonth = new Date(`${yearMonth.slice(0, 4)}-${yearMonth.slice(4, 6)}-01T00:00:00Z`);
     const endOfMonth = new Date(startOfMonth);

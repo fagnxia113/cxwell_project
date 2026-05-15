@@ -34,6 +34,13 @@
   },
   "loading": "正在加载项目...",
   "loading_error": "项目加载失败",
+  "type": {
+    "all": "全部",
+    "cx-m": "Cx-M",
+    "cx_project": "Cx项目",
+    "cx-m_label": "Cx-M项目",
+    "cx-project_label": "Cx项目"
+  },
   "action": {
     "initiate": "发起立项",
     "import": "批量导入",
@@ -313,6 +320,12 @@
     "notes": "备注",
     "notes_placeholder": "用途描述...",
     "no_records": "暂无费用记录",
+    "filter_category": "类别筛选",
+    "chart": {
+      "category_pie": "费用占比分布",
+      "cost_trend": "成本趋势曲线",
+      "total": "合计"
+    },
     "categories": {
       "equipment": "设备采购",
       "labor": "人工劳务",

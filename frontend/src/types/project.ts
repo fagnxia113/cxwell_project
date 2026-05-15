@@ -23,6 +23,7 @@ export interface Project {
   budget: number
   customer_name: string
   customerId?: string
+  project_type?: string
   building_area?: number
   it_capacity?: number
   cabinet_count?: number

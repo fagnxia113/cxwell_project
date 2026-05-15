@@ -266,6 +266,17 @@ export class PersonnelController {
     };
   }
 
+  @Get('rotation/all-plans/:yearMonth')
+  async getAllRotationPlan(
+    @Param('yearMonth') yearMonth: string,
+  ) {
+    const data = await this.organizationService.getAllRotationPlan(yearMonth);
+    return {
+      success: true,
+      data,
+    };
+  }
+
   @Post('rotation/plan/:employeeId/:yearMonth')
   async saveRotationPlan(
     @Param('employeeId') employeeId: string,

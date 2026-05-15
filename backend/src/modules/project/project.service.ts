@@ -461,6 +461,7 @@ export class ProjectService {
       it_capacity: project.itCapacity,
       cabinet_count: project.cabinetCount,
       cabinet_power: project.cabinetPower,
+      project_type: project.projectType,
       start_date: project.startDate,
       end_date: project.endDate,
       power_architecture: project.powerArchitecture,

@@ -34,6 +34,13 @@
   },
   "loading": "Loading projects...",
   "loading_error": "Failed to load projects",
+  "type": {
+    "all": "All",
+    "cx-m": "Cx-M",
+    "cx_project": "Cx Project",
+    "cx-m_label": "Cx-M Project",
+    "cx-project_label": "Cx Project"
+  },
   "action": {
     "initiate": "Initiate Project",
     "import": "Import Project",
@@ -308,6 +315,12 @@
     "notes": "Notes",
     "notes_placeholder": "Usage description...",
     "no_records": "No expense records",
+    "filter_category": "Category Filter",
+    "chart": {
+      "category_pie": "Expense Distribution",
+      "cost_trend": "Cost Trend",
+      "total": "Total"
+    },
     "categories": {
       "equipment": "Equipment",
       "labor": "Labor",

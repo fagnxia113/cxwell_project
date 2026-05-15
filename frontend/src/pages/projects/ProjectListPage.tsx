@@ -24,6 +24,7 @@ export default function ProjectListPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [showImportModal, setShowImportModal] = useState(false)
+  const [projectTypeFilter, setProjectTypeFilter] = useState<string>('all')
   const [permissionDrawer, setPermissionDrawer] = useState<{ isOpen: boolean, projectId: string, projectName: string }>({
     isOpen: false,
     projectId: '',
@@ -44,6 +45,10 @@ export default function ProjectListPage() {
     loadProjects,
     stats
   } = useProjectList()
+
+  const filteredProjects = projectTypeFilter === 'all'
+    ? projects
+    : projects.filter((p: any) => p.project_type === projectTypeFilter)
 
   return (
     <div className="min-h-screen bg-mesh p-4 lg:p-6 space-y-4 animate-fade-in custom-scrollbar pb-16">
@@ -107,17 +112,37 @@ export default function ProjectListPage() {
       {/* 2. 统计看板组件 */}
       <ProjectStatsHeader stats={stats} />
 
-      {/* 3. 搜索栏 */}
+      {/* 3. 搜索栏 + 类型切换 */}
       <div className="premium-card p-4">
-        <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder={t('project.placeholder.search')}
-            className="input-search"
-          />
+        <div className="flex items-center gap-3">
+          <div className="relative group flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder={t('project.placeholder.search')}
+              className="input-search"
+            />
+          </div>
+          <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+            {[
+              { key: 'all', label: t('project.type.all') },
+              { key: 'cx-m', label: 'Cx-M' },
+              { key: 'cx-project', label: t('project.type.cx_project') },
+            ].map(opt => (
+              <button
+                key={opt.key}
+                onClick={() => setProjectTypeFilter(opt.key)}
+                className={cn(
+                  "px-3 py-1.5 rounded-md transition-all text-xs font-bold",
+                  projectTypeFilter === opt.key ? "bg-white text-primary shadow-sm" : "text-slate-400 hover:text-slate-600"
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -137,12 +162,12 @@ export default function ProjectListPage() {
         </div>
       ) : viewMode === 'table' ? (
         <ProjectListTable
-          projects={projects}
+          projects={filteredProjects}
           onDelete={handleDelete}
           onManageTeam={(id, name) => setPermissionDrawer({ isOpen: true, projectId: id, projectName: name })}
         />
       ) : (
-        <ProjectListGrid projects={projects} />
+        <ProjectListGrid projects={filteredProjects} />
       )}
 
       {/* 5. 分页组件 */}

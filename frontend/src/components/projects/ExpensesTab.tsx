@@ -1,8 +1,20 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DollarSign, Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, PieChart as PieIcon, TrendingUp, Filter } from 'lucide-react'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from 'recharts'
 import { cn } from '../../utils/cn'
 import type { ProjectExpense, Project } from '../../types/project'
+
+const CATEGORY_COLORS: Record<string, string> = {
+  equipment: '#10b981',
+  labor: '#14b8a6',
+  travel: '#f59e0b',
+  meal: '#f97316',
+  transportation: '#22c55e',
+  accommodation: '#06b6d4',
+  material: '#8b5cf6',
+  other: '#94a3b8',
+}
 
 interface ExpensesTabProps {
   project: Project | null
@@ -17,16 +29,53 @@ interface ExpensesTabProps {
 export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteExpense, isAdmin, isProjectManager, isProjectMember }: ExpensesTabProps) {
   const { t } = useTranslation()
   const [showAddForm, setShowAddForm] = useState(false)
+  const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [newExpense, setNewExpense] = useState({ category: 'equipment', amount: 0, date: new Date().toISOString().split('T')[0], notes: '' })
 
-  // 预算单位是万元，费用单位是元
   const budgetInWan = project?.budget || 0
   const budgetInYuan = Number(budgetInWan) * 10000
   const totalSpentInYuan = expenses.reduce((sum, item) => sum + Number(item.amount), 0)
   const totalSpentInWan = totalSpentInYuan / 10000
   const utilization = budgetInYuan > 0 ? Math.round((totalSpentInYuan / budgetInYuan) * 100) : 0
 
+  const filteredExpenses = categoryFilter === 'all'
+    ? expenses
+    : expenses.filter(e => e.category === categoryFilter)
 
+  const pieData = useMemo(() => {
+    const map: Record<string, number> = {}
+    expenses.forEach(e => {
+      map[e.category] = (map[e.category] || 0) + Number(e.amount)
+    })
+    return Object.entries(map).map(([cat, amount]) => ({
+      name: t(`project.expense.categories.${cat}`) || cat,
+      value: amount,
+      category: cat,
+    })).sort((a, b) => b.value - a.value)
+  }, [expenses, t])
+
+  const trendData = useMemo(() => {
+    const map: Record<string, Record<string, number>> = {}
+    const categories = new Set<string>()
+    expenses.forEach(e => {
+      const month = e.date ? e.date.substring(0, 7) : 'unknown'
+      if (!map[month]) map[month] = {}
+      map[month][e.category] = (map[month][e.category] || 0) + Number(e.amount)
+      categories.add(e.category)
+    })
+    const sortedMonths = Object.keys(map).sort()
+    return sortedMonths.map(month => {
+      const entry: any = { month }
+      let total = 0
+      categories.forEach(cat => {
+        const val = map[month][cat] || 0
+        entry[t(`project.expense.categories.${cat}`) || cat] = val
+        total += val
+      })
+      entry.total = total
+      return entry
+    })
+  }, [expenses, t])
 
   const handleAdd = () => {
     if (newExpense.amount <= 0) return
@@ -53,9 +102,12 @@ export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteE
     return colors[cat] || colors.other
   }
 
+  const allCategories = ['equipment', 'labor', 'travel', 'meal', 'transportation', 'accommodation', 'material', 'other']
+
+  const formatYuan = (val: number) => `¥${(val / 10000).toFixed(2)}万`
+
   return (
     <div className="space-y-4">
-      {/* 顶部操作栏 */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
@@ -93,7 +145,6 @@ export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteE
         </button>
       </div>
 
-      {/* 进度条 */}
       <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
         <div
           className={cn(
@@ -114,14 +165,9 @@ export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteE
                 onChange={e => setNewExpense({...newExpense, category: e.target.value})}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
               >
-                <option value="equipment">{getCategoryLabel('equipment')}</option>
-                <option value="labor">{getCategoryLabel('labor')}</option>
-                <option value="travel">{getCategoryLabel('travel')}</option>
-                <option value="meal">{getCategoryLabel('meal')}</option>
-                <option value="transportation">{getCategoryLabel('transportation')}</option>
-                <option value="accommodation">{getCategoryLabel('accommodation')}</option>
-                <option value="material">{getCategoryLabel('material')}</option>
-                <option value="other">{getCategoryLabel('other')}</option>
+                {allCategories.map(cat => (
+                  <option key={cat} value={cat}>{getCategoryLabel(cat)}</option>
+                ))}
               </select>
             </div>
             <div className="space-y-1.5">
@@ -160,7 +206,95 @@ export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteE
         </div>
       )}
 
-      {/* 费用列表 */}
+      {expenses.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <PieIcon size={14} className="text-emerald-500" />
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('project.expense.chart.category_pie')}</span>
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={85}
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[entry.category] || '#94a3b8'} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value: any) => [`¥${Number(value).toLocaleString()}`, '']}
+                  contentStyle={{ fontSize: '11px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 justify-center">
+              {pieData.map(entry => (
+                <div key={entry.category} className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[entry.category] || '#94a3b8' }} />
+                  <span className="text-[9px] font-bold text-slate-500">{entry.name}</span>
+                  <span className="text-[9px] font-black text-slate-700">{((entry.value / totalSpentInYuan) * 100).toFixed(1)}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <TrendingUp size={14} className="text-blue-500" />
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('project.expense.chart.cost_trend')}</span>
+            </div>
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={trendData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="month" tick={{ fontSize: 10 }} stroke="#94a3b8" />
+                <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" tickFormatter={(v) => `${(v/10000).toFixed(0)}万`} />
+                <Tooltip
+                  formatter={(value: any, name: any) => [`¥${Number(value).toLocaleString()}`, String(name)]}
+                  contentStyle={{ fontSize: '11px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                />
+                <Legend wrapperStyle={{ fontSize: '10px' }} />
+                <Line type="monotone" dataKey="total" name={t('project.expense.chart.total')} stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center gap-2">
+        <Filter size={12} className="text-slate-400" />
+        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{t('project.expense.filter_category')}</span>
+        <div className="flex flex-wrap gap-1">
+          <button
+            onClick={() => setCategoryFilter('all')}
+            className={cn(
+              "px-2 py-0.5 rounded text-[9px] font-bold transition-all",
+              categoryFilter === 'all' ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+            )}
+          >
+            {t('project.type.all')}
+          </button>
+          {allCategories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
+              className={cn(
+                "px-2 py-0.5 rounded text-[9px] font-bold transition-all",
+                categoryFilter === cat ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+              )}
+            >
+              {getCategoryLabel(cat)}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
         <table className="min-w-full divide-y divide-slate-50">
           <thead className="bg-slate-50/80">
@@ -173,14 +307,14 @@ export default function ExpensesTab({ project, expenses, onAddExpense, onDeleteE
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
-            {expenses.length === 0 ? (
+            {filteredExpenses.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-12 text-center">
                   <p className="text-slate-300 font-bold text-[10px] uppercase tracking-widest">{t('project.expense.no_records')}</p>
                 </td>
               </tr>
             ) : (
-              expenses.map(item => (
+              filteredExpenses.map(item => (
                 <tr key={item.id} className="group hover:bg-slate-50/50 transition-colors">
                   <td className="px-4 py-3">
                     <div className={cn(
