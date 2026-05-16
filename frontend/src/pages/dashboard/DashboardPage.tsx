@@ -58,6 +58,16 @@ const STATUS_LABELS: Record<string, string> = {
   '5': 'archived',
 };
 
+function spreadCoords(base: number[], index: number, total: number): number[] {
+  if (total <= 1) return base;
+  const cols = Math.ceil(Math.sqrt(total));
+  const row = Math.floor(index / cols);
+  const col = index % cols;
+  const offsetX = (col - (cols - 1) / 2) * 2.5;
+  const offsetY = (row - (Math.ceil(total / cols) - 1) / 2) * 2.5;
+  return [base[0] + offsetX, base[1] + offsetY];
+}
+
 const ProfessionalMap = ({ projects }: { projects: any[] }) => {
   const { t, i18n } = useTranslation();
   const [view, setView] = useState<'world' | 'china' | 'sea'>('world');
@@ -93,11 +103,20 @@ const ProfessionalMap = ({ projects }: { projects: any[] }) => {
       return true;
     });
 
+    const countryGroups: Record<string, { index: number; project: any; total: number }[]> = {};
+    filtered.forEach((p, i) => {
+      const country = p.country || 'Global';
+      if (!countryGroups[country]) countryGroups[country] = [];
+      countryGroups[country].push({ index: countryGroups[country].length, project: p, total: 0 });
+    });
+    Object.values(countryGroups).forEach(g => g.forEach(item => { item.total = g.length; }));
+
     const groups: Record<string, any[]> = {};
-    filtered.forEach(p => {
+    Object.values(countryGroups).flat().forEach(({ index, project: p, total }) => {
       const status = p.status || '1';
       if (!groups[status]) groups[status] = [];
-      const coord = ProjectCoords[p.country] || [110 + Math.random() * 20, 20 + Math.random() * 20];
+      const baseCoord = ProjectCoords[p.country] || [110, 20];
+      const coord = spreadCoords(baseCoord, index, total);
       groups[status].push({
         name: p.projectName || p.name,
         value: [...coord, p.progress || 0, p.id]
@@ -117,14 +136,20 @@ const ProfessionalMap = ({ projects }: { projects: any[] }) => {
         type: 'effectScatter',
         coordinateSystem: 'geo',
         data,
-        symbolSize: (val: any) => Math.max(8, val[2] / 5),
+        symbolSize: (val: any) => Math.max(10, val[2] / 4),
         showEffectOn: 'render',
-        rippleEffect: { brushType: 'stroke', scale: 3 },
+        rippleEffect: { brushType: 'stroke', scale: 2.5 },
         emphasis: { scale: true },
         label: {
           formatter: '{b}',
           position: 'right',
-          show: false
+          show: true,
+          fontSize: 9,
+          fontWeight: 'bold',
+          color: '#334155',
+          backgroundColor: 'rgba(255,255,255,0.85)',
+          padding: [2, 4],
+          borderRadius: 3,
         },
         itemStyle: {
           color,
@@ -147,9 +172,11 @@ const ProfessionalMap = ({ projects }: { projects: any[] }) => {
         trigger: 'item',
         formatter: (params: any) => {
           if (params.componentType === 'series' && params.seriesType === 'effectScatter') {
+            const statusKey = Object.keys(STATUS_LABELS).find(k => t(`project.status.${STATUS_LABELS[k]}`) === params.seriesName);
+            const statusColor = STATUS_COLORS[statusKey || '3'];
             return `<div class="p-2">
               <div class="font-bold text-slate-800 mb-1">${params.name}</div>
-              <div class="text-xs font-bold" style="color:${STATUS_COLORS[Object.keys(STATUS_LABELS).find(k => t(`project.status.${STATUS_LABELS[k]}`) === params.seriesName) || '3']}">${params.seriesName}</div>
+              <div class="text-xs font-bold" style="color:${statusColor}">${params.seriesName}</div>
               <div class="text-xs text-emerald-500 font-bold">${t('common.progress')}: ${params.value[2]}%</div>
             </div>`;
           }
