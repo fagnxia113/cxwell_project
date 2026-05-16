@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { 
-  FileText, ClipboardList, GitBranch, Wind, Flame, Cpu, Droplets,
+  FileText, ClipboardList, GitBranch, Wind, Flame, Cpu,
   Briefcase, TrendingUp, List, DollarSign, Zap, User, Wrench, Calendar, Tag
 } from 'lucide-react'
 import type { Project, Phase, Milestone } from '../../types/project'
@@ -22,7 +22,7 @@ interface OverviewTabProps {
   milestones?: Milestone[]
   isEditing: boolean
   editForm: Partial<Project>
-  onEditFormChange: (updates: Record<string, any>) => void
+  onEditFormChange: (updates: Partial<Project>) => void
 }
 
 export default function OverviewTab({
@@ -160,111 +160,29 @@ export default function OverviewTab({
         </div>
       </div>
 
-      {/* 阶段 1.2: Numeric Specs + Cooling Split */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-          <EditableField
-            label={t('project.fields.building_area')}
-            icon={Briefcase}
-            value={(project as any).building_area || 0}
-            unit="m²"
-            isEditing={isEditing}
-            inputType="number"
-            editValue={(editForm as any).building_area || 0}
-            onChange={v => onEditFormChange({ building_area: Number(v) })}
-            displayMode="metric"
-          />
-        </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-          <EditableField
-            label={t('project.fields.it_capacity')}
-            icon={TrendingUp}
-            value={(project as any).it_capacity || 0}
-            unit="MW"
-            isEditing={isEditing}
-            inputType="number"
-            editValue={(editForm as any).it_capacity || 0}
-            onChange={v => onEditFormChange({ it_capacity: Number(v) })}
-            displayMode="metric"
-          />
-        </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-          <EditableField
-            label={t('project.fields.budget')}
-            icon={DollarSign}
-            value={(project as any).budget || 0}
-            unit={t('common.unit_ten_thousand')}
-            isEditing={isEditing}
-            inputType="number"
-            editValue={(editForm as any).budget || 0}
-            onChange={v => onEditFormChange({ budget: Number(v) })}
-            displayMode="metric"
-          />
-        </div>
-      </div>
-
-      {/* 阶段 1.2b: Cooling Type Split */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-1.5 bg-blue-50 rounded-lg"><Wind size={14} className="text-blue-500" /></div>
-            <span className="text-xs font-black text-blue-600 uppercase tracking-widest">{t('project.fields.air_cooled')}</span>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
+      {/* 阶段 1.2: Numeric Specs (原来在侧边栏) */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {[
+          { key: 'building_area', label: t('project.fields.building_area'), icon: Briefcase, unit: 'm²' },
+          { key: 'it_capacity', label: t('project.fields.it_capacity'), icon: TrendingUp, unit: 'MW' },
+          { key: 'cabinet_count', label: t('project.fields.cabinet_count'), icon: List, unit: t('common.unit_piece') },
+          { key: 'cabinet_power', label: t('project.fields.cabinet_power'), icon: DollarSign, unit: 'kW' },
+          { key: 'budget', label: t('project.fields.budget'), icon: DollarSign, unit: t('common.unit_ten_thousand') },
+        ].map(spec => (
+          <div key={spec.key} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
             <EditableField
-              label={t('project.fields.cooling_power')}
-              icon={TrendingUp}
-              value={(project as any).air_cooled_power || 0}
-              unit="kW"
+              label={spec.label}
+              icon={spec.icon}
+              value={(project as any)[spec.key] || 0}
+              unit={spec.unit}
               isEditing={isEditing}
               inputType="number"
-              editValue={(editForm as any).air_cooled_power || 0}
-              onChange={v => onEditFormChange({ air_cooled_power: Number(v) })}
-              displayMode="metric"
-            />
-            <EditableField
-              label={t('project.fields.cooling_cabinets')}
-              icon={List}
-              value={(project as any).air_cooled_cabinets || 0}
-              unit={t('common.unit_piece')}
-              isEditing={isEditing}
-              inputType="number"
-              editValue={(editForm as any).air_cooled_cabinets || 0}
-              onChange={v => onEditFormChange({ air_cooled_cabinets: Number(v) })}
+              editValue={(editForm as any)[spec.key] || 0}
+              onChange={v => onEditFormChange({ [spec.key]: v })}
               displayMode="metric"
             />
           </div>
-        </div>
-        <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-1.5 bg-cyan-50 rounded-lg"><Droplets size={14} className="text-cyan-500" /></div>
-            <span className="text-xs font-black text-cyan-600 uppercase tracking-widest">{t('project.fields.liquid_cooled')}</span>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <EditableField
-              label={t('project.fields.cooling_power')}
-              icon={TrendingUp}
-              value={(project as any).liquid_cooled_power || 0}
-              unit="kW"
-              isEditing={isEditing}
-              inputType="number"
-              editValue={(editForm as any).liquid_cooled_power || 0}
-              onChange={v => onEditFormChange({ liquid_cooled_power: Number(v) })}
-              displayMode="metric"
-            />
-            <EditableField
-              label={t('project.fields.cooling_cabinets')}
-              icon={List}
-              value={(project as any).liquid_cooled_cabinets || 0}
-              unit={t('common.unit_piece')}
-              isEditing={isEditing}
-              inputType="number"
-              editValue={(editForm as any).liquid_cooled_cabinets || 0}
-              onChange={v => onEditFormChange({ liquid_cooled_cabinets: Number(v) })}
-              displayMode="metric"
-            />
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* 阶段 1.5: Technical Architecture Grid (新板块) */}

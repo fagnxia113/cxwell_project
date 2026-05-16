@@ -28,10 +28,6 @@ export interface Project {
   it_capacity?: number
   cabinet_count?: number
   cabinet_power?: number
-  air_cooled_power?: number
-  air_cooled_cabinets?: number
-  liquid_cooled_power?: number
-  liquid_cooled_cabinets?: number
   rack_power?: number          // 原文件中 editForm/display 用到但接口未声明
   power_architecture?: string
   hvac_architecture?: string
