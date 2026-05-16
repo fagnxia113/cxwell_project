@@ -1,23 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import dayjs from 'dayjs'
 import {
-  Users,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  Search,
-  RefreshCw,
-  ChevronLeft,
-  ChevronRight,
-  Calendar,
-  BarChart3,
-  Activity as ActivityIcon,
-  LayoutGrid,
-  FileText,
-  MapPin,
-  Clock
+  Users, CheckCircle2, Search, RefreshCw, ChevronLeft, ChevronRight,
+  Calendar, BarChart3, Activity as ActivityIcon, FileText, MapPin, Clock
 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { apiClient } from '../../utils/apiClient'
 import { useMessage } from '../../hooks/useMessage'
 import { useTranslation } from 'react-i18next'
@@ -56,38 +42,7 @@ interface CalendarData {
 
 type ViewMode = 'summary' | 'calendar' | 'records'
 
-const StatCard = ({ title, value, icon: Icon, color, delay }: any) => {
-  const colorConfig: Record<string, { bg: string; text: string }> = {
-    emerald: { bg: 'bg-emerald-500', text: 'text-emerald-600' },
-    blue: { bg: 'bg-blue-500', text: 'text-blue-600' },
-    indigo: { bg: 'bg-indigo-500', text: 'text-indigo-600' },
-    amber: { bg: 'bg-amber-500', text: 'text-amber-600' }
-  }
-  const config = colorConfig[color] || colorConfig.blue
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, type: 'spring', damping: 25 }}
-      className="bg-white p-6 rounded-lg border border-slate-100/80 shadow-sm relative overflow-hidden group"
-    >
-      <div className={cn(
-        "absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-[0.03]",
-        config.bg
-      )} />
-      <div className="flex items-center gap-5 relative z-10">
-        <div className={cn("p-4 rounded-2xl", config.bg)}>
-          <Icon size={24} strokeWidth={2.5} className="text-white" />
-        </div>
-        <div>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1.5">{title}</p>
-          <h3 className="text-3xl font-black text-slate-900 tracking-tighter leading-none">{value}</h3>
-        </div>
-      </div>
-    </motion.div>
-  )
-}
+const PAGE_SIZE = 50
 
 export default function AttendanceBoardPage() {
   const { t } = useTranslation()
@@ -99,25 +54,21 @@ export default function AttendanceBoardPage() {
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [page, setPage] = useState(0)
 
-  useEffect(() => {
-    loadData()
-  }, [currentMonth, viewMode])
+  useEffect(() => { loadData() }, [currentMonth])
+
+  useEffect(() => { setPage(0) }, [searchTerm, viewMode])
 
   const loadData = async () => {
     try {
       setLoading(true)
-      if (viewMode === 'summary') {
-        const res = await apiClient.get<any>(`/api/personnel/attendance/summary?year_month=${currentMonth}`)
-        if (res && res.success && res.data) {
-          setSummaryData(res.data)
-        }
-      } else {
-        const res = await apiClient.get<any>(`/api/personnel/attendance/calendar?year_month=${currentMonth}`)
-        if (res && res.success && res.data) {
-          setCalendarData(res.data)
-        }
-      }
+      const [summaryRes, calendarRes] = await Promise.all([
+        apiClient.get<any>(`/api/personnel/attendance/summary?year_month=${currentMonth}`).catch(() => null),
+        apiClient.get<any>(`/api/personnel/attendance/calendar?year_month=${currentMonth}`).catch(() => null)
+      ])
+      if (summaryRes?.success && summaryRes.data) setSummaryData(summaryRes.data)
+      if (calendarRes?.success && calendarRes.data) setCalendarData(calendarRes.data)
     } catch (err: any) {
       showError(t('personnel.attendance.load_failed') + ': ' + err.message)
     } finally {
@@ -142,34 +93,48 @@ export default function AttendanceBoardPage() {
     }
   }
 
-  const filteredSummary = summaryData?.employees.filter(emp =>
-    emp.name.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || []
+  const lowerSearch = searchTerm.toLowerCase()
 
-  const filteredCalendar = calendarData?.employees.filter(emp =>
-    emp.name.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || []
+  const filteredSummary = useMemo(() => {
+    if (!summaryData) return []
+    if (!searchTerm) return summaryData.employees
+    return summaryData.employees.filter(emp => emp.name.toLowerCase().includes(lowerSearch))
+  }, [summaryData, lowerSearch])
 
-  const getWeekdayLabel = (day: number) => {
-    const date = dayjs(`${currentMonth}-${String(day).padStart(2, '0')}`)
-    const weekdays = t('personnel.attendance.weekdays', { returnObjects: true }) as string[]
-    return weekdays[date.day()]
-  }
+  const filteredCalendar = useMemo(() => {
+    if (!calendarData) return []
+    if (!searchTerm) return calendarData.employees
+    return calendarData.employees.filter(emp => emp.name.toLowerCase().includes(lowerSearch))
+  }, [calendarData, lowerSearch])
+
+  const weekDays = ['日', '一', '二', '三', '四', '五', '六']
 
   const stats = useMemo(() => ({
     totalEmployees: summaryData?.employees.length || 0,
-    averageRate: summaryData?.employees.length 
-      ? Math.round(summaryData.employees.reduce((acc, curr) => acc + curr.attendanceRate, 0) / summaryData.employees.length) 
+    averageRate: summaryData?.employees.length
+      ? Math.round(summaryData.employees.reduce((acc, curr) => acc + curr.attendanceRate, 0) / summaryData.employees.length)
       : 0,
     totalWorked: summaryData?.employees.reduce((acc, curr) => acc + curr.workedDays, 0) || 0,
     totalExpected: summaryData?.employees.reduce((acc, curr) => acc + curr.expectedDays, 0) || 0
   }), [summaryData])
 
+  const calendarPageData = useMemo(() => {
+    const src = filteredCalendar
+    return src.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+  }, [filteredCalendar, page])
+
+  const summaryPageData = useMemo(() => {
+    const src = filteredSummary
+    return src.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+  }, [filteredSummary, page])
+
+  const currentList = viewMode === 'calendar' ? filteredCalendar : filteredSummary
+  const totalPages = Math.ceil(currentList.length / PAGE_SIZE)
+
   return (
     <div className="min-h-screen bg-mesh p-4 lg:p-6 space-y-4 animate-fade-in custom-scrollbar">
-      {/* Standard Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
+        <div>
           <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
             <div className="p-2 bg-primary rounded-lg text-white">
               <BarChart3 size={20} strokeWidth={2.5} />
@@ -177,7 +142,7 @@ export default function AttendanceBoardPage() {
             {t('personnel.attendance.board_title')}
           </h1>
           <p className="text-slate-500 text-sm mt-0.5">{t('personnel.attendance.subtitle')}</p>
-        </motion.div>
+        </div>
 
         <div className="flex gap-2">
           <button
@@ -191,15 +156,13 @@ export default function AttendanceBoardPage() {
         </div>
       </div>
 
-      {/* Analytics Dashboard */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard title={t('personnel.stats.total')} value={stats.totalEmployees} icon={Users} color="blue" delay={0.1} />
-        <StatCard title={t('personnel.attendance.columns.attendance_rate')} value={`${stats.averageRate}%`} icon={CheckCircle2} color="emerald" delay={0.2} />
-        <StatCard title={t('personnel.attendance.columns.worked_days')} value={stats.totalWorked} icon={ActivityIcon} color="indigo" delay={0.3} />
-        <StatCard title={t('personnel.attendance.columns.expected_days')} value={stats.totalExpected} icon={Calendar} color="amber" delay={0.4} />
+        <StatCard title={t('personnel.stats.total')} value={stats.totalEmployees} icon={Users} color="blue" />
+        <StatCard title={t('personnel.attendance.columns.attendance_rate')} value={`${stats.averageRate}%`} icon={CheckCircle2} color="emerald" />
+        <StatCard title={t('personnel.attendance.columns.worked_days')} value={stats.totalWorked} icon={ActivityIcon} color="indigo" />
+        <StatCard title={t('personnel.attendance.columns.expected_days')} value={stats.totalExpected} icon={Calendar} color="amber" />
       </div>
 
-      {/* Filter & Control Bar */}
       <div className="premium-card p-4 bg-white/60 backdrop-blur-xl border-none flex flex-wrap items-center gap-4 shadow-sm">
         <div className="flex items-center gap-1 bg-slate-100/50 p-1 rounded-lg">
           <button
@@ -264,9 +227,22 @@ export default function AttendanceBoardPage() {
             <ChevronRight size={16} className="text-slate-400" />
           </button>
         </div>
+
+        {totalPages > 1 && viewMode !== 'records' && (
+          <div className="flex items-center gap-2">
+            <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
+              className="p-1.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all">
+              <ChevronLeft size={14} />
+            </button>
+            <span className="text-xs font-bold text-slate-500">{page + 1}/{totalPages}</span>
+            <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}
+              className="p-1.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all">
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Main Content View */}
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-32 flex flex-col items-center gap-4 text-slate-300">
@@ -288,13 +264,13 @@ export default function AttendanceBoardPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {filteredSummary.length === 0 ? (
+                    {summaryPageData.length === 0 ? (
                       <tr>
                         <td colSpan={5} className="px-8 py-20 text-center text-slate-300 font-bold uppercase tracking-widest italic">{t('common.no_data')}</td>
                       </tr>
                     ) : (
-                      filteredSummary.map(emp => (
-                        <tr key={emp.employeeId} className="group hover:bg-slate-50/50 transition-all">
+                      summaryPageData.map(emp => (
+                        <tr key={emp.employeeId} className="group hover:bg-slate-50/50 transition-colors">
                           <td className="px-8 py-4">
                             <div className="flex items-center gap-3">
                               <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
@@ -314,7 +290,7 @@ export default function AttendanceBoardPage() {
                               <div className="flex-1 bg-slate-100 rounded-full h-1.5 overflow-hidden">
                                 <div
                                   className={cn(
-                                    "h-full rounded-full transition-all duration-1000",
+                                    "h-full rounded-full",
                                     emp.attendanceRate >= 80 ? "bg-emerald-500" :
                                     emp.attendanceRate >= 50 ? "bg-amber-500" : "bg-rose-500"
                                   )}
@@ -350,7 +326,7 @@ export default function AttendanceBoardPage() {
                 <table className="w-full border-collapse">
                   <thead className="bg-slate-50/50 border-b border-slate-100">
                     <tr>
-                      <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest sticky left-0 bg-slate-50/50 backdrop-blur-md z-10">员工姓名</th>
+                      <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest sticky left-0 bg-slate-50/50 z-10">{t('personnel.attendance.columns.employee')}</th>
                       {calendarData && calendarData.days.map(day => {
                         const date = dayjs(`${currentMonth}-${String(day).padStart(2, '0')}`);
                         const isWeekend = date.day() === 0 || date.day() === 6;
@@ -366,21 +342,21 @@ export default function AttendanceBoardPage() {
                             <div className={cn(
                               "text-[8px] font-black opacity-50 uppercase",
                               isWeekend ? "text-rose-300" : "text-slate-400"
-                            )}>{getWeekdayLabel(day).slice(-1)}</div>
+                            )}>{weekDays[date.day()]}</div>
                           </th>
                         );
                       })}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {!calendarData || filteredCalendar.length === 0 ? (
+                    {!calendarData || calendarPageData.length === 0 ? (
                       <tr>
                         <td colSpan={35} className="px-8 py-20 text-center text-slate-300 font-bold uppercase tracking-widest italic">{t('common.no_data')}</td>
                       </tr>
                     ) : (
-                      filteredCalendar.map(emp => (
-                        <tr key={emp.employeeId} className="group hover:bg-slate-50/30 transition-all">
-                          <td className="px-6 py-3 sticky left-0 bg-white group-hover:bg-slate-50 z-10 border-r border-slate-50 shadow-[2px_0_10px_rgba(0,0,0,0.02)]">
+                      calendarPageData.map(emp => (
+                        <tr key={emp.employeeId} className="group hover:bg-slate-50/30 transition-colors">
+                          <td className="px-6 py-3 sticky left-0 bg-white group-hover:bg-slate-50 z-10 border-r border-slate-50">
                             <div className="flex items-center gap-2">
                               <div className="w-7 h-7 rounded bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold">
                                 {emp.name?.charAt(0)}
@@ -394,46 +370,24 @@ export default function AttendanceBoardPage() {
                             const record = emp.calendar[dateStr]
                             const isWeekend = date.day() === 0 || date.day() === 6
 
+                            const tooltipParts: string[] = []
+                            if (record?.hasClockedIn) {
+                              tooltipParts.push(record.projectName || '')
+                              if (record.checkInTime) tooltipParts.push(`IN: ${dayjs(record.checkInTime).format('HH:mm')}`)
+                              if (record.checkOutTime) tooltipParts.push(`OUT: ${dayjs(record.checkOutTime).format('HH:mm')}`)
+                              if (record.locationName) tooltipParts.push(record.locationName)
+                            }
+
                             return (
                               <td key={day} className={cn(
-                                "px-1 py-3 text-center relative group/cell",
+                                "px-1 py-3 text-center",
                                 isWeekend ? "bg-rose-50/10" : ""
                               )}>
                                 {record?.hasClockedIn ? (
-                                  <>
-                                    <div 
-                                      className="w-3 h-3 mx-auto rounded-full bg-emerald-500 shadow-sm transition-transform hover:scale-125 cursor-pointer" 
-                                    />
-                                    {/* Optimized Tooltip */}
-                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-900/95 backdrop-blur-md text-white p-3 rounded-xl shadow-2xl opacity-0 invisible group-hover/cell:opacity-100 group-hover/cell:visible transition-all z-50 pointer-events-none border border-white/10">
-                                      <div className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2 pb-2 border-b border-white/10">
-                                        {record.projectName || 'Default Project'}
-                                      </div>
-                                      <div className="space-y-2">
-                                        <div className="flex items-center justify-between gap-2">
-                                          <div className="flex items-center gap-1.5 text-slate-400">
-                                            <Clock size={10} />
-                                            <span className="text-[9px] font-bold uppercase">{t('project.attendance.check_in') || 'IN'}</span>
-                                          </div>
-                                          <span className="text-[11px] font-black">{record.checkInTime ? dayjs(record.checkInTime).format('HH:mm') : '--:--'}</span>
-                                        </div>
-                                        <div className="flex items-center justify-between gap-2">
-                                          <div className="flex items-center gap-1.5 text-slate-400">
-                                            <Clock size={10} />
-                                            <span className="text-[9px] font-bold uppercase">{t('project.attendance.check_out') || 'OUT'}</span>
-                                          </div>
-                                          <span className="text-[11px] font-black">{record.checkOutTime ? dayjs(record.checkOutTime).format('HH:mm') : '--:--'}</span>
-                                        </div>
-                                        {record.locationName && (
-                                          <div className="pt-1.5 flex items-start gap-1.5 border-t border-white/10">
-                                            <MapPin size={10} className="mt-0.5 text-emerald-500" />
-                                            <span className="text-[9px] font-medium leading-relaxed text-slate-300">{record.locationName}</span>
-                                          </div>
-                                        )}
-                                      </div>
-                                      <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-slate-900/95" />
-                                    </div>
-                                  </>
+                                  <div
+                                    className="w-3 h-3 mx-auto rounded-full bg-emerald-500 shadow-sm transition-transform hover:scale-125 cursor-pointer"
+                                    title={tooltipParts.join(' | ')}
+                                  />
                                 ) : (
                                   <div className="w-1 h-1 mx-auto rounded-full bg-slate-100" />
                                 )}
@@ -455,7 +409,6 @@ export default function AttendanceBoardPage() {
         )}
       </div>
 
-      {/* Legend Footer */}
       <div className="flex items-center gap-6 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-emerald-500" />
@@ -472,6 +425,31 @@ export default function AttendanceBoardPage() {
         <div className="ml-auto flex items-center gap-2 italic">
           <ActivityIcon size={14} />
           <span>{t('personnel.attendance.analysis_engine')}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function StatCard({ title, value, icon: Icon, color }: any) {
+  const colorConfig: Record<string, { bg: string; text: string }> = {
+    emerald: { bg: 'bg-emerald-500', text: 'text-emerald-600' },
+    blue: { bg: 'bg-blue-500', text: 'text-blue-600' },
+    indigo: { bg: 'bg-indigo-500', text: 'text-indigo-600' },
+    amber: { bg: 'bg-amber-500', text: 'text-amber-600' }
+  }
+  const config = colorConfig[color] || colorConfig.blue
+
+  return (
+    <div className="bg-white p-6 rounded-lg border border-slate-100/80 shadow-sm relative overflow-hidden">
+      <div className={cn("absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-[0.03]", config.bg)} />
+      <div className="flex items-center gap-5 relative z-10">
+        <div className={cn("p-4 rounded-2xl", config.bg)}>
+          <Icon size={24} strokeWidth={2.5} className="text-white" />
+        </div>
+        <div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1.5">{title}</p>
+          <h3 className="text-3xl font-black text-slate-900 tracking-tighter leading-none">{value}</h3>
         </div>
       </div>
     </div>

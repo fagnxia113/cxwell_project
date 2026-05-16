@@ -1,20 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  ChevronLeft,
-  ChevronRight,
-  Download,
-  Users,
-  Briefcase,
-  Plane,
-  Home,
-  Info,
-  Search,
-  Filter,
-  Heart,
-  Stethoscope,
-  Flag,
-  Ban
+  ChevronLeft, ChevronRight, Download, Users, Briefcase, Plane, Home,
+  Info, Search, Filter, Heart, Stethoscope, Flag, Ban, ChevronDown
 } from 'lucide-react'
 import dayjs from 'dayjs'
 import { apiClient } from '../../utils/apiClient'
@@ -42,31 +30,81 @@ interface ProjectInfo {
   name: string
 }
 
+interface CellInfo {
+  bgClass: string
+  text: string
+  title: string
+}
+
 const PROJECT_COLORS = [
   'bg-blue-500', 'bg-indigo-500', 'bg-violet-500', 'bg-purple-500',
   'bg-fuchsia-500', 'bg-pink-500', 'bg-rose-500', 'bg-cyan-500',
   'bg-teal-500', 'bg-sky-500',
 ]
 
-const TYPE_CONFIG: Record<string, { color: string; textColor: string; icon: any }> = {
-  work: { color: 'bg-blue-500', textColor: 'text-blue-600', icon: Briefcase },
-  home_rest: { color: 'bg-emerald-500', textColor: 'text-emerald-600', icon: Plane },
-  rest: { color: 'bg-amber-500', textColor: 'text-amber-600', icon: Home },
-  annual_leave: { color: 'bg-rose-500', textColor: 'text-rose-600', icon: Heart },
-  medical_leave: { color: 'bg-orange-500', textColor: 'text-orange-600', icon: Stethoscope },
-  public_holiday: { color: 'bg-purple-500', textColor: 'text-purple-600', icon: Flag },
-  unpaid_leave: { color: 'bg-slate-500', textColor: 'text-slate-600', icon: Ban },
+const TYPE_BG: Record<string, string> = {
+  work: 'bg-blue-500',
+  home_rest: 'bg-emerald-500',
+  rest: 'bg-amber-500',
+  annual_leave: 'bg-rose-500',
+  medical_leave: 'bg-orange-500',
+  public_holiday: 'bg-purple-500',
+  unpaid_leave: 'bg-slate-500',
 }
 
-function getProjectColor(projectId: string, projectIds: string[]): string {
-  const idx = projectIds.indexOf(projectId)
-  return PROJECT_COLORS[idx % PROJECT_COLORS.length]
-}
+const PAGE_SIZE = 50
 
 function getProjectAbbr(name: string): string {
   if (!name) return ''
   if (name.length <= 3) return name
   return name.slice(0, 3)
+}
+
+function buildCellMatrix(
+  personnel: PersonnelSchedule[],
+  days: string[],
+  projectMap: Record<string, string>,
+  sortedProjectIds: string[],
+  t: any
+): Map<string, CellInfo[]> {
+  const matrix = new Map<string, CellInfo[]>()
+  for (const person of personnel) {
+    const row: CellInfo[] = []
+    for (const dateStr of days) {
+      const segment = person.segments.find(s => dateStr >= s.startDate && dateStr <= s.endDate)
+      if (!segment) {
+        row.push({ bgClass: 'bg-slate-50', text: '', title: '' })
+        continue
+      }
+      if (segment.type === 'work' && segment.projectId) {
+        const projName = projectMap[segment.projectId] || ''
+        const abbr = getProjectAbbr(projName)
+        const idx = sortedProjectIds.indexOf(segment.projectId)
+        const color = PROJECT_COLORS[idx % PROJECT_COLORS.length]
+        row.push({
+          bgClass: color,
+          text: abbr,
+          title: `${person.employeeName} ${dateStr}: ${projName}`
+        })
+      } else if (segment.type === 'work') {
+        row.push({
+          bgClass: 'bg-blue-400',
+          text: '',
+          title: `${person.employeeName} ${dateStr}: ${t('personnel.rotation.on_duty')}`
+        })
+      } else {
+        const bg = TYPE_BG[segment.type] || 'bg-slate-300'
+        const label = t(`personnel.rotation.types.${segment.type}`)
+        row.push({
+          bgClass: bg,
+          text: '',
+          title: `${person.employeeName} ${dateStr}: ${label}`
+        })
+      }
+    }
+    matrix.set(person.employeeId, row)
+  }
+  return matrix
 }
 
 export default function AllRotationPlanPage() {
@@ -78,20 +116,26 @@ export default function AllRotationPlanPage() {
   const [projectMap, setProjectMap] = useState<Record<string, string>>({})
   const [projects, setProjects] = useState<ProjectInfo[]>([])
   const [filterProjectId, setFilterProjectId] = useState<string>('all')
-  const [hoveredCell, setHoveredCell] = useState<{ row: string, col: string } | null>(null)
+  const [page, setPage] = useState(0)
 
   const daysInMonth = dayjs(currentMonth).daysInMonth()
-  const days = Array.from({ length: daysInMonth }, (_, i) => dayjs(currentMonth + '-' + (i + 1).toString().padStart(2, '0')))
+  const dayStrings = useMemo(() =>
+    Array.from({ length: daysInMonth }, (_, i) => {
+      const d = (i + 1).toString().padStart(2, '0')
+      return `${currentMonth}-${d}`
+    }),
+    [currentMonth, daysInMonth]
+  )
 
   const sortedProjectIds = useMemo(() => Object.keys(projectMap).sort(), [projectMap])
 
-  useEffect(() => {
-    loadProjects()
-  }, [])
+  const today = dayjs().format('YYYY-MM-DD')
 
-  useEffect(() => {
-    loadReport()
-  }, [currentMonth])
+  useEffect(() => { loadProjects() }, [])
+
+  useEffect(() => { loadReport() }, [currentMonth])
+
+  useEffect(() => { setPage(0) }, [searchTerm, filterProjectId])
 
   const loadProjects = async () => {
     try {
@@ -118,25 +162,21 @@ export default function AllRotationPlanPage() {
     }
   }
 
-  const getStatusForDay = (employee: PersonnelSchedule, date: dayjs.Dayjs) => {
-    const dateStr = date.format('YYYY-MM-DD')
-    const segment = employee.segments.find(s => dateStr >= s.startDate && dateStr <= s.endDate)
-    if (!segment) return { type: 'none' as const, projectId: null }
-    return { type: segment.type, projectId: segment.projectId }
-  }
-
   const changeMonth = (delta: number) => {
     setCurrentMonth(dayjs(currentMonth).add(delta, 'month').format('YYYY-MM'))
   }
 
-  const filteredData = data.filter(p => {
-    const matchSearch = p.employeeName.toLowerCase().includes(searchTerm.toLowerCase())
-    if (filterProjectId === 'all') return matchSearch
-    const matchProject = p.segments.some(s => s.projectId === filterProjectId)
-    return matchSearch && matchProject
-  })
+  const lowerSearch = searchTerm.toLowerCase()
 
-  const today = dayjs().format('YYYY-MM-DD')
+  const filteredData = useMemo(() => {
+    if (!searchTerm && filterProjectId === 'all') return data
+    return data.filter(p => {
+      const matchSearch = !searchTerm || p.employeeName.toLowerCase().includes(lowerSearch)
+      if (filterProjectId === 'all') return matchSearch
+      const matchProject = p.segments.some(s => s.projectId === filterProjectId)
+      return matchSearch && matchProject
+    })
+  }, [data, lowerSearch, filterProjectId])
 
   const stats = useMemo(() => ({
     total: data.length,
@@ -146,27 +186,18 @@ export default function AllRotationPlanPage() {
     notReported: data.filter(p => p.segments.length === 0).length,
   }), [data, today])
 
-  const getCellContent = (statusInfo: { type: string, projectId: string | null }) => {
-    if (statusInfo.type === 'none') return null
+  const cellMatrix = useMemo(() =>
+    buildCellMatrix(filteredData, dayStrings, projectMap, sortedProjectIds, t),
+    [filteredData, dayStrings, projectMap, sortedProjectIds, t]
+  )
 
-    if (statusInfo.type === 'work' && statusInfo.projectId) {
-      const projName = projectMap[statusInfo.projectId] || ''
-      const abbr = getProjectAbbr(projName)
-      const color = getProjectColor(statusInfo.projectId, sortedProjectIds)
-      return { bgClass: color, text: abbr, fullText: projName }
-    }
+  const totalPages = Math.ceil(filteredData.length / PAGE_SIZE)
+  const pageData = useMemo(() =>
+    filteredData.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE),
+    [filteredData, page]
+  )
 
-    if (statusInfo.type === 'work') {
-      return { bgClass: 'bg-blue-400', text: '', fullText: t('personnel.rotation.on_duty') }
-    }
-
-    const config = TYPE_CONFIG[statusInfo.type]
-    if (config) {
-      return { bgClass: config.color, text: '', fullText: t(`personnel.rotation.types.${statusInfo.type}`) }
-    }
-
-    return null
-  }
+  const weekDays = ['日', '一', '二', '三', '四', '五', '六']
 
   return (
     <div className="min-h-screen bg-mesh p-4 lg:p-6 space-y-4 animate-fade-in custom-scrollbar">
@@ -191,7 +222,6 @@ export default function AllRotationPlanPage() {
               <ChevronRight size={18} className="text-slate-400" />
             </button>
           </div>
-
           <button className="p-2.5 bg-white border border-slate-200 text-slate-400 hover:text-blue-600 rounded-xl transition-all shadow-sm">
             <Download size={18} />
           </button>
@@ -232,7 +262,6 @@ export default function AllRotationPlanPage() {
             className="w-full pl-12 pr-4 py-3 bg-white border border-slate-100 rounded-2xl shadow-sm outline-none focus:ring-4 ring-blue-500/10 transition-all text-sm font-bold"
           />
         </div>
-
         <div className="flex items-center gap-2">
           <Filter size={14} className="text-slate-400" />
           <select
@@ -246,6 +275,30 @@ export default function AllRotationPlanPage() {
             ))}
           </select>
         </div>
+        {totalPages > 1 && (
+          <div className="flex items-center gap-2 ml-auto">
+            <button
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all shadow-sm"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="text-xs font-bold text-slate-500">
+              {page + 1} / {totalPages}
+            </span>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+              disabled={page >= totalPages - 1}
+              className="p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all shadow-sm"
+            >
+              <ChevronRight size={16} />
+            </button>
+            <span className="text-[10px] text-slate-400">
+              {t('personnel.rotation.showing_range', { from: page * PAGE_SIZE + 1, to: Math.min((page + 1) * PAGE_SIZE, filteredData.length), total: filteredData.length })}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-[40px] border border-slate-100 shadow-2xl shadow-slate-200/40 overflow-hidden">
@@ -256,18 +309,22 @@ export default function AllRotationPlanPage() {
                 <th className="sticky left-0 z-20 bg-slate-50/50 px-8 py-6 text-left border-r border-slate-100 min-w-[160px]">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('personnel.rotation.personnel')}</span>
                 </th>
-                {days.map(day => (
-                  <th key={day.format('D')} className={cn(
-                    "px-2 py-6 text-center min-w-[40px] border-r border-slate-100/50",
-                    day.day() === 0 || day.day() === 6 ? "bg-amber-50/30" : ""
-                  )}>
-                    <div className="text-[10px] font-black text-slate-400 mb-1">{day.format('ddd').toUpperCase()}</div>
-                    <div className={cn(
-                      "text-sm font-black",
-                      day.isSame(dayjs(), 'day') ? "text-accent" : "text-primary"
-                    )}>{day.format('D')}</div>
-                  </th>
-                ))}
+                {dayStrings.map((ds, i) => {
+                  const d = dayjs(ds)
+                  const isWeekend = d.day() === 0 || d.day() === 6
+                  return (
+                    <th key={ds} className={cn(
+                      "px-2 py-6 text-center min-w-[40px] border-r border-slate-100/50",
+                      isWeekend ? "bg-amber-50/30" : ""
+                    )}>
+                      <div className="text-[10px] font-black text-slate-400 mb-1">{weekDays[d.day()]}</div>
+                      <div className={cn(
+                        "text-sm font-black",
+                        ds === today ? "text-accent" : "text-primary"
+                      )}>{i + 1}</div>
+                    </th>
+                  )
+                })}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -280,63 +337,55 @@ export default function AllRotationPlanPage() {
                     </div>
                   </td>
                 </tr>
-              ) : filteredData.length === 0 ? (
+              ) : pageData.length === 0 ? (
                 <tr>
                   <td colSpan={daysInMonth + 1} className="py-24 text-center text-slate-300 font-black uppercase text-xs tracking-widest">
                     {t('personnel.rotation.no_data')}
                   </td>
                 </tr>
               ) : (
-                filteredData.map(person => (
-                  <tr key={person.employeeId} className="group hover:bg-slate-50/50 transition-colors">
-                    <td className="sticky left-0 z-10 bg-white group-hover:bg-slate-50/50 px-8 py-5 border-r border-slate-100 shadow-[10px_0_15px_-10px_rgba(0,0,0,0.05)]">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center font-black text-[10px] text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                          {person.employeeName[0]}
+                pageData.map(person => {
+                  const cells = cellMatrix.get(person.employeeId)
+                  return (
+                    <tr key={person.employeeId} className="group hover:bg-slate-50/50 transition-colors">
+                      <td className="sticky left-0 z-10 bg-white group-hover:bg-slate-50/50 px-8 py-5 border-r border-slate-100 shadow-[10px_0_15px_-10px_rgba(0,0,0,0.05)]">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center font-black text-[10px] text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                            {person.employeeName[0]}
+                          </div>
+                          <div>
+                            <span className="text-sm font-bold text-primary truncate max-w-[120px] block">{person.employeeName}</span>
+                            {person.position && <span className="text-[9px] text-slate-400">{person.position}</span>}
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-sm font-bold text-primary truncate max-w-[120px] block">{person.employeeName}</span>
-                          {person.position && <span className="text-[9px] text-slate-400">{person.position}</span>}
-                        </div>
-                      </div>
-                    </td>
-                    {days.map(day => {
-                      const statusInfo = getStatusForDay(person, day)
-                      const cellContent = getCellContent(statusInfo)
-                      const isHovered = hoveredCell?.row === person.employeeId && hoveredCell?.col === day.format('D')
-                      return (
-                        <td key={day.format('D')} className="p-0.5 border-r border-slate-100/30">
+                      </td>
+                      {cells ? cells.map((cell, i) => (
+                        <td key={i} className="p-0.5 border-r border-slate-100/30">
                           <div
                             className={cn(
-                              "w-full h-8 rounded-md transition-all relative flex items-center justify-center",
-                              cellContent ? cellContent.bgClass : "bg-slate-50",
-                              cellContent && "shadow-sm",
-                              isHovered && "ring-2 ring-white z-10 scale-110"
+                              "w-full h-8 rounded-md flex items-center justify-center cell-hover",
+                              cell.bgClass,
+                              cell.text && "shadow-sm"
                             )}
-                            onMouseEnter={() => setHoveredCell({ row: person.employeeId, col: day.format('D') })}
-                            onMouseLeave={() => setHoveredCell(null)}
-                            title={cellContent
-                              ? `${person.employeeName} ${day.format('YYYY-MM-DD')}: ${cellContent.fullText}`
-                              : ''
-                            }
+                            title={cell.title}
                           >
-                            {cellContent?.text && (
+                            {cell.text && (
                               <span className="text-[7px] font-black text-white/90 truncate px-0.5 leading-none">
-                                {cellContent.text}
+                                {cell.text}
                               </span>
-                            )}
-                            {isHovered && cellContent?.fullText && (
-                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded-lg whitespace-nowrap z-50 shadow-lg">
-                                {cellContent.fullText}
-                                <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-800"></div>
-                              </div>
                             )}
                           </div>
                         </td>
-                      )
-                    })}
-                  </tr>
-                ))
+                      )) : (
+                        dayStrings.map((_, i) => (
+                          <td key={i} className="p-0.5 border-r border-slate-100/30">
+                            <div className="w-full h-8 rounded-md bg-slate-50"></div>
+                          </td>
+                        ))
+                      )}
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>
@@ -348,6 +397,8 @@ export default function AllRotationPlanPage() {
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .cell-hover { transition: transform 0.1s, box-shadow 0.1s; }
+        .cell-hover:hover { transform: scale(1.15); box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 10; position: relative; }
       `}} />
     </div>
   )

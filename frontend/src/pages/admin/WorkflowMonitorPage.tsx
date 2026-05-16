@@ -49,8 +49,21 @@ const WorkflowMonitorPage: React.FC = () => {
   // 自动刷新逻辑 (30秒)
   useEffect(() => {
     fetchData(filterStatus);
-    const interval = setInterval(() => fetchData(filterStatus), 30000);
-    return () => clearInterval(interval);
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchData(filterStatus);
+      }
+    }, 30000);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchData(filterStatus);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [fetchData, filterStatus]);
 
   // 工具方法：格式化时长

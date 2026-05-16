@@ -117,6 +117,7 @@ export default function PersonnelListPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [currentUser, setCurrentUser] = useState<any>(null)
 
@@ -142,7 +143,12 @@ export default function PersonnelListPage() {
     fetchDepartments()
   }, [])
 
-  useEffect(() => { loadEmployees() }, [page, searchTerm])
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearchTerm(searchTerm), 300)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  useEffect(() => { loadEmployees() }, [page, debouncedSearchTerm])
 
   const loadPositions = async () => {
     try {
@@ -157,7 +163,7 @@ export default function PersonnelListPage() {
       const res = await orgApi.getEmployees({
         pageNum: page,
         pageSize: 12,
-        name: searchTerm || undefined
+        name: debouncedSearchTerm || undefined
       })
       if (res && res.success) {
         setEmployees(res.data.list || [])
@@ -167,20 +173,21 @@ export default function PersonnelListPage() {
     } catch (e: any) { showError(e.message || t('personnel.error.load_failed')) } finally { setLoading(false) }
   }
 
+  const flatDeptMap = useMemo(() => {
+    const map = new Map<string, string>()
+    const flatten = (nodes: any[]) => {
+      for (const node of nodes) {
+        map.set(String(node.id), node.name)
+        if (node.children) flatten(node.children)
+      }
+    }
+    flatten(departments)
+    return map
+  }, [departments])
+
   const getDepartmentName = (id: string) => {
     if (!id) return '-'
-    const strId = String(id)
-    const findDept = (nodes: any[]): any => {
-      for (const node of nodes) {
-        if (String(node.id) === strId) return node
-        if (node.children) {
-          const found = findDept(node.children)
-          if (found) return found
-        }
-      }
-      return null
-    }
-    return findDept(departments)?.name || '-'
+    return flatDeptMap.get(String(id)) || '-'
   }
 
   const getPositionName = (id: string) => {

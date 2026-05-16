@@ -39,7 +39,6 @@ export function useNotificationSystem() {
         setPendingCount(typeof pendingRes.data === 'number' ? pendingRes.data : (pendingRes.data?.count || 0))
       }
     } catch (error) {
-      console.error('Fetch counts failed:', error)
     }
   }, [])
 
@@ -55,7 +54,6 @@ export function useNotificationSystem() {
         setNotifications([])
       }
     } catch (error) {
-      console.error('Fetch notification list failed:', error)
       setNotifications([])
     } finally {
       setLoading(false)
@@ -73,10 +71,21 @@ export function useNotificationSystem() {
   useEffect(() => {
     if (pollingRef.current) clearInterval(pollingRef.current)
     pollingRef.current = setInterval(() => {
-      fetchCounts()
+      if (document.visibilityState === 'visible') {
+        fetchCounts()
+      }
     }, 30000)
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchCounts()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current)
+      document.removeEventListener('visibilitychange', handleVisibility)
     }
   }, [fetchCounts])
 
@@ -89,7 +98,6 @@ export function useNotificationSystem() {
         return true
       }
     } catch (error) {
-      console.error('Mark as read failed:', error)
     }
     return false
   }

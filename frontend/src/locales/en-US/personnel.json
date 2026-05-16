@@ -131,6 +131,7 @@
     "all_plans_title": "All Staff Rotation Plans",
     "all_plans_subtitle": "View all employees' monthly attendance plans at a glance.",
     "all_plans_hint": "Data generated from employee self-reported monthly plans",
+    "showing_range": "Showing {{from}}-{{to}} / {{total}}",
     "stat_total": "Total Staff",
     "stat_working": "Working",
     "stat_home_rest": "Home Leave",

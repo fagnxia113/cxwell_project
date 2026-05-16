@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { projectApi } from '../api/projectApi'
 import { useMessage } from './useMessage'
@@ -67,18 +67,19 @@ export function useProjectList() {
     }
   }
 
-  const activeStatuses = ['2', '3'];
-  const completedStatuses = ['4', '5'];
-
-  const stats = {
-    totalCount: projects.length,
-    activeCount: projects.filter(p => activeStatuses.includes(p.status)).length,
-    completedCount: projects.filter(p => completedStatuses.includes(p.status)).length,
-    avgProgress: projects.length > 0 
-      ? Math.round(projects.reduce((acc, p) => acc + (p.progress || 0), 0) / projects.length) 
-      : 0,
-    geographyCount: Array.from(new Set(projects.map(p => p.country).filter(Boolean))).length
-  }
+  const stats = useMemo(() => {
+    const activeStatuses = ['2', '3'];
+    const completedStatuses = ['4', '5'];
+    return {
+      totalCount: projects.length,
+      activeCount: projects.filter(p => activeStatuses.includes(p.status)).length,
+      completedCount: projects.filter(p => completedStatuses.includes(p.status)).length,
+      avgProgress: projects.length > 0
+        ? Math.round(projects.reduce((acc, p) => acc + (p.progress || 0), 0) / projects.length)
+        : 0,
+      geographyCount: Array.from(new Set(projects.map(p => p.country).filter(Boolean))).length
+    }
+  }, [projects])
 
   return {
     projects,

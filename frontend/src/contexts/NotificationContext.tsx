@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
+import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode, useCallback } from 'react'
 import { notificationService, type Notification } from '../services/notificationService'
 
 interface NotificationContextType {
@@ -27,7 +27,6 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       const data = await notificationService.list()
       setNotifications(data || [])
     } catch (error) {
-      console.error('获取通知失败:', error)
     } finally {
       setLoading(false)
     }
@@ -42,7 +41,6 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         )
       )
     } catch (error) {
-      console.error('标记通知已读失败:', error)
     }
   }, [])
 
@@ -53,7 +51,6 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         prev.map(notif => ({ ...notif, read: true }))
       )
     } catch (error) {
-      console.error('标记所有通知已读失败:', error)
     }
   }, [])
 
@@ -62,7 +59,6 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       await notificationService.delete(id)
       setNotifications(prev => prev.filter(notif => notif.id !== id))
     } catch (error) {
-      console.error('删除通知失败:', error)
     }
   }, [])
 
@@ -70,28 +66,43 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     setNotifications([])
   }, [])
 
-  const unreadCount = notifications.filter(n => !n.read).length
+  const unreadCount = useMemo(() => notifications.filter(n => !n.read).length, [notifications])
 
   useEffect(() => {
     fetchNotifications()
-    
-    const interval = setInterval(fetchNotifications, 60000)
-    return () => clearInterval(interval)
+
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchNotifications()
+      }
+    }, 60000)
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchNotifications()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
   }, [fetchNotifications])
 
+  const contextValue = useMemo(() => ({
+    notifications,
+    unreadCount,
+    loading,
+    fetchNotifications,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    clearAll
+  }), [notifications, unreadCount, loading, fetchNotifications, markAsRead, markAllAsRead, deleteNotification, clearAll])
+
   return (
-    <NotificationContext.Provider
-      value={{
-        notifications,
-        unreadCount,
-        loading,
-        fetchNotifications,
-        markAsRead,
-        markAllAsRead,
-        deleteNotification,
-        clearAll
-      }}
-    >
+    <NotificationContext.Provider value={contextValue}>
       {children}
     </NotificationContext.Provider>
   )
