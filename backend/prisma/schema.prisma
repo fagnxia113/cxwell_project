@@ -200,6 +200,10 @@ model Project {
   fireArchitecture         String?               @map("fire_architecture") @db.Text
   hvacArchitecture         String?               @map("hvac_architecture") @db.Text
   itCapacity               Decimal?              @map("it_capacity") @db.Decimal(10, 2)
+  airCooledPower           Decimal?              @map("air_cooled_power") @db.Decimal(10, 2)
+  airCooledCabinets        Int?                  @map("air_cooled_cabinets")
+  liquidCooledPower        Decimal?              @map("liquid_cooled_power") @db.Decimal(10, 2)
+  liquidCooledCabinets     Int?                  @map("liquid_cooled_cabinets")
   powerArchitecture        String?               @map("power_architecture") @db.Text
   weakElectricArchitecture String?               @map("weak_electric_architecture") @db.Text
   address                  String?               @map("address") @db.VarChar(500)
