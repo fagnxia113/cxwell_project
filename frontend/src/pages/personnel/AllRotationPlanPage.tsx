@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  ChevronLeft, ChevronRight, Download, Users, Briefcase, Plane, Home,
-  Info, Search, Filter, Heart, Stethoscope, Flag, Ban, ChevronDown
+  ChevronLeft, ChevronRight, Download, Users, Briefcase, Coffee,
+  Info, Search, Filter
 } from 'lucide-react'
 import dayjs from 'dayjs'
 import { apiClient } from '../../utils/apiClient'
@@ -36,35 +36,30 @@ interface CellInfo {
   title: string
 }
 
-const PROJECT_COLORS = [
-  'bg-blue-500', 'bg-indigo-500', 'bg-violet-500', 'bg-purple-500',
-  'bg-fuchsia-500', 'bg-pink-500', 'bg-rose-500', 'bg-cyan-500',
-  'bg-teal-500', 'bg-sky-500',
-]
+const WORK_TYPES = new Set<string>(['work'])
+const LEAVE_TYPES = new Set<string>(['rest', 'home_rest', 'annual_leave', 'medical_leave', 'public_holiday', 'unpaid_leave'])
 
-const TYPE_BG: Record<string, string> = {
-  work: 'bg-blue-500',
-  home_rest: 'bg-emerald-500',
-  rest: 'bg-amber-500',
-  annual_leave: 'bg-rose-500',
-  medical_leave: 'bg-orange-500',
-  public_holiday: 'bg-purple-500',
-  unpaid_leave: 'bg-slate-500',
+const LEAVE_ABBR: Record<string, string> = {
+  home_rest: '休',
+  rest: '息',
+  annual_leave: '年',
+  medical_leave: '病',
+  public_holiday: '公',
+  unpaid_leave: '无',
 }
 
 const PAGE_SIZE = 50
 
 function getProjectAbbr(name: string): string {
   if (!name) return ''
-  if (name.length <= 3) return name
-  return name.slice(0, 3)
+  if (name.length <= 2) return name
+  return name.slice(0, 2)
 }
 
 function buildCellMatrix(
   personnel: PersonnelSchedule[],
   days: string[],
   projectMap: Record<string, string>,
-  sortedProjectIds: string[],
   t: any
 ): Map<string, CellInfo[]> {
   const matrix = new Map<string, CellInfo[]>()
@@ -73,33 +68,28 @@ function buildCellMatrix(
     for (const dateStr of days) {
       const segment = person.segments.find(s => dateStr >= s.startDate && dateStr <= s.endDate)
       if (!segment) {
-        row.push({ bgClass: 'bg-slate-50', text: '', title: '' })
+        row.push({ bgClass: '', text: '', title: '' })
         continue
       }
-      if (segment.type === 'work' && segment.projectId) {
-        const projName = projectMap[segment.projectId] || ''
-        const abbr = getProjectAbbr(projName)
-        const idx = sortedProjectIds.indexOf(segment.projectId)
-        const color = PROJECT_COLORS[idx % PROJECT_COLORS.length]
+      if (WORK_TYPES.has(segment.type)) {
+        const projName = segment.projectId ? (projectMap[segment.projectId] || '') : ''
+        const abbr = projName ? getProjectAbbr(projName) : ''
+        const label = t('personnel.rotation.types.work')
         row.push({
-          bgClass: color,
+          bgClass: 'bg-blue-500',
           text: abbr,
-          title: `${person.employeeName} ${dateStr}: ${projName}`
+          title: `${person.employeeName} ${dateStr}: ${label}${projName ? ' - ' + projName : ''}`
         })
-      } else if (segment.type === 'work') {
-        row.push({
-          bgClass: 'bg-blue-400',
-          text: '',
-          title: `${person.employeeName} ${dateStr}: ${t('personnel.rotation.on_duty')}`
-        })
-      } else {
-        const bg = TYPE_BG[segment.type] || 'bg-slate-300'
+      } else if (LEAVE_TYPES.has(segment.type)) {
         const label = t(`personnel.rotation.types.${segment.type}`)
+        const abbr = LEAVE_ABBR[segment.type] || ''
         row.push({
-          bgClass: bg,
-          text: '',
+          bgClass: 'bg-amber-400',
+          text: abbr,
           title: `${person.employeeName} ${dateStr}: ${label}`
         })
+      } else {
+        row.push({ bgClass: '', text: '', title: '' })
       }
     }
     matrix.set(person.employeeId, row)
@@ -127,14 +117,10 @@ export default function AllRotationPlanPage() {
     [currentMonth, daysInMonth]
   )
 
-  const sortedProjectIds = useMemo(() => Object.keys(projectMap).sort(), [projectMap])
-
   const today = dayjs().format('YYYY-MM-DD')
 
   useEffect(() => { loadProjects() }, [])
-
   useEffect(() => { loadReport() }, [currentMonth])
-
   useEffect(() => { setPage(0) }, [searchTerm, filterProjectId])
 
   const loadProjects = async () => {
@@ -181,14 +167,13 @@ export default function AllRotationPlanPage() {
   const stats = useMemo(() => ({
     total: data.length,
     working: data.filter(p => p.segments.some(s => s.type === 'work' && today >= s.startDate && today <= s.endDate)).length,
-    homeRest: data.filter(p => p.segments.some(s => s.type === 'home_rest' && today >= s.startDate && today <= s.endDate)).length,
-    onLeave: data.filter(p => p.segments.some(s => ['annual_leave', 'medical_leave', 'public_holiday', 'unpaid_leave'].includes(s.type) && today >= s.startDate && today <= s.endDate)).length,
+    onLeave: data.filter(p => p.segments.some(s => LEAVE_TYPES.has(s.type) && today >= s.startDate && today <= s.endDate)).length,
     notReported: data.filter(p => p.segments.length === 0).length,
   }), [data, today])
 
   const cellMatrix = useMemo(() =>
-    buildCellMatrix(filteredData, dayStrings, projectMap, sortedProjectIds, t),
-    [filteredData, dayStrings, projectMap, sortedProjectIds, t]
+    buildCellMatrix(filteredData, dayStrings, projectMap, t),
+    [filteredData, dayStrings, projectMap, t]
   )
 
   const totalPages = Math.ceil(filteredData.length / PAGE_SIZE)
@@ -228,26 +213,41 @@ export default function AllRotationPlanPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <StatCard label={t('personnel.rotation.stat_total')} value={stats.total} color="text-blue-600" />
-        <StatCard label={t('personnel.rotation.stat_working')} value={stats.working} color="text-indigo-600" />
-        <StatCard label={t('personnel.rotation.stat_home_rest')} value={stats.homeRest} color="text-emerald-600" />
-        <StatCard label={t('personnel.rotation.stat_on_leave')} value={stats.onLeave} color="text-rose-600" />
-        <StatCard label={t('personnel.rotation.stat_not_reported')} value={stats.notReported} color="text-amber-600" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatCard label={t('personnel.rotation.stat_total')} value={stats.total} color="text-slate-600" />
+        <StatCard label={t('personnel.rotation.stat_working')} value={stats.working} color="text-blue-600" />
+        <StatCard label={t('personnel.rotation.stat_on_leave')} value={stats.onLeave} color="text-amber-600" />
+        <StatCard label={t('personnel.rotation.stat_not_reported')} value={stats.notReported} color="text-slate-400" />
       </div>
 
-      <div className="flex flex-wrap gap-4 px-6 py-4 bg-white/60 backdrop-blur-xl rounded-[24px] border border-white shadow-sm items-center">
-        <LegendItem icon={<Briefcase size={14} />} label={t('personnel.rotation.on_duty')} color="bg-blue-500" />
-        <LegendItem icon={<Plane size={14} />} label={t('personnel.rotation.home_rest')} color="bg-emerald-500" />
-        <LegendItem icon={<Home size={14} />} label={t('personnel.rotation.local_rest')} color="bg-amber-500" />
-        <LegendItem icon={<Heart size={14} />} label={t('personnel.rotation.types.annual_leave')} color="bg-rose-500" />
-        <LegendItem icon={<Stethoscope size={14} />} label={t('personnel.rotation.types.medical_leave')} color="bg-orange-500" />
-        <LegendItem icon={<Flag size={14} />} label={t('personnel.rotation.types.public_holiday')} color="bg-purple-500" />
-        <LegendItem icon={<Ban size={14} />} label={t('personnel.rotation.types.unpaid_leave')} color="bg-slate-500" />
-        <LegendItem icon={<span className="text-[10px]">?</span>} label={t('personnel.rotation.not_reported')} color="bg-slate-100" />
-        <div className="ml-auto flex items-center gap-2 text-[10px] font-bold text-slate-400">
-          <Info size={14} className="text-blue-400" />
-          {t('personnel.rotation.all_plans_hint')}
+      <div className="flex flex-wrap gap-6 px-6 py-3 bg-white/60 backdrop-blur-xl rounded-2xl border border-white shadow-sm items-center">
+        <div className="flex items-center gap-2">
+          <div className="w-5 h-5 rounded bg-blue-500 flex items-center justify-center">
+            <Briefcase size={10} className="text-white" />
+          </div>
+          <span className="text-xs font-bold text-slate-600">{t('personnel.rotation.on_duty')}</span>
+          <span className="text-[10px] text-slate-400">{t('personnel.rotation.legend_work_hint')}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-5 h-5 rounded bg-amber-400 flex items-center justify-center">
+            <Coffee size={10} className="text-white" />
+          </div>
+          <span className="text-xs font-bold text-slate-600">{t('personnel.rotation.leave')}</span>
+          <span className="text-[10px] text-slate-400">{t('personnel.rotation.legend_leave_hint')}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-5 h-5 rounded bg-slate-100 border border-slate-200"></div>
+          <span className="text-xs font-bold text-slate-400">{t('personnel.rotation.not_reported')}</span>
+        </div>
+        <div className="ml-auto flex items-center gap-4 text-[10px] text-slate-400">
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-4 h-4 rounded bg-blue-500 text-white text-[7px] font-black text-center leading-4">项目</span>
+            {t('personnel.rotation.legend_proj_abbr')}
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-4 h-4 rounded bg-amber-400 text-white text-[7px] font-black text-center leading-4">休</span>
+            {t('personnel.rotation.legend_leave_abbr')}
+          </span>
         </div>
       </div>
 
@@ -284,9 +284,7 @@ export default function AllRotationPlanPage() {
             >
               <ChevronLeft size={16} />
             </button>
-            <span className="text-xs font-bold text-slate-500">
-              {page + 1} / {totalPages}
-            </span>
+            <span className="text-xs font-bold text-slate-500">{page + 1} / {totalPages}</span>
             <button
               onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
@@ -301,12 +299,12 @@ export default function AllRotationPlanPage() {
         )}
       </div>
 
-      <div className="bg-white rounded-[40px] border border-slate-100 shadow-2xl shadow-slate-200/40 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-slate-50/50">
-                <th className="sticky left-0 z-20 bg-slate-50/50 px-8 py-6 text-left border-r border-slate-100 min-w-[160px]">
+                <th className="sticky left-0 z-20 bg-slate-50/50 px-6 py-4 text-left border-r border-slate-100 min-w-[140px]">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('personnel.rotation.personnel')}</span>
                 </th>
                 {dayStrings.map((ds, i) => {
@@ -314,12 +312,12 @@ export default function AllRotationPlanPage() {
                   const isWeekend = d.day() === 0 || d.day() === 6
                   return (
                     <th key={ds} className={cn(
-                      "px-2 py-6 text-center min-w-[40px] border-r border-slate-100/50",
+                      "px-1 py-4 text-center min-w-[36px] border-r border-slate-100/50",
                       isWeekend ? "bg-amber-50/30" : ""
                     )}>
-                      <div className="text-[10px] font-black text-slate-400 mb-1">{weekDays[d.day()]}</div>
+                      <div className="text-[9px] font-black text-slate-400 mb-0.5">{weekDays[d.day()]}</div>
                       <div className={cn(
-                        "text-sm font-black",
+                        "text-xs font-black",
                         ds === today ? "text-accent" : "text-primary"
                       )}>{i + 1}</div>
                     </th>
@@ -330,16 +328,16 @@ export default function AllRotationPlanPage() {
             <tbody className="divide-y divide-slate-50">
               {loading ? (
                 <tr>
-                  <td colSpan={daysInMonth + 1} className="py-24 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="w-10 h-10 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
-                      <span className="text-xs font-bold text-slate-400 italic">{t('personnel.rotation.loading_data')}</span>
+                  <td colSpan={daysInMonth + 1} className="py-20 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-8 h-8 border-3 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
+                      <span className="text-xs font-bold text-slate-400">{t('personnel.rotation.loading_data')}</span>
                     </div>
                   </td>
                 </tr>
               ) : pageData.length === 0 ? (
                 <tr>
-                  <td colSpan={daysInMonth + 1} className="py-24 text-center text-slate-300 font-black uppercase text-xs tracking-widest">
+                  <td colSpan={daysInMonth + 1} className="py-20 text-center text-slate-300 font-bold text-xs">
                     {t('personnel.rotation.no_data')}
                   </td>
                 </tr>
@@ -348,14 +346,14 @@ export default function AllRotationPlanPage() {
                   const cells = cellMatrix.get(person.employeeId)
                   return (
                     <tr key={person.employeeId} className="group hover:bg-slate-50/50 transition-colors">
-                      <td className="sticky left-0 z-10 bg-white group-hover:bg-slate-50/50 px-8 py-5 border-r border-slate-100 shadow-[10px_0_15px_-10px_rgba(0,0,0,0.05)]">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center font-black text-[10px] text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                      <td className="sticky left-0 z-10 bg-white group-hover:bg-slate-50/50 px-6 py-3 border-r border-slate-100">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded bg-slate-100 flex items-center justify-center font-black text-[9px] text-slate-400 group-hover:bg-blue-500 group-hover:text-white transition-colors">
                             {person.employeeName[0]}
                           </div>
                           <div>
-                            <span className="text-sm font-bold text-primary truncate max-w-[120px] block">{person.employeeName}</span>
-                            {person.position && <span className="text-[9px] text-slate-400">{person.position}</span>}
+                            <span className="text-xs font-bold text-primary truncate max-w-[100px] block">{person.employeeName}</span>
+                            {person.position && <span className="text-[8px] text-slate-400">{person.position}</span>}
                           </div>
                         </div>
                       </td>
@@ -363,14 +361,13 @@ export default function AllRotationPlanPage() {
                         <td key={i} className="p-0.5 border-r border-slate-100/30">
                           <div
                             className={cn(
-                              "w-full h-8 rounded-md flex items-center justify-center cell-hover",
-                              cell.bgClass,
-                              cell.text && "shadow-sm"
+                              "w-full h-7 rounded flex items-center justify-center cell-hover",
+                              cell.bgClass || "bg-slate-50"
                             )}
                             title={cell.title}
                           >
                             {cell.text && (
-                              <span className="text-[7px] font-black text-white/90 truncate px-0.5 leading-none">
+                              <span className="text-[7px] font-black text-white/95 truncate px-0.5 leading-none">
                                 {cell.text}
                               </span>
                             )}
@@ -379,7 +376,7 @@ export default function AllRotationPlanPage() {
                       )) : (
                         dayStrings.map((_, i) => (
                           <td key={i} className="p-0.5 border-r border-slate-100/30">
-                            <div className="w-full h-8 rounded-md bg-slate-50"></div>
+                            <div className="w-full h-7 rounded bg-slate-50"></div>
                           </td>
                         ))
                       )}
@@ -393,12 +390,12 @@ export default function AllRotationPlanPage() {
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
-        .custom-scrollbar::-webkit-scrollbar { height: 8px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .cell-hover { transition: transform 0.1s, box-shadow 0.1s; }
-        .cell-hover:hover { transform: scale(1.15); box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 10; position: relative; }
+        .cell-hover { transition: transform 0.1s; }
+        .cell-hover:hover { transform: scale(1.2); z-index: 10; position: relative; }
       `}} />
     </div>
   )
@@ -409,17 +406,6 @@ function StatCard({ label, value, color }: { label: string; value: number; color
     <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
       <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</div>
       <div className={cn("text-2xl font-black tabular-nums", color)}>{value}</div>
-    </div>
-  )
-}
-
-function LegendItem({ icon, label, color }: { icon: any, label: string, color: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <div className={cn("w-4 h-4 rounded-md flex items-center justify-center text-white", color)}>
-        {icon}
-      </div>
-      <span className="text-[11px] font-black text-slate-600 uppercase tracking-tight">{label}</span>
     </div>
   )
 }
