@@ -424,6 +424,9 @@ export class ProjectService {
     if (data.address !== undefined) {
       updateData.address = data.address;
     }
+    if (data.project_type !== undefined) {
+      updateData.projectType = data.project_type;
+    }
     await this.prisma.project.update({
       where: { projectId: id },
       data: updateData

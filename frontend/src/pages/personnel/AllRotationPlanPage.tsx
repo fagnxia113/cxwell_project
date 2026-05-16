@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   ChevronLeft,
@@ -9,17 +9,24 @@ import {
   Plane,
   Home,
   Info,
-  Search
+  Search,
+  Filter,
+  Heart,
+  Stethoscope,
+  Flag,
+  Ban
 } from 'lucide-react'
 import dayjs from 'dayjs'
 import { apiClient } from '../../utils/apiClient'
 import { cn } from '../../utils/cn'
 
+type RotationType = 'work' | 'rest' | 'home_rest' | 'annual_leave' | 'medical_leave' | 'public_holiday' | 'unpaid_leave'
+
 interface ScheduleSegment {
   startDate: string
   endDate: string
   projectId: string | null
-  type: 'work' | 'rest' | 'home_rest'
+  type: RotationType
 }
 
 interface PersonnelSchedule {
@@ -30,6 +37,38 @@ interface PersonnelSchedule {
   segments: ScheduleSegment[]
 }
 
+interface ProjectInfo {
+  id: string
+  name: string
+}
+
+const PROJECT_COLORS = [
+  'bg-blue-500', 'bg-indigo-500', 'bg-violet-500', 'bg-purple-500',
+  'bg-fuchsia-500', 'bg-pink-500', 'bg-rose-500', 'bg-cyan-500',
+  'bg-teal-500', 'bg-sky-500',
+]
+
+const TYPE_CONFIG: Record<string, { color: string; textColor: string; icon: any }> = {
+  work: { color: 'bg-blue-500', textColor: 'text-blue-600', icon: Briefcase },
+  home_rest: { color: 'bg-emerald-500', textColor: 'text-emerald-600', icon: Plane },
+  rest: { color: 'bg-amber-500', textColor: 'text-amber-600', icon: Home },
+  annual_leave: { color: 'bg-rose-500', textColor: 'text-rose-600', icon: Heart },
+  medical_leave: { color: 'bg-orange-500', textColor: 'text-orange-600', icon: Stethoscope },
+  public_holiday: { color: 'bg-purple-500', textColor: 'text-purple-600', icon: Flag },
+  unpaid_leave: { color: 'bg-slate-500', textColor: 'text-slate-600', icon: Ban },
+}
+
+function getProjectColor(projectId: string, projectIds: string[]): string {
+  const idx = projectIds.indexOf(projectId)
+  return PROJECT_COLORS[idx % PROJECT_COLORS.length]
+}
+
+function getProjectAbbr(name: string): string {
+  if (!name) return ''
+  if (name.length <= 3) return name
+  return name.slice(0, 3)
+}
+
 export default function AllRotationPlanPage() {
   const { t } = useTranslation()
   const [loading, setLoading] = useState(true)
@@ -37,9 +76,14 @@ export default function AllRotationPlanPage() {
   const [data, setData] = useState<PersonnelSchedule[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [projectMap, setProjectMap] = useState<Record<string, string>>({})
+  const [projects, setProjects] = useState<ProjectInfo[]>([])
+  const [filterProjectId, setFilterProjectId] = useState<string>('all')
+  const [hoveredCell, setHoveredCell] = useState<{ row: string, col: string } | null>(null)
 
   const daysInMonth = dayjs(currentMonth).daysInMonth()
   const days = Array.from({ length: daysInMonth }, (_, i) => dayjs(currentMonth + '-' + (i + 1).toString().padStart(2, '0')))
+
+  const sortedProjectIds = useMemo(() => Object.keys(projectMap).sort(), [projectMap])
 
   useEffect(() => {
     loadProjects()
@@ -56,6 +100,7 @@ export default function AllRotationPlanPage() {
       const map: Record<string, string> = {}
       projs.forEach((p: any) => { map[p.id] = p.name })
       setProjectMap(map)
+      setProjects(projs.map((p: any) => ({ id: p.id, name: p.name })))
     } catch (e) {}
   }
 
@@ -76,32 +121,51 @@ export default function AllRotationPlanPage() {
   const getStatusForDay = (employee: PersonnelSchedule, date: dayjs.Dayjs) => {
     const dateStr = date.format('YYYY-MM-DD')
     const segment = employee.segments.find(s => dateStr >= s.startDate && dateStr <= s.endDate)
-    if (!segment) return { type: 'none' }
-    if (segment.type === 'work') {
-      return { type: 'work', projectId: segment.projectId }
-    }
-    return { type: segment.type }
+    if (!segment) return { type: 'none' as const, projectId: null }
+    return { type: segment.type, projectId: segment.projectId }
   }
 
   const changeMonth = (delta: number) => {
     setCurrentMonth(dayjs(currentMonth).add(delta, 'month').format('YYYY-MM'))
   }
 
-  const filteredData = data.filter(p =>
-    p.employeeName.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredData = data.filter(p => {
+    const matchSearch = p.employeeName.toLowerCase().includes(searchTerm.toLowerCase())
+    if (filterProjectId === 'all') return matchSearch
+    const matchProject = p.segments.some(s => s.projectId === filterProjectId)
+    return matchSearch && matchProject
+  })
 
-  const stats = {
+  const today = dayjs().format('YYYY-MM-DD')
+
+  const stats = useMemo(() => ({
     total: data.length,
-    working: data.filter(p => {
-      const today = dayjs().format('YYYY-MM-DD')
-      return p.segments.some(s => s.type === 'work' && today >= s.startDate && today <= s.endDate)
-    }).length,
-    homeRest: data.filter(p => {
-      const today = dayjs().format('YYYY-MM-DD')
-      return p.segments.some(s => s.type === 'home_rest' && today >= s.startDate && today <= s.endDate)
-    }).length,
+    working: data.filter(p => p.segments.some(s => s.type === 'work' && today >= s.startDate && today <= s.endDate)).length,
+    homeRest: data.filter(p => p.segments.some(s => s.type === 'home_rest' && today >= s.startDate && today <= s.endDate)).length,
+    onLeave: data.filter(p => p.segments.some(s => ['annual_leave', 'medical_leave', 'public_holiday', 'unpaid_leave'].includes(s.type) && today >= s.startDate && today <= s.endDate)).length,
     notReported: data.filter(p => p.segments.length === 0).length,
+  }), [data, today])
+
+  const getCellContent = (statusInfo: { type: string, projectId: string | null }) => {
+    if (statusInfo.type === 'none') return null
+
+    if (statusInfo.type === 'work' && statusInfo.projectId) {
+      const projName = projectMap[statusInfo.projectId] || ''
+      const abbr = getProjectAbbr(projName)
+      const color = getProjectColor(statusInfo.projectId, sortedProjectIds)
+      return { bgClass: color, text: abbr, fullText: projName }
+    }
+
+    if (statusInfo.type === 'work') {
+      return { bgClass: 'bg-blue-400', text: '', fullText: t('personnel.rotation.on_duty') }
+    }
+
+    const config = TYPE_CONFIG[statusInfo.type]
+    if (config) {
+      return { bgClass: config.color, text: '', fullText: t(`personnel.rotation.types.${statusInfo.type}`) }
+    }
+
+    return null
   }
 
   return (
@@ -134,17 +198,22 @@ export default function AllRotationPlanPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <StatCard label={t('personnel.rotation.stat_total')} value={stats.total} color="text-blue-600" />
         <StatCard label={t('personnel.rotation.stat_working')} value={stats.working} color="text-indigo-600" />
         <StatCard label={t('personnel.rotation.stat_home_rest')} value={stats.homeRest} color="text-emerald-600" />
+        <StatCard label={t('personnel.rotation.stat_on_leave')} value={stats.onLeave} color="text-rose-600" />
         <StatCard label={t('personnel.rotation.stat_not_reported')} value={stats.notReported} color="text-amber-600" />
       </div>
 
-      <div className="flex flex-wrap gap-6 px-6 py-4 bg-white/60 backdrop-blur-xl rounded-[24px] border border-white shadow-sm items-center">
+      <div className="flex flex-wrap gap-4 px-6 py-4 bg-white/60 backdrop-blur-xl rounded-[24px] border border-white shadow-sm items-center">
         <LegendItem icon={<Briefcase size={14} />} label={t('personnel.rotation.on_duty')} color="bg-blue-500" />
         <LegendItem icon={<Plane size={14} />} label={t('personnel.rotation.home_rest')} color="bg-emerald-500" />
         <LegendItem icon={<Home size={14} />} label={t('personnel.rotation.local_rest')} color="bg-amber-500" />
+        <LegendItem icon={<Heart size={14} />} label={t('personnel.rotation.types.annual_leave')} color="bg-rose-500" />
+        <LegendItem icon={<Stethoscope size={14} />} label={t('personnel.rotation.types.medical_leave')} color="bg-orange-500" />
+        <LegendItem icon={<Flag size={14} />} label={t('personnel.rotation.types.public_holiday')} color="bg-purple-500" />
+        <LegendItem icon={<Ban size={14} />} label={t('personnel.rotation.types.unpaid_leave')} color="bg-slate-500" />
         <LegendItem icon={<span className="text-[10px]">?</span>} label={t('personnel.rotation.not_reported')} color="bg-slate-100" />
         <div className="ml-auto flex items-center gap-2 text-[10px] font-bold text-slate-400">
           <Info size={14} className="text-blue-400" />
@@ -152,15 +221,31 @@ export default function AllRotationPlanPage() {
         </div>
       </div>
 
-      <div className="relative group max-w-md">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={16} />
-        <input
-          type="text"
-          placeholder={t('personnel.rotation.search_placeholder')}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-12 pr-4 py-3 bg-white border border-slate-100 rounded-2xl shadow-sm outline-none focus:ring-4 ring-blue-500/10 transition-all text-sm font-bold"
-        />
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative group flex-1 max-w-md">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={16} />
+          <input
+            type="text"
+            placeholder={t('personnel.rotation.search_placeholder')}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-100 rounded-2xl shadow-sm outline-none focus:ring-4 ring-blue-500/10 transition-all text-sm font-bold"
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Filter size={14} className="text-slate-400" />
+          <select
+            value={filterProjectId}
+            onChange={(e) => setFilterProjectId(e.target.value)}
+            className="bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold text-primary shadow-sm outline-none focus:ring-2 ring-primary/10 transition-all"
+          >
+            <option value="all">{t('personnel.rotation.all_projects')}</option>
+            {projects.map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="bg-white rounded-[40px] border border-slate-100 shadow-2xl shadow-slate-200/40 overflow-hidden">
@@ -217,21 +302,36 @@ export default function AllRotationPlanPage() {
                     </td>
                     {days.map(day => {
                       const statusInfo = getStatusForDay(person, day)
-                      const projectName = statusInfo.type === 'work' && statusInfo.projectId
-                        ? projectMap[statusInfo.projectId] || ''
-                        : ''
+                      const cellContent = getCellContent(statusInfo)
+                      const isHovered = hoveredCell?.row === person.employeeId && hoveredCell?.col === day.format('D')
                       return (
-                        <td key={day.format('D')} className="p-1 border-r border-slate-100/30">
+                        <td key={day.format('D')} className="p-0.5 border-r border-slate-100/30">
                           <div
                             className={cn(
-                              "w-full h-8 rounded-md transition-all",
-                              statusInfo.type === 'work' ? "bg-blue-500 shadow-lg shadow-blue-500/20" :
-                              statusInfo.type === 'home_rest' ? "bg-emerald-500 shadow-lg shadow-emerald-500/20" :
-                              statusInfo.type === 'rest' ? "bg-amber-500 shadow-lg shadow-amber-500/20" :
-                              "bg-slate-50"
+                              "w-full h-8 rounded-md transition-all relative flex items-center justify-center",
+                              cellContent ? cellContent.bgClass : "bg-slate-50",
+                              cellContent && "shadow-sm",
+                              isHovered && "ring-2 ring-white z-10 scale-110"
                             )}
-                            title={statusInfo.type !== 'none' ? `${person.employeeName} ${day.format('YYYY-MM-DD')}: ${statusInfo.type === 'work' ? projectName || t('personnel.rotation.on_duty') : statusInfo.type === 'home_rest' ? t('personnel.rotation.home_rest') : t('personnel.rotation.local_rest')}` : ''}
-                          />
+                            onMouseEnter={() => setHoveredCell({ row: person.employeeId, col: day.format('D') })}
+                            onMouseLeave={() => setHoveredCell(null)}
+                            title={cellContent
+                              ? `${person.employeeName} ${day.format('YYYY-MM-DD')}: ${cellContent.fullText}`
+                              : ''
+                            }
+                          >
+                            {cellContent?.text && (
+                              <span className="text-[7px] font-black text-white/90 truncate px-0.5 leading-none">
+                                {cellContent.text}
+                              </span>
+                            )}
+                            {isHovered && cellContent?.fullText && (
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded-lg whitespace-nowrap z-50 shadow-lg">
+                                {cellContent.fullText}
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-800"></div>
+                              </div>
+                            )}
+                          </div>
                         </td>
                       )
                     })}

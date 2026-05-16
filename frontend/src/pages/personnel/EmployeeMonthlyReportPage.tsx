@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Calendar, ChevronLeft, ChevronRight, Plane, Home, Briefcase, Save, X, Check } from 'lucide-react'
+import { Calendar, ChevronLeft, ChevronRight, Plane, Home, Briefcase, Save, X, Check, Heart, Stethoscope, Flag, Ban } from 'lucide-react'
 import dayjs from 'dayjs'
 import { apiClient } from '../../utils/apiClient'
 import { useMessage } from '../../hooks/useMessage'
@@ -8,9 +8,11 @@ import { useUser } from '../../contexts/UserContext'
 import { useTranslation } from 'react-i18next'
 import { cn } from '../../utils/cn'
 
+type ScheduleType = 'work' | 'rest' | 'home_rest' | 'annual_leave' | 'medical_leave' | 'public_holiday' | 'unpaid_leave'
+
 interface ScheduleEntry {
   date: string
-  type: 'work' | 'rest' | 'home_rest'
+  type: ScheduleType
   projectId: string | null
   projectName?: string
 }
@@ -20,11 +22,18 @@ interface Project {
   name: string
 }
 
-const getTypeConfig = (t: any) => ({
+const getTypeConfig = (t: any): Record<ScheduleType, { label: string; color: string; textColor: string; bgLight: string; icon: any }> => ({
   work: { label: t('personnel.rotation.types.work'), color: 'bg-blue-500', textColor: 'text-blue-600', bgLight: 'bg-blue-50', icon: Briefcase },
   home_rest: { label: t('personnel.rotation.types.home_rest'), color: 'bg-emerald-500', textColor: 'text-emerald-600', bgLight: 'bg-emerald-50', icon: Plane },
-  rest: { label: t('personnel.rotation.types.rest'), color: 'bg-amber-500', textColor: 'text-amber-600', bgLight: 'bg-amber-50', icon: Home }
-});
+  rest: { label: t('personnel.rotation.types.rest'), color: 'bg-amber-500', textColor: 'text-amber-600', bgLight: 'bg-amber-50', icon: Home },
+  annual_leave: { label: t('personnel.rotation.types.annual_leave'), color: 'bg-rose-500', textColor: 'text-rose-600', bgLight: 'bg-rose-50', icon: Heart },
+  medical_leave: { label: t('personnel.rotation.types.medical_leave'), color: 'bg-orange-500', textColor: 'text-orange-600', bgLight: 'bg-orange-50', icon: Stethoscope },
+  public_holiday: { label: t('personnel.rotation.types.public_holiday'), color: 'bg-purple-500', textColor: 'text-purple-600', bgLight: 'bg-purple-50', icon: Flag },
+  unpaid_leave: { label: t('personnel.rotation.types.unpaid_leave'), color: 'bg-slate-500', textColor: 'text-slate-600', bgLight: 'bg-slate-50', icon: Ban },
+})
+
+const WORK_TYPES: ScheduleType[] = ['work', 'rest', 'home_rest']
+const LEAVE_TYPES: ScheduleType[] = ['annual_leave', 'medical_leave', 'public_holiday', 'unpaid_leave']
 
 export default function EmployeeMonthlyReportPage() {
   const { t } = useTranslation()
@@ -36,7 +45,7 @@ export default function EmployeeMonthlyReportPage() {
   const [schedule, setSchedule] = useState<Map<string, ScheduleEntry>>(new Map())
   const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set())
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false)
-  const [editingType, setEditingType] = useState<'work' | 'rest' | 'home_rest'>('work')
+  const [editingType, setEditingType] = useState<ScheduleType>('work')
   const [editingProject, setEditingProject] = useState<string>('')
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const TYPE_CONFIG = getTypeConfig(t)
@@ -164,8 +173,6 @@ export default function EmployeeMonthlyReportPage() {
 
   const weekDays = t('personnel.attendance.weekdays', { returnObjects: true }) as string[]
 
-  const hasScheduleData = schedule.size > 0
-
   return (
     <div className="min-h-screen bg-mesh p-4 lg:p-6 space-y-4 animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -187,7 +194,7 @@ export default function EmployeeMonthlyReportPage() {
           </button>
           <div className="px-6 py-2 bg-white rounded-xl shadow-sm border border-slate-100 text-center min-w-[140px]">
             <span className="text-sm font-bold text-primary">
-              {dayjs(currentMonth + '-01').format('YYYY') === dayjs().format('YYYY') 
+              {dayjs(currentMonth + '-01').format('YYYY') === dayjs().format('YYYY')
                 ? dayjs(currentMonth + '-01').format('MMMM')
                 : dayjs(currentMonth + '-01').format('MMM YYYY')}
             </span>
@@ -196,7 +203,7 @@ export default function EmployeeMonthlyReportPage() {
             <ChevronRight size={20} className="text-slate-400" />
           </button>
           <div className="h-6 w-px bg-slate-200 mx-2"></div>
-          <button 
+          <button
             onClick={() => {
               setIsMultiSelectMode(!isMultiSelectMode)
               if (isMultiSelectMode) setSelectedDates(new Set())
@@ -256,7 +263,7 @@ export default function EmployeeMonthlyReportPage() {
                 const isToday = dayjs().format('YYYY-MM-DD') === date
                 const isSelected = selectedDates.has(date)
                 const TypeConfig = entry ? TYPE_CONFIG[entry.type] : null
-                const IconComponent = entry ? TYPE_CONFIG[entry.type].icon : null
+                const IconComponent = entry ? TYPE_CONFIG[entry.type]?.icon : null
 
                 return (
                   <div
@@ -288,7 +295,7 @@ export default function EmployeeMonthlyReportPage() {
                         className={cn("flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-white text-xs font-medium mb-1", TypeConfig.color)}
                       >
                         <IconComponent size={12} />
-                        <span className="truncate">{t(`personnel.rotation.types.${entry.type}`)}</span>
+                        <span className="truncate">{TypeConfig.label}</span>
                       </motion.div>
                     )}
                     {entry?.projectName && (
@@ -306,7 +313,7 @@ export default function EmployeeMonthlyReportPage() {
                 <div className={cn("w-6 h-6 rounded-lg flex items-center justify-center", config.color)}>
                   <config.icon size={12} className="text-white" />
                 </div>
-                <span className="text-xs font-medium text-slate-600">{t(`personnel.rotation.types.${key}`)}</span>
+                <span className="text-xs font-medium text-slate-600">{config.label}</span>
               </div>
             ))}
           </div>
@@ -347,22 +354,53 @@ export default function EmployeeMonthlyReportPage() {
 
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('personnel.rotation.schedule_type')}</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {Object.entries(TYPE_CONFIG).map(([key, config]) => (
-                      <button
-                        key={key}
-                        onClick={() => setEditingType(key as any)}
-                        className={cn(
-                          "flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all",
-                          editingType === key
-                            ? cn("border-current", config.bgLight, config.textColor)
-                            : "border-slate-100 hover:border-slate-200"
-                        )}
-                      >
-                        <config.icon size={18} className={config.textColor} />
-                        <span className="text-xs font-medium">{t(`personnel.rotation.types.${key}`)}</span>
-                      </button>
-                    ))}
+                  <div className="space-y-2">
+                    <div>
+                      <div className="text-[10px] font-bold text-slate-400 mb-1">{t('personnel.rotation.category_work')}</div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {WORK_TYPES.map(key => {
+                          const config = TYPE_CONFIG[key]
+                          return (
+                            <button
+                              key={key}
+                              onClick={() => setEditingType(key)}
+                              className={cn(
+                                "flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 transition-all",
+                                editingType === key
+                                  ? cn("border-current", config.bgLight, config.textColor)
+                                  : "border-slate-100 hover:border-slate-200"
+                              )}
+                            >
+                              <config.icon size={16} className={config.textColor} />
+                              <span className="text-[10px] font-medium">{config.label}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-bold text-slate-400 mb-1">{t('personnel.rotation.category_leave')}</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {LEAVE_TYPES.map(key => {
+                          const config = TYPE_CONFIG[key]
+                          return (
+                            <button
+                              key={key}
+                              onClick={() => setEditingType(key)}
+                              className={cn(
+                                "flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 transition-all",
+                                editingType === key
+                                  ? cn("border-current", config.bgLight, config.textColor)
+                                  : "border-slate-100 hover:border-slate-200"
+                              )}
+                            >
+                              <config.icon size={16} className={config.textColor} />
+                              <span className="text-[10px] font-medium">{config.label}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
 

@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { 
   FileText, ClipboardList, GitBranch, Wind, Flame, Cpu,
-  Briefcase, TrendingUp, List, DollarSign, Zap, User, Wrench, Calendar
+  Briefcase, TrendingUp, List, DollarSign, Zap, User, Wrench, Calendar, Tag
 } from 'lucide-react'
 import type { Project, Phase, Milestone } from '../../types/project'
 import { formatDate } from '../../types/project'
@@ -84,6 +84,20 @@ export default function OverviewTab({
             <div className="lg:col-span-4 space-y-6 bg-slate-50/50 p-6 rounded-xl border border-slate-100">
               <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-4">{t('project.sections.base_info')}</h4>
               <div className="space-y-4">
+                <EditableField
+                  label={t('project.fields.project_type')}
+                  icon={Tag}
+                  value={project.project_type === 'cx-m' ? 'Cx-M' : project.project_type === 'cx-project' ? t('project.type.cx_project') : project.project_type || '-'}
+                  isEditing={isEditing}
+                  inputType="select"
+                  editValue={editForm.project_type || project.project_type || ''}
+                  onChange={v => onEditFormChange({ project_type: String(v) })}
+                  options={[
+                    { label: 'Cx-M', value: 'cx-m' },
+                    { label: t('project.type.cx_project'), value: 'cx-project' },
+                  ]}
+                  placeholder={t('project.type.select_type') || '选择项目类型'}
+                />
                 <EditableField
                   label={t('project.fields.customer')}
                   icon={Briefcase}

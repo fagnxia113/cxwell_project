@@ -39,7 +39,8 @@
     "cx-m": "Cx-M",
     "cx_project": "Cx Project",
     "cx-m_label": "Cx-M Project",
-    "cx-project_label": "Cx Project"
+    "cx-project_label": "Cx Project",
+    "select_type": "Select Project Type"
   },
   "action": {
     "initiate": "Initiate Project",
@@ -77,6 +78,7 @@
     "total_progress": "Total Progress",
     "budget_progress": "Budget Progress",
     "project_name": "Project Name",
+    "project_type": "Project Type",
     "customer": "Customer",
     "description": "Description",
     "manager": "Project Manager",

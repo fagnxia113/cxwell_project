@@ -144,7 +144,11 @@
     "types": {
       "work": "工作中",
       "home_rest": "回国休假",
-      "rest": "本地休息"
+      "rest": "本地休息",
+      "annual_leave": "年假",
+      "medical_leave": "病假",
+      "public_holiday": "公假",
+      "unpaid_leave": "无薪假"
     },
     "on_duty_current": "本项目工作中",
     "on_duty_other": "其他项目工作中",
@@ -159,6 +163,10 @@
     "stat_working": "工作中",
     "stat_home_rest": "回国休假",
     "stat_not_reported": "未填报",
+    "stat_on_leave": "休假中",
+    "all_projects": "全部项目",
+    "category_work": "工作安排",
+    "category_leave": "假期类型",
     "pm_hint": "数据由各项目经理报备生成",
     "staff_column": "员工",
     "search_placeholder": "搜索人员名称...",

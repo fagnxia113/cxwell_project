@@ -39,7 +39,8 @@
     "cx-m": "Cx-M",
     "cx_project": "Cx项目",
     "cx-m_label": "Cx-M项目",
-    "cx-project_label": "Cx项目"
+    "cx-project_label": "Cx项目",
+    "select_type": "选择项目类型"
   },
   "action": {
     "initiate": "发起立项",
@@ -77,6 +78,7 @@
     "total_progress": "总进度",
     "budget_progress": "预算执行",
     "project_name": "项目名称",
+    "project_type": "项目类型",
     "customer": "所属客户",
     "description": "项目描述",
     "manager": "项目经理",

@@ -174,7 +174,6 @@ const getMenus = (t: any): MenuItem[] => [
       { key: 'person-attendance', label: t('sidebar.attendance'), path: '/personnel/attendance', permission: 'personnel:attendance:view' },
       { key: 'person-report-relation', label: t('sidebar.reportRelation'), path: '/personnel/report-relation', permission: 'personnel:report-relation:view' },
       { key: 'person-rotation', label: t('sidebar.rotationReport'), path: '/personnel/rotation-report', permission: 'personnel:rotation:view' },
-      { key: 'person-overview', label: t('sidebar.attendanceOverview'), path: '/personnel/attendance-overview', permission: 'personnel:attendance-overview:view' },
       { key: 'person-all-plans', label: t('sidebar.allRotationPlans'), path: '/personnel/all-rotation-plans', permission: 'personnel:rotation:view' },
     ]
   },

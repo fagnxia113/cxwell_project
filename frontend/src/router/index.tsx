@@ -16,7 +16,6 @@ const EmployeeDetailPage = lazy(() => import('../pages/personnel/EmployeeDetailP
 const AttendanceBoardPage = lazy(() => import('../pages/personnel/AttendanceBoardPage'))
 const EmployeeMonthlyReportPage = lazy(() => import('../pages/personnel/EmployeeMonthlyReportPage'))
 const ReportRelationPage = lazy(() => import('../pages/personnel/ReportRelationPage'))
-const ProjectAttendanceOverview = lazy(() => import('../pages/projects/ProjectAttendanceOverview'))
 const AllRotationPlanPage = lazy(() => import('../pages/personnel/AllRotationPlanPage'))
 
 // 客户与地点
@@ -73,7 +72,7 @@ export const routes: RouteObject[] = [
             { path: 'attendance', element: <AttendanceBoardPage /> },
             { path: 'report-relation', element: <ReportRelationPage /> },
             { path: 'rotation-report', element: <EmployeeMonthlyReportPage /> },
-            { path: 'attendance-overview', element: <ProjectAttendanceOverview /> },
+            { path: 'attendance-overview', element: <Navigate to="/personnel/all-rotation-plans" replace /> },
             { path: 'all-rotation-plans', element: <AllRotationPlanPage /> },
             { path: ':id', element: <EmployeeDetailPage /> },
         ]
