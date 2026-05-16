@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Calendar, ChevronLeft, ChevronRight, Plane, Home, Briefcase, Save, X, Check, Heart, Stethoscope, Flag, Ban, User, Baby } from 'lucide-react'
+import { Calendar, ChevronLeft, ChevronRight, Plane, Home, Briefcase, Save, X, Check, Heart, Stethoscope, Flag, Ban } from 'lucide-react'
 import dayjs from 'dayjs'
 import { apiClient } from '../../utils/apiClient'
 import { useMessage } from '../../hooks/useMessage'
@@ -8,9 +8,7 @@ import { useUser } from '../../contexts/UserContext'
 import { useTranslation } from 'react-i18next'
 import { cn } from '../../utils/cn'
 
-type ScheduleType = 'work' | 'rest' | 'home_rest' | 'annual_leave' | 'medical_leave'
-  | 'public_holiday' | 'unpaid_leave' | 'personal_leave' | 'marriage_leave'
-  | 'maternity_leave' | 'paternity_leave' | 'bereavement_leave'
+type ScheduleType = 'work' | 'rest' | 'home_rest' | 'annual_leave' | 'medical_leave' | 'public_holiday' | 'unpaid_leave'
 
 interface ScheduleEntry {
   date: string
@@ -32,15 +30,10 @@ const getTypeConfig = (t: any): Record<ScheduleType, { label: string; color: str
   medical_leave: { label: t('personnel.rotation.types.medical_leave'), color: 'bg-orange-500', textColor: 'text-orange-600', bgLight: 'bg-orange-50', icon: Stethoscope },
   public_holiday: { label: t('personnel.rotation.types.public_holiday'), color: 'bg-purple-500', textColor: 'text-purple-600', bgLight: 'bg-purple-50', icon: Flag },
   unpaid_leave: { label: t('personnel.rotation.types.unpaid_leave'), color: 'bg-slate-500', textColor: 'text-slate-600', bgLight: 'bg-slate-50', icon: Ban },
-  personal_leave: { label: t('personnel.rotation.types.personal_leave'), color: 'bg-sky-500', textColor: 'text-sky-600', bgLight: 'bg-sky-50', icon: User },
-  marriage_leave: { label: t('personnel.rotation.types.marriage_leave'), color: 'bg-pink-500', textColor: 'text-pink-600', bgLight: 'bg-pink-50', icon: Heart },
-  maternity_leave: { label: t('personnel.rotation.types.maternity_leave'), color: 'bg-fuchsia-500', textColor: 'text-fuchsia-600', bgLight: 'bg-fuchsia-50', icon: Baby },
-  paternity_leave: { label: t('personnel.rotation.types.paternity_leave'), color: 'bg-teal-500', textColor: 'text-teal-600', bgLight: 'bg-teal-50', icon: Baby },
-  bereavement_leave: { label: t('personnel.rotation.types.bereavement_leave'), color: 'bg-stone-500', textColor: 'text-stone-600', bgLight: 'bg-stone-50', icon: Flag },
 })
 
 const WORK_TYPES: ScheduleType[] = ['work', 'rest', 'home_rest']
-const LEAVE_TYPES: ScheduleType[] = ['annual_leave', 'medical_leave', 'public_holiday', 'unpaid_leave', 'personal_leave', 'marriage_leave', 'maternity_leave', 'paternity_leave', 'bereavement_leave']
+const LEAVE_TYPES: ScheduleType[] = ['annual_leave', 'medical_leave', 'public_holiday', 'unpaid_leave']
 
 export default function EmployeeMonthlyReportPage() {
   const { t } = useTranslation()

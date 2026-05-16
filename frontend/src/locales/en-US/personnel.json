@@ -120,12 +120,7 @@
       "annual_leave": "Annual Leave",
       "medical_leave": "Medical Certificate",
       "public_holiday": "Public Holiday",
-      "unpaid_leave": "Unpaid Leave",
-      "personal_leave": "Personal Leave",
-      "marriage_leave": "Marriage Leave",
-      "maternity_leave": "Maternity Leave",
-      "paternity_leave": "Paternity Leave",
-      "bereavement_leave": "Bereavement Leave"
+      "unpaid_leave": "Unpaid Leave"
     },
     "on_duty_current": "Working (Current)",
     "on_duty_other": "Working (Other)",

@@ -148,12 +148,7 @@
       "annual_leave": "年假",
       "medical_leave": "病假",
       "public_holiday": "公假",
-      "unpaid_leave": "无薪假",
-      "personal_leave": "事假",
-      "marriage_leave": "婚假",
-      "maternity_leave": "产假",
-      "paternity_leave": "陪产假",
-      "bereavement_leave": "丧假"
+      "unpaid_leave": "无薪假"
     },
     "on_duty_current": "本项目工作中",
     "on_duty_other": "其他项目工作中",

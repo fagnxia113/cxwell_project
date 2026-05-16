@@ -3,15 +3,14 @@ import { useTranslation } from 'react-i18next'
 import {
   ChevronLeft, ChevronRight, Download, Users, Briefcase, Coffee,
   Search, Filter, Plane, Home, Heart, Stethoscope, Flag, Ban,
-  User, CalendarDays
+  CalendarDays
 } from 'lucide-react'
 import dayjs from 'dayjs'
 import { apiClient } from '../../utils/apiClient'
 import { cn } from '../../utils/cn'
 
 type RotationType = 'work' | 'rest' | 'home_rest' | 'annual_leave' | 'medical_leave'
-  | 'public_holiday' | 'unpaid_leave' | 'personal_leave' | 'marriage_leave'
-  | 'maternity_leave' | 'paternity_leave' | 'bereavement_leave'
+  | 'public_holiday' | 'unpaid_leave'
 
 type ViewMode = 'all' | 'work' | 'leave'
 
@@ -36,7 +35,7 @@ interface ProjectInfo {
 }
 
 interface CellInfo {
-  type: RotationType
+  type: RotationType | 'none'
   projectId: string | null
   title: string
 }
@@ -44,8 +43,7 @@ interface CellInfo {
 const WORK_TYPES = new Set<string>(['work'])
 const LEAVE_TYPES = new Set<string>([
   'rest', 'home_rest', 'annual_leave', 'medical_leave',
-  'public_holiday', 'unpaid_leave', 'personal_leave', 'marriage_leave',
-  'maternity_leave', 'paternity_leave', 'bereavement_leave'
+  'public_holiday', 'unpaid_leave'
 ])
 
 const LEAVE_COLORS: Record<string, string> = {
@@ -55,25 +53,6 @@ const LEAVE_COLORS: Record<string, string> = {
   medical_leave: 'bg-orange-400',
   public_holiday: 'bg-violet-400',
   unpaid_leave: 'bg-slate-400',
-  personal_leave: 'bg-sky-400',
-  marriage_leave: 'bg-pink-400',
-  maternity_leave: 'bg-fuchsia-400',
-  paternity_leave: 'bg-teal-400',
-  bereavement_leave: 'bg-stone-400',
-}
-
-const LEAVE_ICONS: Record<string, any> = {
-  home_rest: Plane,
-  rest: Home,
-  annual_leave: Heart,
-  medical_leave: Stethoscope,
-  public_holiday: Flag,
-  unpaid_leave: Ban,
-  personal_leave: User,
-  marriage_leave: Heart,
-  maternity_leave: Heart,
-  paternity_leave: Heart,
-  bereavement_leave: Flag,
 }
 
 const PAGE_SIZE = 50
@@ -90,7 +69,7 @@ function buildCellMatrix(
     for (const dateStr of days) {
       const segment = person.segments.find(s => dateStr >= s.startDate && dateStr <= s.endDate)
       if (!segment) {
-        row.push({ type: 'rest' as RotationType, projectId: null, title: '' })
+        row.push({ type: 'none', projectId: null, title: '' })
         continue
       }
       const projName = segment.projectId ? (projectMap[segment.projectId] || '') : ''
@@ -111,7 +90,7 @@ function buildCellMatrix(
 function getCellBg(cell: CellInfo, viewMode: ViewMode, filterProjectId: string, filterLeaveType: string): string {
   const isWork = WORK_TYPES.has(cell.type)
   const isLeave = LEAVE_TYPES.has(cell.type)
-  const isEmpty = !cell.title
+  const isNone = cell.type === 'none'
 
   if (viewMode === 'all') {
     if (isWork) return 'bg-blue-500'
@@ -475,14 +454,14 @@ export default function AllRotationPlanPage() {
                           <td key={i} className="p-0.5 border-r border-slate-100/30">
                             <div
                               className={cn("w-full h-7 rounded cell-hover", bg)}
-                              title={cell.title}
+                              title={cell.title || t('personnel.rotation.not_reported')}
                             />
                           </td>
                         )
                       }) : (
                         dayStrings.map((_, i) => (
                           <td key={i} className="p-0.5 border-r border-slate-100/30">
-                            <div className="w-full h-7 rounded bg-slate-50"></div>
+                            <div className="w-full h-7 rounded bg-slate-50" title={t('personnel.rotation.not_reported')}></div>
                           </td>
                         ))
                       )}
