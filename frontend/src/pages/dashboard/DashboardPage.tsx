@@ -63,8 +63,8 @@ function spreadCoords(base: number[], index: number, total: number): number[] {
   const cols = Math.ceil(Math.sqrt(total));
   const row = Math.floor(index / cols);
   const col = index % cols;
-  const offsetX = (col - (cols - 1) / 2) * 2.5;
-  const offsetY = (row - (Math.ceil(total / cols) - 1) / 2) * 2.5;
+  const offsetX = (col - (cols - 1) / 2) * 1.2;
+  const offsetY = (row - (Math.ceil(total / cols) - 1) / 2) * 1.2;
   return [base[0] + offsetX, base[1] + offsetY];
 }
 
