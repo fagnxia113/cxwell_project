@@ -28,7 +28,7 @@ export class TaskBoardController {
       console.log('[TaskBoard] req.user:', JSON.stringify(user));
       const projectScope = await this.projectService.applyDataScope(user);
       console.log('[TaskBoard] projectScope:', JSON.stringify(projectScope, (k, v) => typeof v === 'bigint' ? v.toString() : v));
-      const where: any = { delFlag: { not: '2' }, ...projectScope };
+      const where: any = { delFlag: '0', ...projectScope };
       console.log('[TaskBoard] final where:', JSON.stringify(where, (k, v) => typeof v === 'bigint' ? v.toString() : v));
 
       // --- 2. 获取用户 employeeId (用于后续匹配) ---

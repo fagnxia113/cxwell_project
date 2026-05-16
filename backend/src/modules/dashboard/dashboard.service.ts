@@ -18,11 +18,13 @@ export class DashboardService {
     const [
       projectCount,
       activeProjects,
+      completedProjects,
       pendingTasks,
       employeeCount
     ] = await Promise.all([
-      this.prisma.project.count({ where: { delFlag: { not: '2' }, ...projectScope } }),
-      this.prisma.project.count({ where: { status: { in: ['2', '3'] }, delFlag: { not: '2' }, ...projectScope } }),
+      this.prisma.project.count({ where: { delFlag: '0', ...projectScope } }),
+      this.prisma.project.count({ where: { status: { in: ['2', '3'] }, delFlag: '0', ...projectScope } }),
+      this.prisma.project.count({ where: { status: { in: ['4', '5'] }, delFlag: '0', ...projectScope } }),
       this.prisma.flowTask.count({ where: { flowStatus: 'todo' } }),
       this.prisma.sysEmployee.count({ where: { status: '0' } }),
     ]);
@@ -31,7 +33,7 @@ export class DashboardService {
       projects: {
         total: projectCount,
         inProgress: activeProjects,
-        completed: projectCount - activeProjects, // 简化计算
+        completed: completedProjects,
       },
       approvals: {
         pending: pendingTasks,
@@ -53,7 +55,7 @@ export class DashboardService {
     const stats = await this.prisma.project.groupBy({
       by: ['status'],
       _count: { projectId: true },
-      where: { delFlag: { not: '2' }, ...projectScope }
+      where: { delFlag: '0', ...projectScope }
     });
 
     const statusMap: Record<string, string> = {

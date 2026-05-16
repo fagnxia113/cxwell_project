@@ -29,7 +29,6 @@ import { cn } from '../../utils/cn'
 
 const COLORS = ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
-// Project Coordinates mapping
 const ProjectCoords: Record<string, number[]> = {
   'China': [116.40, 39.90],
   'Vietnam': [105.83, 21.02],
@@ -41,6 +40,22 @@ const ProjectCoords: Record<string, number[]> = {
   'Japan': [139.69, 35.68],
   'USA': [-77.03, 38.90],
   'Global': [0, 0]
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  '1': '#94a3b8',
+  '2': '#f59e0b',
+  '3': '#0ea5e9',
+  '4': '#10b981',
+  '5': '#8b5cf6',
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  '1': 'preliminary',
+  '2': 'initiated',
+  '3': 'in_progress',
+  '4': 'completed',
+  '5': 'archived',
 };
 
 const ProfessionalMap = ({ projects }: { projects: any[] }) => {
@@ -70,25 +85,56 @@ const ProfessionalMap = ({ projects }: { projects: any[] }) => {
     return () => { isMounted = false; };
   }, []); 
 
-  const getMarkers = (region: string) => {
-    return projects
-      .filter(p => {
-        const addr = (p.country || p.address || '').toLowerCase();
-        if (region === 'china') return addr.includes('china') || addr.includes('中国');
-        if (region === 'sea') return ['vietnam', 'singapore', 'thailand', 'malaysia', 'southeast'].some(k => addr.includes(k));
-        return true;
-      })
-      .map(p => {
-        const coord = ProjectCoords[p.country] || [110 + Math.random() * 20, 20 + Math.random() * 20];
-        return {
-          name: p.projectName || p.name,
-          value: [...coord, p.progress || 0, p.id]
-        };
+  const getMarkersByStatus = (region: string) => {
+    const filtered = projects.filter(p => {
+      const addr = (p.country || p.address || '').toLowerCase();
+      if (region === 'china') return addr.includes('china') || addr.includes('中国');
+      if (region === 'sea') return ['vietnam', 'singapore', 'thailand', 'malaysia', 'philippines', 'indonesia', 'southeast'].some(k => addr.includes(k));
+      return true;
+    });
+
+    const groups: Record<string, any[]> = {};
+    filtered.forEach(p => {
+      const status = p.status || '1';
+      if (!groups[status]) groups[status] = [];
+      const coord = ProjectCoords[p.country] || [110 + Math.random() * 20, 20 + Math.random() * 20];
+      groups[status].push({
+        name: p.projectName || p.name,
+        value: [...coord, p.progress || 0, p.id]
       });
+    });
+    return groups;
   };
 
   const option = useMemo(() => {
     if (!mapLoaded) return {};
+    const groups = getMarkersByStatus(view);
+    const seriesList = Object.entries(groups).map(([status, data]) => {
+      const color = STATUS_COLORS[status] || '#94a3b8';
+      const statusKey = STATUS_LABELS[status] || 'preliminary';
+      return {
+        name: t(`project.status.${statusKey}`),
+        type: 'effectScatter',
+        coordinateSystem: 'geo',
+        data,
+        symbolSize: (val: any) => Math.max(8, val[2] / 5),
+        showEffectOn: 'render',
+        rippleEffect: { brushType: 'stroke', scale: 3 },
+        emphasis: { scale: true },
+        label: {
+          formatter: '{b}',
+          position: 'right',
+          show: false
+        },
+        itemStyle: {
+          color,
+          shadowBlur: 10,
+          shadowColor: color
+        },
+        zlevel: 1
+      };
+    });
+
     return {
       backgroundColor: 'transparent',
       title: {
@@ -103,6 +149,7 @@ const ProfessionalMap = ({ projects }: { projects: any[] }) => {
           if (params.componentType === 'series' && params.seriesType === 'effectScatter') {
             return `<div class="p-2">
               <div class="font-bold text-slate-800 mb-1">${params.name}</div>
+              <div class="text-xs font-bold" style="color:${STATUS_COLORS[Object.keys(STATUS_LABELS).find(k => t(`project.status.${STATUS_LABELS[k]}`) === params.seriesName) || '3']}">${params.seriesName}</div>
               <div class="text-xs text-emerald-500 font-bold">${t('common.progress')}: ${params.value[2]}%</div>
             </div>`;
           }
@@ -143,32 +190,10 @@ const ProfessionalMap = ({ projects }: { projects: any[] }) => {
         show: true,
         bottom: 20,
         left: 'center',
-        data: [t('dashboard.project_site')],
+        data: Object.keys(groups).map(s => t(`project.status.${STATUS_LABELS[s] || 'preliminary'}`)),
         textStyle: { color: '#64748b', fontSize: 10 }
       },
-      series: [
-        {
-          name: t('dashboard.project_site'),
-          type: 'effectScatter',
-          coordinateSystem: 'geo',
-          data: getMarkers(view),
-          symbolSize: (val: any) => Math.max(8, val[2] / 5),
-          showEffectOn: 'render',
-          rippleEffect: { brushType: 'stroke', scale: 3 },
-          emphasis: { scale: true },
-          label: {
-            formatter: '{b}',
-            position: 'right',
-            show: false
-          },
-          itemStyle: {
-            color: '#00cc79',
-            shadowBlur: 10,
-            shadowColor: '#00cc79'
-          },
-          zlevel: 1
-        }
-      ]
+      series: seriesList
     };
   }, [view, projects, mapLoaded, i18n.language, t]);
 
@@ -217,11 +242,13 @@ const ProfessionalMap = ({ projects }: { projects: any[] }) => {
       </>
       )}
 
-      <div className="absolute bottom-6 right-6 flex items-center gap-4 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-slate-100 shadow-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[10px] font-bold text-slate-500 uppercase">{t('dashboard.project_site')}</span>
-        </div>
+      <div className="absolute bottom-6 right-6 flex items-center gap-3 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-slate-100 shadow-sm">
+        {Object.entries(STATUS_COLORS).map(([status, color]) => (
+          <div key={status} className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+            <span className="text-[9px] font-bold text-slate-500">{t(`project.status.${STATUS_LABELS[status]}`)}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
