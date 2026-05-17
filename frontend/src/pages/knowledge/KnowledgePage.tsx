@@ -22,7 +22,8 @@ import {
   AlertCircle,
   Menu,
   RotateCcw,
-  ArrowRightLeft
+  ArrowRightLeft,
+  Eye
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -31,10 +32,13 @@ import { orgApi } from '../../api/orgApi'
 import { useMessage } from '../../hooks/useMessage'
 import { useConfirm } from '../../hooks/useConfirm'
 import { cn } from '../../utils/cn'
+import { FilePreviewModal } from '../../components/common/FilePreviewModal'
 
 interface KnowledgeItem {
   id: string;
   title: string;
+  name?: string;
+  fileName?: string;
   isFolder: boolean;
   parentId: string | null;
   fileUrl?: string;
@@ -163,6 +167,7 @@ export default function KnowledgePage() {
   const [transferTarget, setTransferTarget] = useState<string>('')
   const [transferSearch, setTransferSearch] = useState('')
   const [currentUser, setCurrentUser] = useState<any>(null)
+  const [previewFile, setPreviewFile] = useState<{name: string; url: string} | null>(null)
 
   useEffect(() => {
     const stored = localStorage.getItem('user')
@@ -545,11 +550,11 @@ export default function KnowledgePage() {
                      className="grid grid-cols-12 gap-6 px-10 py-5 bg-white rounded-[24px] border border-slate-100 hover:border-indigo-200 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all group items-center"
                    >
                      <div className="col-span-6 flex items-center gap-5">
-                        <div onClick={() => item.isFolder && setCurrentFolderId(item.id)} className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm transition-all cursor-pointer", item.isFolder ? "bg-amber-50 text-amber-500 group-hover:bg-amber-100 group-hover:rotate-6" : "bg-indigo-50 text-indigo-500 group-hover:bg-indigo-100 group-hover:-rotate-6")}>
+                        <div onClick={() => item.isFolder ? setCurrentFolderId(item.id) : item.fileUrl && setPreviewFile({ name: item.name || item.fileName || item.title || '文件', url: item.fileUrl })} className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm transition-all cursor-pointer", item.isFolder ? "bg-amber-50 text-amber-500 group-hover:bg-amber-100 group-hover:rotate-6" : "bg-indigo-50 text-indigo-500 group-hover:bg-indigo-100 group-hover:-rotate-6")}>
                            {item.isFolder ? <Folder size={24} fill="currentColor" /> : <FileText size={24} />}
                         </div>
                         <div className="min-w-0">
-                           <h4 onClick={() => item.isFolder && setCurrentFolderId(item.id)} className="text-[15px] font-black text-slate-900 truncate hover:text-indigo-600 cursor-pointer transition-colors tracking-tight">{item.title}</h4>
+                           <h4 onClick={() => item.isFolder ? setCurrentFolderId(item.id) : item.fileUrl && setPreviewFile({ name: item.name || item.fileName || item.title || '文件', url: item.fileUrl })} className="text-[15px] font-black text-slate-900 truncate hover:text-indigo-600 cursor-pointer transition-colors tracking-tight">{item.title}</h4>
                            {!item.isFolder && <p className="text-[11px] text-slate-400 font-black uppercase mt-1">{(item.fileSize ? (item.fileSize / 1024 / 1024).toFixed(2) : 0)} MB • {item.fileType?.toUpperCase()}</p>}
                         </div>
                      </div>
@@ -557,7 +562,7 @@ export default function KnowledgePage() {
                      <div className="col-span-2"><span className="text-[13px] font-bold text-slate-400">{new Date(item.createdAt).toLocaleDateString()}</span></div>
                      <div className="col-span-2 flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
                         {item.isFolder && canEditPermissions(item) && <button onClick={() => openPermissionModal(item)} className="w-10 h-10 flex items-center justify-center bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl text-slate-400 transition-all" title={t('knowledge.perm_edit')}><Shield size={18} /></button>}
-                        {!item.isFolder && <button onClick={() => item.fileUrl && window.open(item.fileUrl)} className="w-10 h-10 flex items-center justify-center bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl text-slate-400 transition-all"><Download size={18} /></button>}
+                        {!item.isFolder && <button onClick={() => item.fileUrl && setPreviewFile({ name: item.name || item.fileName || item.title || '文件', url: item.fileUrl })} className="w-10 h-10 flex items-center justify-center bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl text-slate-400 transition-all" title="预览"><Eye size={18} /></button>}
                         <button onClick={() => handleDelete(item.id)} className="w-10 h-10 flex items-center justify-center bg-slate-50 hover:bg-rose-50 hover:text-rose-600 rounded-xl text-slate-400 transition-all"><Trash2 size={18} /></button>
                      </div>
                    </motion.div>
@@ -788,6 +793,13 @@ export default function KnowledgePage() {
           </div>
         )}
       </AnimatePresence>
+      {previewFile && (
+        <FilePreviewModal
+          files={[previewFile]}
+          initialIndex={0}
+          onClose={() => setPreviewFile(null)}
+        />
+      )}
     </div>
   )
 }

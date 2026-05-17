@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Node } from 'reactflow'
 import { useTranslation } from 'react-i18next'
 import {
@@ -21,6 +21,7 @@ import {
 } from '../../types/workflow-designer'
 import { useOrganizationData } from '../../hooks/useOrganizationData'
 import EmployeeSelectorModal from './EmployeeSelectorModal'
+import { apiClient } from '../../utils/apiClient'
 
 interface NodeConfigPanelProps {
   node: Node
@@ -33,8 +34,17 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onUpdate, onDel
   const { t } = useTranslation()
   const [activeSection, setActiveSection] = useState<'basic' | 'approval' | 'gateway' | 'service'>('basic')
   const [showEmployeeSelector, setShowEmployeeSelector] = useState(false)
+  const [roles, setRoles] = useState<Array<{roleKey: string; roleName: string}>>([])
   
   const { employees, positions, departments, loading: orgLoading } = useOrganizationData()
+
+  useEffect(() => {
+    apiClient.get<any>('/api/workflow/definition/roles').then((res: any) => {
+      if (res?.success && Array.isArray(res.data)) {
+        setRoles(res.data.map((r: any) => ({ roleKey: r.roleKey, roleName: r.roleName })))
+      }
+    }).catch(() => {})
+  }, [])
 
   const getSelectedEmployeeNames = (employeeIds: string): string => {
     if (!employeeIds) return ''
@@ -210,15 +220,9 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onUpdate, onDel
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
             >
               <option value="">{t('common.select')}</option>
-              <option value="admin">超级管理员</option>
-              <option value="general_manager">总经理</option>
-              <option value="hr_manager">人事主管</option>
-              <option value="project_manager">项目经理</option>
-              <option value="project_director">项目总监</option>
-              <option value="finance">财务主管</option>
-              <option value="dept_manager">部门经理</option>
-              <option value="equipment_manager">设备管理员</option>
-              <option value="user">员工</option>
+              {roles.map(role => (
+                <option key={role.roleKey} value={role.roleKey}>{role.roleName}</option>
+              ))}
             </select>
           </div>
         )}

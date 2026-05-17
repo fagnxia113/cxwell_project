@@ -17,6 +17,7 @@ import {
   Download 
 } from 'lucide-react';
 import { cn } from '../../../utils/cn';
+import { FileLink } from '../../common/FilePreviewModal';
 import { Equipment } from '../../../hooks/useEquipmentDetail';
 
 interface EquipmentDetailsTabsProps {
@@ -160,11 +161,11 @@ export default function EquipmentDetailsTabs({ equipment, onTabChange, activeTab
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {equipment.attachments?.length ? equipment.attachments.map((file, i) => (
-                    <a 
-                      key={i} 
-                      href={file.url} 
-                      target="_blank" 
-                      rel="noreferrer" 
+                    <FileLink
+                      key={i}
+                      name={file.name || `ATTACH_0${i+1}`}
+                      url={file.url}
+                      files={equipment.attachments || undefined}
                       className="p-5 bg-slate-50/50 hover:bg-white border border-slate-100 transition-all rounded-[24px] flex items-center justify-between group shadow-sm hover:shadow-xl hover:-translate-y-1 duration-300"
                     >
                       <div className="flex items-center gap-5 min-w-0">
@@ -179,7 +180,7 @@ export default function EquipmentDetailsTabs({ equipment, onTabChange, activeTab
                       <div className="p-2 bg-slate-100 rounded-xl text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-all">
                         <Download size={16} />
                       </div>
-                    </a>
+                    </FileLink>
                   )) : (
                     <div className="col-span-full py-24 flex flex-col items-center justify-center opacity-30 grayscale items-center">
                        <FileText size={48} className="mb-4" />

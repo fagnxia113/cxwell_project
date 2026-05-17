@@ -11,7 +11,7 @@ export interface ApprovalConfig {
 }
 
 export interface ApproverSource {
-  type: 'user' | 'role' | 'department_manager' | 'project_manager' | 'initiator' | 'form_field' | 'expression'
+  type: 'user' | 'role' | 'reportTo_manager' | 'reportTo_deptLeader' | 'reportTo_n2' | 'reportTo_n3' | 'project_manager' | 'initiator' | 'form_field' | 'expression'
   value?: string
   multiple?: boolean
 }

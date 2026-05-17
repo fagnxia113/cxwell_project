@@ -33,7 +33,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
   const handleNotificationClick = (item: NotificationItem & { actionUrl?: string }) => {
     setShowDropdown(false)
     if (item.actionUrl && item.actionUrl !== '#') {
-      window.location.href = item.actionUrl
+      navigate(item.actionUrl)
     } else {
       navigate('/approvals/center')
     }

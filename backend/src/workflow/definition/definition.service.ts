@@ -83,12 +83,15 @@ export class DefinitionService {
       coordinate?: string;
       handlerType?: string;
       handlerPath?: string;
+      approvalMode?: string;
+      skipCondition?: string;
     }>;
     skips: Array<{
       nowNodeCode: string;
       nextNodeCode: string;
       skipName?: string;
       skipCondition?: string;
+      skipType?: string;
       coordinate?: string;
     }>;
   }, operator: string) {
@@ -109,6 +112,8 @@ export class DefinitionService {
             nodeName: node.nodeName,
             nodeType: node.nodeType,
             permissionFlag: node.permissionFlag ?? '',
+            approvalMode: node.approvalMode ?? 'or_sign',
+            anyNodeSkip: node.skipCondition || null,
             coordinate: node.coordinate ?? '',
             handlerType: node.handlerType ?? null,
             handlerPath: node.handlerPath ?? null,
@@ -134,6 +139,7 @@ export class DefinitionService {
             nextNodeCode: skip.nextNodeCode,
             nextNodeType: nextNode?.nodeType ?? null,
             skipName: skip.skipName ?? '',
+            skipType: skip.skipType ?? null,
             skipCondition: skip.skipCondition ?? '',
             coordinate: skip.coordinate ?? '',
             createBy: operator,

@@ -14,6 +14,7 @@
   "submit_failed": "Submission failed",
   "submit_proposal": "Submit Application",
   "save_draft": "Save Draft",
+  "delete_draft": "Delete Draft",
   "view_my_requests": "View My Requests",
   "definition_key_not_found": "Process definition not found",
   "no_definition": "No process information",
@@ -150,8 +151,10 @@
   },
   "error": {
     "instance_not_found": "Process instance not found",
+    "task_not_found": "Task not found or already processed",
     "reject_reason_required": "Please provide a reason for rejection",
-    "inputRequired": "Please enter comments"
+    "inputRequired": "Please enter comments",
+    "load_failed": "Failed to load process data"
   },
   "message": {
     "not_found_desc": "The requested process instance could not be found. It may have been deleted."

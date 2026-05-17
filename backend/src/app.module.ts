@@ -45,6 +45,9 @@ const commonImports = [
           serveRoot: '/api/files',
           serveStaticOptions: {
             index: false,
+            setHeaders: (res: any, filePath: string) => {
+              res.setHeader('Content-Disposition', 'inline');
+            },
           },
         }),
       ]

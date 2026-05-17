@@ -1,9 +1,23 @@
 import { Controller, Get, Post, Body, Param, Req } from '@nestjs/common';
 import { DefinitionService } from './definition.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Controller('workflow/definition')
 export class DefinitionController {
-  constructor(private readonly defService: DefinitionService) {}
+  constructor(
+    private readonly defService: DefinitionService,
+    private readonly prisma: PrismaService,
+  ) {}
+
+  @Get('roles')
+  async getRoles() {
+    const roles = await this.prisma.sysRole.findMany({
+      where: { delFlag: '0' },
+      select: { roleKey: true, roleName: true },
+      orderBy: { roleSort: 'asc' },
+    });
+    return { success: true, data: roles };
+  }
 
   @Get('list')
   async list() {

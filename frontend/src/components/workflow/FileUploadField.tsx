@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react'
-import { Upload, Paperclip, Trash2 } from 'lucide-react'
+import { Upload, Trash2, Paperclip } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { FileLinks, FileLink } from '../common/FilePreviewModal'
 
 interface FileUploadFieldProps {
   value: any
@@ -71,12 +72,9 @@ const FileUploadField: React.FC<FileUploadFieldProps> = ({ value, onChange, read
   if (readonly) {
     return (
       <div className="space-y-1">
-        {files.length === 0 ? <div className={readonlyInputClass}>-</div> : files.map((f, i) => (
-          <a key={i} href={f.url} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-sm text-primary hover:bg-primary/5 transition-colors">
-            <Paperclip size={14} /><span className="truncate">{f.name}</span>
-          </a>
-        ))}
+        {files.length === 0 ? <div className={readonlyInputClass}>-</div> : (
+          <FileLinks files={files} />
+        )}
       </div>
     )
   }
@@ -94,7 +92,7 @@ const FileUploadField: React.FC<FileUploadFieldProps> = ({ value, onChange, read
           {files.map((f, i) => (
             <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-sm">
               <Paperclip size={12} className="text-slate-400 shrink-0" />
-              <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate flex-1">{f.name}</a>
+              <FileLink name={f.name} url={f.url} files={files} className="text-primary hover:underline truncate flex-1" />
               <button type="button" onClick={() => removeFile(i)} className="text-slate-400 hover:text-rose-500 transition-colors shrink-0">
                 <Trash2 size={14} />
               </button>

@@ -8,6 +8,7 @@ import {
   Info 
 } from 'lucide-react';
 import { getFormFieldLabels, getEnumLabels } from '../../constants/workflowConstants';
+import { FileLinks } from '../common/FilePreviewModal';
 
 interface ApprovalFormPayloadViewProps {
   formData: Record<string, any>;
@@ -49,22 +50,7 @@ export default function ApprovalFormPayloadView({
       try {
         const files = JSON.parse(value);
         if (Array.isArray(files) && files.length > 0 && files[0].url) {
-          return (
-            <div className="flex flex-wrap gap-2">
-              {files.map((file: any, i: number) => (
-                <a
-                  key={i}
-                  href={file.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-black hover:bg-indigo-100 transition-all border border-indigo-100"
-                >
-                  <Database size={12} />
-                  <span className="truncate max-w-[120px]">{file.name || '查看文件'}</span>
-                </a>
-              ))}
-            </div>
-          );
+          return <FileLinks files={files} className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-black hover:bg-indigo-100 transition-all border border-indigo-100" icon={<Database size={12} />} />;
         }
       } catch (e) { /* ignore */ }
     }

@@ -90,7 +90,7 @@ export default function NotificationCenterPage() {
       await handleMarkAsRead(notification.id)
     }
     if (notification.actionUrl && notification.actionUrl !== '#') {
-      window.location.href = notification.actionUrl
+      navigate(notification.actionUrl)
     } else if (notification.type === 'workflow' || notification.type?.startsWith('task_')) {
       navigate('/approvals/center')
     }

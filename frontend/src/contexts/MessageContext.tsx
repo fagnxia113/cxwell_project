@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react'
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react'
 
 export type MessageType = 'success' | 'error' | 'info' | 'warning'
@@ -37,13 +37,15 @@ export const MessageProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   }, [removeMessage])
 
-  const success = (content: string, duration?: number) => addMessage('success', content, duration)
-  const error = (content: string, duration?: number) => addMessage('error', content, duration)
-  const info = (content: string, duration?: number) => addMessage('info', content, duration)
-  const warning = (content: string, duration?: number) => addMessage('warning', content, duration)
+  const success = useCallback((content: string, duration?: number) => addMessage('success', content, duration), [addMessage])
+  const error = useCallback((content: string, duration?: number) => addMessage('error', content, duration), [addMessage])
+  const info = useCallback((content: string, duration?: number) => addMessage('info', content, duration), [addMessage])
+  const warning = useCallback((content: string, duration?: number) => addMessage('warning', content, duration), [addMessage])
+
+  const contextValue = useMemo(() => ({ success, error, info, warning }), [success, error, info, warning])
 
   return (
-    <MessageContext.Provider value={{ success, error, info, warning }}>
+    <MessageContext.Provider value={contextValue}>
       {children}
       {/* 消息渲染容器 */}
       <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center space-y-3 pointer-events-none w-full max-w-md px-4">

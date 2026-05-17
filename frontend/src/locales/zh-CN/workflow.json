@@ -14,6 +14,7 @@
   "submit_failed": "提交失败",
   "submit_proposal": "提交申请",
   "save_draft": "保存草稿",
+  "delete_draft": "删除草稿",
   "view_my_requests": "查看我发起的申请",
   "definition_key_not_found": "流程定义未找到",
   "no_definition": "无流程信息",
@@ -150,8 +151,10 @@
   },
   "error": {
     "instance_not_found": "工作流实例未找到",
+    "task_not_found": "任务不存在或已被处理",
     "reject_reason_required": "请填写驳回原因",
-    "inputRequired": "请输入意见"
+    "inputRequired": "请输入意见",
+    "load_failed": "加载流程数据失败"
   },
   "message": {
     "not_found_desc": "请求的工作流实例无法找到，可能已被删除或不存在。"

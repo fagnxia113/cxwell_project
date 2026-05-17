@@ -127,8 +127,25 @@ export class FileStorageService {
     const ossPath = `${subDir}/${finalFilename}`;
 
     try {
+      const ext = path.extname(originalName).toLowerCase().replace('.', '');
+      const mimeMap: Record<string, string> = {
+        'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png', 'gif': 'image/gif',
+        'webp': 'image/webp', 'svg': 'image/svg+xml', 'bmp': 'image/bmp', 'ico': 'image/x-icon',
+        'mp4': 'video/mp4', 'webm': 'video/webm', 'ogg': 'video/ogg',
+        'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'aac': 'audio/aac', 'flac': 'audio/flac',
+        'pdf': 'application/pdf',
+        'doc': 'application/msword', 'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'xls': 'application/vnd.ms-excel', 'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'ppt': 'application/vnd.ms-powerpoint', 'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'txt': 'text/plain', 'csv': 'text/csv', 'rtf': 'application/rtf',
+      };
+      const contentType = mimeMap[ext];
       const options: any = {
-        headers: { 'x-oss-object-acl': 'public-read' },
+        headers: {
+          'x-oss-object-acl': 'public-read',
+          ...(contentType ? { 'Content-Type': contentType } : {}),
+          'Content-Disposition': 'inline',
+        },
       };
 
       if (fileSize > 10 * 1024 * 1024) {
@@ -167,8 +184,25 @@ export class FileStorageService {
     const ossPath = `${subDir}/${finalFilename}`;
 
     try {
+      const ext = path.extname(originalName).toLowerCase().replace('.', '');
+      const mimeMap: Record<string, string> = {
+        'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png', 'gif': 'image/gif',
+        'webp': 'image/webp', 'svg': 'image/svg+xml', 'bmp': 'image/bmp', 'ico': 'image/x-icon',
+        'mp4': 'video/mp4', 'webm': 'video/webm', 'ogg': 'video/ogg',
+        'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'aac': 'audio/aac', 'flac': 'audio/flac',
+        'pdf': 'application/pdf',
+        'doc': 'application/msword', 'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'xls': 'application/vnd.ms-excel', 'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'ppt': 'application/vnd.ms-powerpoint', 'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'txt': 'text/plain', 'csv': 'text/csv', 'rtf': 'application/rtf',
+      };
+      const contentType = mimeMap[ext];
       const options: any = {
-        headers: { 'x-oss-object-acl': 'public-read' },
+        headers: {
+          'x-oss-object-acl': 'public-read',
+          ...(contentType ? { 'Content-Type': contentType } : {}),
+          'Content-Disposition': 'inline',
+        },
       };
 
       if (fileSize > 10 * 1024 * 1024) {

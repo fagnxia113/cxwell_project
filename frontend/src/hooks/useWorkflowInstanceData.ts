@@ -84,12 +84,12 @@ export function useWorkflowInstanceData() {
           activeInstanceId = res.data.instanceId
           setInstanceId(activeInstanceId)
         } else {
-          error(t('workflow.error.load_failed'))
+          error(t('workflow.error.task_not_found') || t('workflow.error.load_failed'))
           setLoading(false)
           return
         }
-      } catch (e) {
-        error(t('workflow.error.load_failed'))
+      } catch (e: any) {
+        error(e.message || t('workflow.error.load_failed'))
         setLoading(false)
         return
       }

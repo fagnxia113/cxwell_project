@@ -85,11 +85,26 @@ export class WorkflowEngineService {
     }
   }
 
-  async saveDraft(definitionId: bigint, businessId: string, starter: string, variables?: any) {
-    const id = BigInt(Date.now()) + BigInt(Math.floor(Math.random() * 1000));
+  async saveDraft(definitionId: bigint, businessId: string, starter: string, variables?: any, existingDraftId?: bigint) {
     const def = await this.prisma.flowDefinition.findUnique({ where: { id: definitionId } });
     if (!def) throw new BadRequestException('流程定义不存在');
 
+    if (existingDraftId) {
+      const existing = await this.prisma.flowInstance.findUnique({ where: { id: existingDraftId } });
+      if (existing && existing.flowStatus === 'draft' && existing.createBy === starter) {
+        await this.prisma.flowInstance.update({
+          where: { id: existingDraftId },
+          data: {
+            ext: variables ? JSON.stringify(variables) : existing.ext,
+            businessId: businessId || existing.businessId,
+            updateTime: new Date(),
+          }
+        });
+        return this.prisma.flowInstance.findUnique({ where: { id: existingDraftId } });
+      }
+    }
+
+    const id = BigInt(Date.now()) + BigInt(Math.floor(Math.random() * 1000));
     const nodes = await this.prisma.flowNode.findMany({ where: { definitionId } });
     const startNode = nodes.find(n => n.nodeType === 0);
     const skip = await this.prisma.flowSkip.findFirst({
@@ -111,6 +126,55 @@ export class WorkflowEngineService {
         updateTime: new Date(),
       }
     });
+  }
+
+  async updateDraft(instanceId: bigint, starter: string, variables?: any) {
+    const instance = await this.prisma.flowInstance.findUnique({ where: { id: instanceId } });
+    if (!instance || instance.flowStatus !== 'draft') {
+      throw new BadRequestException('草稿不存在或状态异常');
+    }
+    if (instance.createBy !== starter) {
+      throw new BadRequestException('无权修改此草稿');
+    }
+    return this.prisma.flowInstance.update({
+      where: { id: instanceId },
+      data: {
+        ext: variables ? JSON.stringify(variables) : instance.ext,
+        updateTime: new Date(),
+      }
+    });
+  }
+
+  async deleteDraft(instanceId: bigint, starter: string) {
+    const instance = await this.prisma.flowInstance.findUnique({ where: { id: instanceId } });
+    if (!instance || instance.flowStatus !== 'draft') {
+      throw new BadRequestException('草稿不存在或状态异常');
+    }
+    if (instance.createBy !== starter) {
+      throw new BadRequestException('无权删除此草稿');
+    }
+    return this.prisma.flowInstance.update({
+      where: { id: instanceId },
+      data: { delFlag: '1', updateTime: new Date() }
+    });
+  }
+
+  async getDraftDetail(instanceId: bigint) {
+    const instance = await this.prisma.flowInstance.findUnique({ where: { id: instanceId } });
+    if (!instance || instance.flowStatus !== 'draft' || instance.delFlag === '1') {
+      return null;
+    }
+    const def = await this.prisma.flowDefinition.findUnique({ where: { id: instance.definitionId } });
+    return {
+      id: instance.id.toString(),
+      definitionId: instance.definitionId.toString(),
+      flowCode: def?.flowCode,
+      flowName: def?.flowName,
+      businessId: instance.businessId,
+      form_data: instance.ext ? JSON.parse(instance.ext) : {},
+      create_time: instance.createTime,
+      update_time: instance.updateTime,
+    };
   }
 
   async submitDraft(instanceId: bigint, starter: string) {

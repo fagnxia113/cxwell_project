@@ -874,12 +874,32 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onUpdate, onDel
   const [employees, setEmployees] = useState<Employee[]>([])
   const [positions, setPositions] = useState<Record<string, string>>({})
   const [departments, setDepartments] = useState<Record<string, string>>({})
+  const [roles, setRoles] = useState<Array<{roleKey: string; roleName: string}>>([])
 
   useEffect(() => {
     loadEmployees()
     loadPositions()
     loadDepartments()
+    loadRoles()
   }, [])
+
+  const loadRoles = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${API_BASE_URL}/api/workflow/definition/roles`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        }
+      })
+      const result = await response.json()
+      if (result?.success && Array.isArray(result.data)) {
+        setRoles(result.data.map((r: any) => ({ roleKey: r.roleKey, roleName: r.roleName })))
+      }
+    } catch (error) {
+      console.error('Failed to load roles:', error)
+    }
+  }
 
   const loadEmployees = async () => {
     try {
@@ -1105,13 +1125,14 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onUpdate, onDel
             disabled={readOnly}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
           >
-            <option value="role">角色</option>
+            <option value="role">指定角色</option>
             <option value="user">指定人员</option>
-            <option value="department_manager">部门负责人</option>
+            <option value="reportTo_manager">直属上级</option>
+            <option value="reportTo_deptLeader">部门负责人</option>
+            <option value="reportTo_n2">上2级上级</option>
+            <option value="reportTo_n3">上3级上级</option>
             <option value="project_manager">项目经理</option>
             <option value="initiator">发起人</option>
-            <option value="form_field">表单字段</option>
-            <option value="expression">表达式</option>
           </select>
         </div>
 
@@ -1125,12 +1146,9 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onUpdate, onDel
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
             >
               <option value="">请选择角色</option>
-              <option value="admin">系统管理员</option>
-              <option value="project_manager">项目经理</option>
-              <option value="hr_manager">人事经理</option>
-              <option value="equipment_manager">设备管理员</option>
-              <option value="finance_manager">财务经理</option>
-              <option value="general_manager">总经理</option>
+              {roles.map(role => (
+                <option key={role.roleKey} value={role.roleKey}>{role.roleName}</option>
+              ))}
             </select>
           </div>
         )}
@@ -1159,34 +1177,6 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onUpdate, onDel
               initialSelectedIds={config.approverSource?.value?.split(',').filter(Boolean) || []}
               positions={positions}
               departments={departments}
-            />
-          </div>
-        )}
-
-        {config.approverSource?.type === 'form_field' && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">表单字段</label>
-            <input
-              type="text"
-              value={config.approverSource?.value || ''}
-              onChange={(e) => updateApproverSource('value', e.target.value)}
-              disabled={readOnly}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-              placeholder="请输入表单字段名"
-            />
-          </div>
-        )}
-
-        {config.approverSource?.type === 'expression' && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">表达式</label>
-            <input
-              type="text"
-              value={config.approverSource?.value || ''}
-              onChange={(e) => updateApproverSource('value', e.target.value)}
-              disabled={readOnly}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-              placeholder="请输入表达式"
             />
           </div>
         )}

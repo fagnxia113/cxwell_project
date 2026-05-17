@@ -28,8 +28,7 @@ import {
   Plus,
   XCircle
 } from 'lucide-react'
-import { API_URL, parseJWTToken } from '../../config/api'
-import { apiClient } from '../../utils/apiClient'
+import { workflowApi } from '../../api/workflowApi'
 import { useMessage } from '../../hooks/useMessage'
 import { useConfirm } from '../../hooks/useConfirm'
 import { cn } from '../../utils/cn'
@@ -112,19 +111,19 @@ export default function ApprovalDraftPage() {
   const loadOrders = async () => {
     try {
       setLoading(true)
-      const result = await apiClient.get<any>(`${API_URL.BASE}/api/draft/list`, { params: { pageSize: 100 } })
-      if (result) {
-        const drafts = Array.isArray(result.data?.drafts || result.drafts) ? (result.data?.drafts || result.drafts) : []
+      const result = await workflowApi.getHubDraft()
+      if (result.success) {
+        const drafts = Array.isArray(result.data) ? result.data : []
         setOrders(drafts.map((draft: any) => ({
           id: draft.id,
           order_no: draft.id?.substring(0, 8).toUpperCase() || 'DRAFT',
-          order_type: draft.templateKey || draft.template_key,
-          title: draft.metadata?.definitionName || draft.metadata?.title || t('approval_draft.no_name'),
-          status: draft.status || 'draft',
+          order_type: draft.process_type_code || draft.process_type,
+          title: draft.process_title || t('approval_draft.no_name'),
+          status: 'draft',
           current_node: t('approval_draft.draft_archived'),
-          form_data: draft.formData || draft.form_data,
-          created_at: draft.createdAt || draft.created_at,
-          updated_at: draft.updatedAt || draft.updated_at
+          form_data: draft.form_data,
+          created_at: draft.create_time,
+          updated_at: draft.update_time
         })))
       }
     } catch (e: any) { showError(e.message || t('approval_draft.load_failed')) } finally { setLoading(false) }
@@ -151,7 +150,7 @@ export default function ApprovalDraftPage() {
   const handleDelete = async (order: DraftOrder) => {
     if (!(await confirm({ title: t('approval_draft.confirm_delete'), content: t('approval_draft.delete_confirm'), type: 'danger' }))) return
     try {
-      await apiClient.delete(`${API_URL.BASE}/api/draft/${order.id}`)
+      await workflowApi.deleteDraft(order.id)
       success(t('approval_draft.draft_deleted'))
       loadOrders()
     } catch (e: any) { showError(e.message || t('common.error')) }
@@ -258,7 +257,7 @@ export default function ApprovalDraftPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.02 }}
-                  onClick={() => navigate(`/approvals/form/${order.order_type}?draftId=${order.id}`)}
+                  onClick={() => navigate(`/approvals/workflow/${order.order_type}?draftId=${order.id}`)}
                   className="grid grid-cols-12 gap-3 px-4 py-3 items-center premium-card border-none bg-white hover:bg-slate-50 hover:shadow-md cursor-pointer transition-all group"
                 >
                   <div className="col-span-1">

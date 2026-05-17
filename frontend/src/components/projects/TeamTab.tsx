@@ -212,6 +212,20 @@ export default function TeamTab({
     return { type: segment.type }
   }
 
+  const getCellBg = (status: string): string => {
+    switch (status) {
+      case 'work_current': return 'bg-blue-500 shadow-sm'
+      case 'work_other': return 'bg-indigo-400/60 shadow-sm border border-indigo-100'
+      case 'home_rest': return 'bg-emerald-500 shadow-sm'
+      case 'rest': return 'bg-amber-500 shadow-sm'
+      case 'annual_leave': return 'bg-rose-400 shadow-sm'
+      case 'medical_leave': return 'bg-orange-400 shadow-sm'
+      case 'public_holiday': return 'bg-violet-400 shadow-sm'
+      case 'unpaid_leave': return 'bg-slate-400 shadow-sm'
+      default: return 'bg-slate-50'
+    }
+  }
+
   const getAttendanceStatusForDay = (record: any, date: dayjs.Dayjs) => {
     const dateStr = date.format('YYYY-MM-DD')
     const hasClockedIn = record.dates?.includes(dateStr)
@@ -394,6 +408,22 @@ export default function TeamTab({
                   <div className="w-3 h-3 rounded bg-amber-500"></div>
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('project.team.local_rest')}</span>
                 </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded bg-rose-400"></div>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('personnel.rotation.types.annual_leave') || '年假'}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded bg-orange-400"></div>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('personnel.rotation.types.medical_leave') || '病假'}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded bg-violet-400"></div>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('personnel.rotation.types.public_holiday') || '公假'}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded bg-slate-400"></div>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('personnel.rotation.types.unpaid_leave') || '无薪假'}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -433,14 +463,7 @@ export default function TeamTab({
                             const { type: status } = getStatusForDay(person, day)
                             return (
                               <td key={`td-${person.employeeId}-${day.format('YYYY-MM-DD')}`} className="p-0.5 border-r border-slate-100/30">
-                                <div className={cn(
-                                  "w-full h-6 rounded-sm transition-all",
-                                  status === 'work_current' ? "bg-blue-500 shadow-sm" :
-                                  status === 'work_other' ? "bg-indigo-400/60 shadow-sm border border-indigo-100" :
-                                  status === 'home_rest' ? "bg-emerald-500 shadow-sm" :
-                                  status === 'rest' ? "bg-amber-500 shadow-sm" :
-                                  "bg-slate-50"
-                                )}></div>
+                                <div className={cn("w-full h-6 rounded-sm transition-all", getCellBg(status))}></div>
                               </td>
                             )
                           })}

@@ -424,6 +424,7 @@ CREATE TABLE IF NOT EXISTS `flow_node` (
   `node_code` varchar(100) NOT NULL COMMENT '流程节点编码',
   `node_name` varchar(100) DEFAULT NULL COMMENT '流程节点名称',
   `permission_flag` varchar(200) DEFAULT NULL COMMENT '权限标识(权限类型:权限标识)',
+  `approval_mode` varchar(20) DEFAULT 'or_sign' COMMENT '审批模式(or_sign或签 and_sign会签 sequential顺序签 vote投票)',
   `node_ratio` decimal(6,3) DEFAULT NULL COMMENT '流程签署比例值',
   `coordinate` varchar(100) DEFAULT NULL COMMENT '坐标',
   `any_node_skip` varchar(100) DEFAULT NULL COMMENT '任意结点跳转',

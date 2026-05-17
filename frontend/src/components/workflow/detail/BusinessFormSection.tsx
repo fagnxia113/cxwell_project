@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { FileText, Send, Calendar, CheckCircle, Camera } from 'lucide-react'
 import FormTemplateRenderer from '../FormTemplateRenderer'
 import { WorkflowInstance, WorkflowTask } from '../../../types/workflow-instance'
+import { FilePreviewModal } from '../../common/FilePreviewModal'
 
 interface BusinessFormSectionProps {
   instance: WorkflowInstance
@@ -24,6 +25,7 @@ export const BusinessFormSection: React.FC<BusinessFormSectionProps> = ({
   repairOrder,
   t
 }) => {
+  const [previewImages, setPreviewImages] = useState<{files: {name: string; url: string}[], index: number} | null>(null)
   const isReadonly = instance.status === 'completed' || instance.status === 'terminated' || !currentTask
   const currentNodeId = currentTask?.node_id || instance.current_node_id || 'start'
 
@@ -139,7 +141,7 @@ export const BusinessFormSection: React.FC<BusinessFormSectionProps> = ({
                       src={url}
                       alt=""
                       className="w-24 h-24 object-cover rounded-xl border-2 border-white shadow-sm cursor-pointer hover:scale-105 transition-transform"
-                      onClick={() => window.open(url, '_blank')}
+                      onClick={() => setPreviewImages({ files: images.map((u: string, i: number) => ({ name: `包裹照片_${i+1}`, url: u })), index: idx })}
                     />
                   ))}
                 </div>
@@ -175,7 +177,7 @@ export const BusinessFormSection: React.FC<BusinessFormSectionProps> = ({
                                 src={url}
                                 alt=""
                                 className="w-8 h-8 object-cover rounded border border-gray-100 cursor-pointer"
-                                onClick={() => window.open(url, '_blank')}
+                                onClick={() => setPreviewImages({ files: (item.shipping_images || []).map((u: string, j: number) => ({ name: `${item.equipment_name}_${j+1}`, url: u })), index: i })}
                               />
                             )) || '-'}
                           </div>
@@ -255,7 +257,7 @@ export const BusinessFormSection: React.FC<BusinessFormSectionProps> = ({
                       src={url}
                       alt=""
                       className="w-24 h-24 object-cover rounded-xl border-2 border-white shadow-sm cursor-pointer hover:scale-105 transition-transform"
-                      onClick={() => window.open(url, '_blank')}
+                      onClick={() => setPreviewImages({ files: images.map((u: string, i: number) => ({ name: `收货照片_${i+1}`, url: u })), index: idx })}
                     />
                   ))}
                 </div>
@@ -309,6 +311,13 @@ export const BusinessFormSection: React.FC<BusinessFormSectionProps> = ({
             </div>
           )}
         </div>
+      )}
+      {previewImages && (
+        <FilePreviewModal
+          files={previewImages.files}
+          initialIndex={previewImages.index}
+          onClose={() => setPreviewImages(null)}
+        />
       )}
     </div>
   )

@@ -13,11 +13,14 @@ import {
   Plus,
   Zap,
   BellRing,
-  ClipboardCheck
+  ClipboardCheck,
+  Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../utils/apiClient';
+import { workflowApi } from '../../api/workflowApi';
+import { useConfirm } from '../../hooks/useConfirm';
 import { cn } from '../../utils/cn';
 import { getFlowName } from '../../constants/workflowConstants';
 import ProcessInitiator from './components/ProcessInitiator';
@@ -54,10 +57,27 @@ const formatDate = (dateStr: string) => {
 const ApprovalCenterPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { confirm } = useConfirm();
   const [activeTab, setActiveTab] = useState<HubType>('initiate');
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<WorkflowTask[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const handleDeleteDraft = async (e: React.MouseEvent, draftId: string) => {
+    e.stopPropagation();
+    const confirmed = await confirm({
+      title: t('workflow.delete_draft') || '删除草稿',
+      content: t('workflow.delete_draft_confirm') || '确定要删除此草稿吗？删除后不可恢复。',
+      type: 'danger'
+    });
+    if (!confirmed) return;
+    try {
+      await workflowApi.deleteDraft(draftId);
+      setData(prev => prev.filter(d => d.id !== draftId));
+    } catch (err) {
+      console.error('Failed to delete draft:', err);
+    }
+  };
 
   const tabs = [
     { key: 'initiate', label: t('approvals.tabs.initiate'), icon: Zap, color: 'text-indigo-600', bg: 'bg-indigo-50' },
@@ -296,6 +316,15 @@ const ApprovalCenterPage: React.FC = () => {
                             </div>
 
                             <div className="flex items-center gap-3">
+                              {activeTab === 'draft' && (
+                                <button
+                                  onClick={(e) => handleDeleteDraft(e, item.id)}
+                                  className="w-9 h-9 rounded-lg bg-rose-50 flex items-center justify-center text-rose-400 hover:bg-rose-100 hover:text-rose-600 transition-all"
+                                  title={t('workflow.delete_draft') || '删除草稿'}
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              )}
                               {(item.result === 'pass' || item.result === 'reject') && (
                                 <span className={cn(
                                   "px-2 py-0.5 rounded text-[10px] font-semibold uppercase",

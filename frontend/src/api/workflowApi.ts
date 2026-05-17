@@ -23,12 +23,20 @@ export const workflowApi = {
     apiClient.post<any>('/api/workflow/start', data),
 
   // 保存为草稿
-  saveWorkflowDraft: (data: { definitionId: string; businessId: string; variables: any }) =>
+  saveWorkflowDraft: (data: { definitionId: string; businessId: string; variables: any; draftId?: string }) =>
     apiClient.post<any>('/api/workflow/tasks/draft/save', data),
 
   // 提交草稿 (转正)
   submitWorkflowDraft: (instanceId: string) =>
     apiClient.post<any>(`/api/workflow/tasks/draft/${instanceId}/submit`, {}),
+
+  // 获取草稿详情
+  getDraftDetail: (draftId: string) =>
+    apiClient.get<any>(`/api/workflow/tasks/draft/${draftId}`),
+
+  // 删除草稿
+  deleteDraft: (draftId: string) =>
+    apiClient.post<any>(`/api/workflow/tasks/draft/${draftId}/delete`, {}),
 
   // --- 任务中心 (新：若依标准对齐) ---
 

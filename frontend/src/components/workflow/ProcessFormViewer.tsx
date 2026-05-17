@@ -3,6 +3,7 @@ import { FileText, Calendar, User, Zap, Database, Maximize, Paperclip } from 'lu
 import { useTranslation } from 'react-i18next'
 import { ProcessInstance, FormField } from '../../hooks/useProcessInstance'
 import EquipmentTransferForm from '../equipment/EquipmentTransferForm'
+import { FileLink } from '../common/FilePreviewModal'
 
 interface ProcessFormViewerProps {
   instance: ProcessInstance
@@ -134,9 +135,9 @@ export default function ProcessFormViewer({ instance, formFields, dynamicOptions
                         {itemFiles.length > 0 ? (
                           <div className="flex items-center justify-center gap-0.5">
                             {itemFiles.map((f: any, fi: number) => (
-                              <a key={fi} href={f.url} target="_blank" rel="noopener noreferrer" title={f.name}>
+                              <FileLink key={fi} name={f.name} url={f.url} files={itemFiles} title={f.name}>
                                 <Paperclip size={12} className="text-slate-400 hover:text-primary" />
-                              </a>
+                              </FileLink>
                             ))}
                           </div>
                         ) : (

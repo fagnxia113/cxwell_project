@@ -74,17 +74,42 @@ export class TaskController {
   @Get(':id/detail')
   async getTaskDetail(@Param('id') id: string) {
     const data = await this.taskQueryService.getTaskDetail(id);
+    if (!data) {
+      return { success: false, error: 'Task not found' };
+    }
     return { success: true, data };
   }
 
   @Post('draft/save')
-  async saveDraft(@Body() body: { definitionId: string; businessId: string; variables: any }, @Request() req: any) {
+  async saveDraft(@Body() body: { definitionId: string; businessId: string; variables: any; draftId?: string }, @Request() req: any) {
     const data = await this.workflowEngine.saveDraft(
       BigInt(body.definitionId),
       body.businessId,
       req.user.loginName,
-      body.variables
+      body.variables,
+      body.draftId ? BigInt(body.draftId) : undefined
     );
+    return { success: true, data };
+  }
+
+  @Post('draft/:id/update')
+  async updateDraft(@Param('id') id: string, @Body() body: { variables: any }, @Request() req: any) {
+    const data = await this.workflowEngine.updateDraft(BigInt(id), req.user.loginName, body.variables);
+    return { success: true, data };
+  }
+
+  @Post('draft/:id/delete')
+  async deleteDraft(@Param('id') id: string, @Request() req: any) {
+    const data = await this.workflowEngine.deleteDraft(BigInt(id), req.user.loginName);
+    return { success: true, data };
+  }
+
+  @Get('draft/:id')
+  async getDraftDetail(@Param('id') id: string) {
+    const data = await this.workflowEngine.getDraftDetail(BigInt(id));
+    if (!data) {
+      return { success: false, error: 'Draft not found' };
+    }
     return { success: true, data };
   }
 

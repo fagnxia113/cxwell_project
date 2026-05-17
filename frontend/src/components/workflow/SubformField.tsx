@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react'
 import { Plus, Trash2, Paperclip, X } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { useTranslation } from 'react-i18next'
+import { FileLink } from '../common/FilePreviewModal'
 
 interface SubformFieldProps {
   value: any[]
@@ -100,10 +101,10 @@ const SubformField: React.FC<SubformFieldProps> = ({ value = [], onChange, colum
             {files.length > 0 ? (
               <div className="flex items-center gap-0.5 flex-wrap justify-center">
                 {files.map((f: any, fi: number) => (
-                  <a key={fi} href={f.url} target="_blank" rel="noopener noreferrer"
+                  <FileLink key={fi} name={f.name} url={f.url} files={files}
                     className="text-primary hover:underline" title={f.name}>
                     <Paperclip size={13} className="text-slate-400 hover:text-primary" />
-                  </a>
+                  </FileLink>
                 ))}
               </div>
             ) : (
@@ -126,7 +127,7 @@ const SubformField: React.FC<SubformFieldProps> = ({ value = [], onChange, colum
               {files.map((f: any, fi: number) => (
                 <div key={fi} className="flex items-center gap-1 px-1 py-0.5 text-[11px] hover:bg-slate-50 rounded">
                   <Paperclip size={10} className="text-slate-400 shrink-0" />
-                  <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate flex-1">{f.name}</a>
+                  <FileLink name={f.name} url={f.url} files={files} className="text-primary hover:underline truncate flex-1" />
                   <button type="button" onClick={() => removeFile(index, col.name, fi)} className="text-slate-300 hover:text-rose-500 shrink-0">
                     <X size={10} />
                   </button>

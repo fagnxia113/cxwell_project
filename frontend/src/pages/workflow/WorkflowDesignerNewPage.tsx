@@ -93,10 +93,10 @@ export default function WorkflowDesignerNewPage() {
           }
           if (flag.startsWith('reportTo:')) {
             const subType = flag.replace('reportTo:', '')
-            if (subType === 'manager') return { type: 'reportTo_manager', value: flag }
-            if (subType === 'deptLeader') return { type: 'reportTo_deptLeader', value: flag }
-            if (subType.match(/^n\d+$/)) return { type: `reportTo_${subType}`, value: flag }
-            return { type: 'reportTo_manager', value: flag }
+            if (subType === 'manager') return { type: 'reportTo_manager', value: '' }
+            if (subType === 'deptLeader') return { type: 'reportTo_deptLeader', value: '' }
+            if (subType.match(/^n\d+$/)) return { type: `reportTo_${subType}`, value: '' }
+            return { type: 'reportTo_manager', value: '' }
           }
           return { type: 'user', value: flag }
         }
@@ -110,8 +110,13 @@ export default function WorkflowDesignerNewPage() {
             data: {
               label: n.nodeName,
               approvalConfig: !isService && n.permissionFlag ? {
-                approvalMode: 'or_sign',
-                approverSource: parsePermissionFlag(n.permissionFlag)
+                approvalMode: n.approvalMode || 'or_sign',
+                approverSource: parsePermissionFlag(n.permissionFlag),
+                skipCondition: n.anyNodeSkip || 'none'
+              } : !isService ? {
+                approvalMode: n.approvalMode || 'or_sign',
+                approverSource: { type: 'role', value: '' },
+                skipCondition: n.anyNodeSkip || 'none'
               } : undefined,
               serviceConfig: isService ? {
                 handlerType: n.handlerType,
@@ -128,6 +133,7 @@ export default function WorkflowDesignerNewPage() {
           type: 'smoothstep',
           animated: true,
           label: s.skipName,
+          skipType: s.skipType || null,
           data: { condition: s.skipCondition }
         }));
 
@@ -197,6 +203,8 @@ export default function WorkflowDesignerNewPage() {
             if (source.type === 'initiator') return 'initiator:self'
             return source.value || ''
           })(),
+          approvalMode: node.approvalConfig?.approvalMode || 'or_sign',
+          skipCondition: node.approvalConfig?.skipCondition || 'none',
           handlerType: node.serviceConfig?.handlerType || null,
           handlerPath: node.serviceConfig?.handlerPath || null
         })),
@@ -204,8 +212,9 @@ export default function WorkflowDesignerNewPage() {
           nowNodeCode: edge.source,
           nextNodeCode: edge.target,
           skipName: edge.label || '',
-          skipCondition: edge.condition || '',
-          coordinate: '' // 连线坐标可选
+          skipCondition: edge.data?.condition || edge.condition || '',
+          skipType: edge.skipType || null,
+          coordinate: ''
         }))
       }
 

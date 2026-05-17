@@ -6,7 +6,7 @@ import { useMessage } from '../hooks/useMessage'
 import { useConfirm } from '../hooks/useConfirm'
 import FormTemplateRenderer from './workflow/FormTemplateRenderer'
 import { motion } from 'framer-motion'
-import { Send, Save, ArrowLeft, Loader2, FileText, Hash, Calendar, User as UserIcon } from 'lucide-react'
+import { Send, Save, ArrowLeft, Loader2, FileText, Hash, Calendar, User as UserIcon, Trash2 } from 'lucide-react'
 import { useUser } from '../contexts/UserContext'
 import { getFlowName } from '../constants/workflowConstants'
 import { orgApi } from '../api/orgApi'
@@ -32,6 +32,7 @@ const WorkflowFormLauncher: React.FC<WorkflowFormLauncherProps> = ({
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [savingDraft, setSavingDraft] = useState(false)
+  const [currentDraftId, setCurrentDraftId] = useState<string | undefined>(draftId)
   const { user } = useUser()
 
   const [definition, setDefinition] = useState<any>(null)
@@ -106,11 +107,12 @@ const WorkflowFormLauncher: React.FC<WorkflowFormLauncherProps> = ({
       // 不再需要从 bizFormTemplate 查找，否则可能导致显示错误的表单字段
 
       if (draftId) {
-        const taskRes = await workflowApi.getTaskDetail(draftId)
-        if (taskRes.success && taskRes.data) {
-          const draftData = taskRes.data.form_data || {}
+        const draftRes = await workflowApi.getDraftDetail(draftId)
+        if (draftRes.success && draftRes.data) {
+          const draftData = draftRes.data.form_data || {}
           setFormData(draftData)
           if (draftData._title) setTitle(draftData._title)
+          setCurrentDraftId(draftId)
           message.success('已恢复草稿数据')
         }
       }
@@ -129,16 +131,43 @@ const WorkflowFormLauncher: React.FC<WorkflowFormLauncherProps> = ({
   const handleSaveDraft = async () => {
     try {
       setSavingDraft(true)
-      await workflowApi.saveWorkflowDraft({
+      const res = await workflowApi.saveWorkflowDraft({
         definitionId: definition?.id?.toString(),
         businessId: `DRAFT-${Date.now()}`,
-        variables: { ...formData, _title: title }
+        variables: { ...formData, _title: title },
+        draftId: currentDraftId
       })
+      if (res.success && res.data) {
+        const newDraftId = res.data.id?.toString()
+        if (newDraftId) setCurrentDraftId(newDraftId)
+      }
       message.success('草稿已成功保存至草稿箱')
     } catch (e: any) {
       message.error('保存草稿失败: ' + e.message)
     } finally {
       setSavingDraft(false)
+    }
+  }
+
+  const handleDeleteDraft = async () => {
+    if (!currentDraftId) return
+    const confirmed = await confirm({
+      title: '删除草稿',
+      content: '确定要删除此草稿吗？删除后不可恢复。',
+      type: 'danger'
+    })
+    if (!confirmed) return
+    try {
+      await workflowApi.deleteDraft(currentDraftId)
+      message.success('草稿已删除')
+      setCurrentDraftId(undefined)
+      if (onCancel) {
+        onCancel()
+      } else {
+        navigate('/approvals/center')
+      }
+    } catch (e: any) {
+      message.error('删除草稿失败: ' + e.message)
     }
   }
 
@@ -170,8 +199,8 @@ const WorkflowFormLauncher: React.FC<WorkflowFormLauncherProps> = ({
       setSubmitting(true)
 
       let res;
-      if (draftId) {
-        res = await workflowApi.submitWorkflowDraft(draftId)
+      if (currentDraftId) {
+        res = await workflowApi.submitWorkflowDraft(currentDraftId)
       } else {
         // 尝试从表单数据中提取业务 ID (如 project_id) 作为流程的 businessId
         const businessId = formData.project_id || formData.id || formData.employee_id;
@@ -322,6 +351,17 @@ const WorkflowFormLauncher: React.FC<WorkflowFormLauncherProps> = ({
         )}
 
         <div className="flex flex-col sm:flex-row justify-end gap-4 pt-4 pb-12">
+          {currentDraftId && (
+            <button
+              type="button"
+              onClick={handleDeleteDraft}
+              disabled={savingDraft || submitting}
+              className="px-8 py-3.5 bg-white text-rose-500 border-2 border-rose-300/30 rounded-xl text-sm font-black flex items-center justify-center gap-3 hover:bg-rose-50 hover:border-rose-300 transition-all disabled:opacity-50 shadow-lg shadow-rose-50"
+            >
+              <Trash2 size={18} />
+              {t('workflow.delete_draft') || '删除草稿'}
+            </button>
+          )}
           <button
             type="button"
             onClick={handleSaveDraft}
