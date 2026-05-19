@@ -55,7 +55,33 @@ export class TaskQueryService {
       where: { id: BigInt(taskId) },
     });
 
-    if (!task) return null;
+    if (!task) {
+      const hisTask = await this.prisma.flowHisTask.findFirst({
+        where: { taskId: BigInt(taskId) },
+      });
+      if (hisTask) {
+        const instance = await this.prisma.flowInstance.findUnique({ where: { id: hisTask.instanceId } });
+        const definition = await this.prisma.flowDefinition.findUnique({ where: { id: hisTask.definitionId } });
+        const initiatorName = await this.getUserName(instance?.createBy || undefined);
+        return {
+          id: hisTask.id.toString(),
+          taskId: hisTask.taskId?.toString() || taskId,
+          instanceId: hisTask.instanceId.toString(),
+          definitionId: hisTask.definitionId.toString(),
+          definition_key: definition?.flowCode || 'unknown',
+          process_title: instance?.businessId || '未命名业务',
+          process_type: definition?.flowCode || 'common',
+          definition_name: definition?.flowName,
+          current_node_id: hisTask.nodeCode,
+          current_node_name: hisTask.nodeName,
+          initiator_name: initiatorName,
+          created_at: hisTask.createTime,
+          form_data: instance?.ext ? JSON.parse(instance.ext) : {},
+          task_completed: true,
+        };
+      }
+      return null;
+    }
 
     const [instance, definition] = await Promise.all([
       this.prisma.flowInstance.findUnique({ where: { id: task.instanceId } }),

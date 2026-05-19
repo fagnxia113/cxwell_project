@@ -370,7 +370,7 @@ export class WorkflowEngineService {
       content: `您有一个新的审批任务，请尽快处理。业务编号: ${updatedInstance?.businessId || instanceId}`,
       type: this.NOTIFY.TASK_ASSIGN,
       priority: 'normal',
-      actionUrl: `/approvals/handle/${newTaskId}`,
+      actionUrl: `/approvals/detail/${instanceId}`,
       relatedId: instanceId.toString(),
     });
 

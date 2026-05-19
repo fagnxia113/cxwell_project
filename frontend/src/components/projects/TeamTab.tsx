@@ -93,7 +93,7 @@ export default function TeamTab({
   const loadEmployees = async () => {
     try {
       setLoadingEmployees(true)
-      const res = await apiClient.get<any>(`/api/personnel/employees?limit=200&projectId=${projectId}`)
+      const res = await apiClient.get<any>(`/api/personnel/employees?pageSize=999&projectId=${projectId}`)
       if (res && res.success) {
         setEmployees(res.data || [])
       }

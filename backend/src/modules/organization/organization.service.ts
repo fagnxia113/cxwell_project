@@ -120,6 +120,9 @@ export class OrganizationService {
     // 排除超级管理员用户
     where.userId = { not: 1n };
 
+    // 只显示在职员工
+    where.status = '0';
+
     if (name) {
       where.name = { contains: name };
     }

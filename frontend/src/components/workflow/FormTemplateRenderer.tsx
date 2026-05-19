@@ -137,9 +137,10 @@ const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
     const items = data['items']
     if (Array.isArray(items)) {
       const total = items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
+      const totalRounded = Math.round(total * 100) / 100
       const totalField = fields.find(f => f.name === 'totalAmount' || (f.name === 'amount' && f.readonly))
-      if (totalField && data[totalField.name] !== total) {
-        onFieldChange(totalField.name, total)
+      if (totalField && data[totalField.name] !== totalRounded) {
+        onFieldChange(totalField.name, totalRounded)
       }
     }
   }, [data['items'], fields, onFieldChange, data['totalAmount'], data['amount']])
@@ -169,6 +170,10 @@ const FormTemplateRenderer: React.FC<FormTemplateRendererProps> = ({
         }
         
         if (typeof val === 'object' && val !== null) return JSON.stringify(val)
+        // 金额字段显示两位小数
+        if ((field.name === 'totalAmount' || (field.name === 'amount' && field.readonly) || field.type === 'number') && (val !== '' && val !== null && val !== undefined)) {
+          return Number(val).toFixed(2)
+        }
         return (val === 0 || val) ? val : '-'
       }
       return <div className={readonlyInputClass}>{getDisplayValue()}</div>

@@ -13,6 +13,11 @@ echo "[0/4] 停止所有运行中的容器，释放内存..."
 docker compose down 2>/dev/null || true
 
 echo ""
+echo "清理旧的 Docker 镜像和构建缓存..."
+docker image prune -f 2>/dev/null || true
+docker builder prune -f --all 2>/dev/null || true
+
+echo ""
 echo "等待内存释放..."
 sleep 5
 

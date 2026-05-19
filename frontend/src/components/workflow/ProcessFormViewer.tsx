@@ -75,7 +75,12 @@ export default function ProcessFormViewer({ instance, formFields, dynamicOptions
 
     if (typeof value === 'boolean') return value ? t('common.yes') : t('common.no')
 
+    // 金额字段显示两位小数
     const field = formFields.find(f => f.name === fieldName)
+    if ((fieldName === 'totalAmount' || fieldName === 'amount' || fieldName === 'estimated_amount' || fieldName === 'final_amount' || fieldName === 'total_amount' || field?.type === 'number') && typeof value === 'number') {
+      return `¥${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    }
+
     if (field?.type === 'date' || fieldName.includes('date') || fieldName.includes('time')) {
       try { return new Date(value).toISOString().split('T')[0] } catch { return value }
     }
@@ -129,7 +134,7 @@ export default function ProcessFormViewer({ instance, formFields, dynamicOptions
                       <td className="px-3 py-2 text-slate-500">
                         {(dynamicOptions['project'] || []).find(o => String(o.value) === String(item.projectId || item.project_id))?.label || item.projectId || item.project_id || '-'}
                       </td>
-                      <td className="px-3 py-2 font-black text-blue-600 w-[100px]">¥{Number(item.amount).toLocaleString()}</td>
+                      <td className="px-3 py-2 font-black text-blue-600 w-[100px]">¥{Number(item.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                       <td className="px-3 py-2 text-slate-500 italic">{item.reason || item.item_reason || '-'}</td>
                       <td className="px-3 py-2 text-center w-[50px]">
                         {itemFiles.length > 0 ? (
