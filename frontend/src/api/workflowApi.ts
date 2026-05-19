@@ -38,6 +38,14 @@ export const workflowApi = {
   deleteDraft: (draftId: string) =>
     apiClient.post<any>(`/api/workflow/tasks/draft/${draftId}/delete`, {}),
 
+  // 重新发起被驳回的流程
+  resubmitInstance: (instanceId: string) =>
+    apiClient.post<any>(`/api/workflow/tasks/instance/${instanceId}/resubmit`, {}),
+
+  // 删除流程实例
+  deleteInstance: (instanceId: string) =>
+    apiClient.post<any>(`/api/workflow/tasks/instance/${instanceId}/delete`, {}),
+
   // --- 任务中心 (新：若依标准对齐) ---
 
   // 待办、已办、发起、草稿

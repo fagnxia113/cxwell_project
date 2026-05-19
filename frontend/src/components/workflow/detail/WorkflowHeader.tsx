@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { ArrowLeft, User, Users, Calendar, RotateCcw, ChevronLeft, Hash, Clock, MoreHorizontal, ChevronDown } from 'lucide-react'
+import { ArrowLeft, User, Users, Calendar, RotateCcw, ChevronLeft, Hash, Clock, MoreHorizontal, ChevronDown, RefreshCw, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { WorkflowInstance, WorkflowTask, getStatusConfig, getProcessTypeLabels, formatDate } from '../../../types/workflow-instance'
 
@@ -12,6 +12,8 @@ interface WorkflowHeaderProps {
   t: any
   onActionClick: (type: string) => void
   onWithdraw: () => void
+  onResubmit?: () => void
+  onDeleteInstance?: () => void
   nodeActions: any[]
   documentNo?: string
   applyDate?: string
@@ -29,6 +31,8 @@ export const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
   t,
   onActionClick,
   onWithdraw,
+  onResubmit,
+  onDeleteInstance,
   nodeActions,
   documentNo,
   applyDate,
@@ -179,6 +183,30 @@ export const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
                 <RotateCcw className="w-3 h-3" />
                 {t('workflow.action.withdraw')}
               </button>
+            )}
+
+            {/* Resubmit & Delete for rejected instances */}
+            {instance.status === 'rejected' && currentUserId === instance.initiator_id && (
+              <>
+                {onResubmit && (
+                  <button
+                    onClick={onResubmit}
+                    className="px-4 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all duration-200 flex items-center gap-1.5 text-xs font-semibold"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    {t('workflow.action.resubmit') || '重新发起'}
+                  </button>
+                )}
+                {onDeleteInstance && (
+                  <button
+                    onClick={onDeleteInstance}
+                    className="px-4 py-1.5 bg-rose-500 text-white rounded-lg hover:bg-rose-600 hover:scale-105 active:scale-95 transition-all duration-200 flex items-center gap-1.5 text-xs font-semibold"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    {t('workflow.action.delete_instance') || '删除流程'}
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>

@@ -165,9 +165,11 @@ export class TaskQueryService {
         instance_id: task.instanceId.toString(),
         process_title: inst?.businessId || '未命名业务',
         process_type: def?.flowName || '通用流程',
+        process_type_code: def?.flowCode || 'common',
         node_name: task.nodeName,
         initiator_name: inst?.createBy ? (userNameMap.get(inst.createBy) || inst.createBy) : '系统',
         status: 'pending',
+        instance_status: inst?.flowStatus || 'running',
         create_time: task.createTime,
         form_data: inst?.ext ? JSON.parse(inst.ext) : {},
       };

@@ -167,6 +167,18 @@ export class TaskController {
     };
   }
 
+  @Post('instance/:instanceId/resubmit')
+  async resubmitInstance(@Param('instanceId') instanceId: string, @Request() req: any) {
+    const data = await this.workflowEngine.resubmitInstance(BigInt(instanceId), req.user.loginName);
+    return { success: true, data };
+  }
+
+  @Post('instance/:instanceId/delete')
+  async deleteInstance(@Param('instanceId') instanceId: string, @Request() req: any) {
+    const data = await this.workflowEngine.deleteInstance(BigInt(instanceId), req.user.loginName);
+    return { success: true, data };
+  }
+
   /**
    * 提交任务办理决策
    */

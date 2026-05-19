@@ -20,6 +20,8 @@ import { getStatusConfig } from '../../types/workflow-instance'
 import FormTemplateRenderer from '../../components/workflow/FormTemplateRenderer'
 import ApprovalFormPayloadView from '../../components/approvals/ApprovalFormPayloadView'
 import { usePermission } from '../../contexts/PermissionContext'
+import { workflowApi } from '../../api/workflowApi'
+import { useMessage } from '../../contexts/MessageContext'
 
 // Modular Components
 import { WorkflowHeader } from '../../components/workflow/detail/WorkflowHeader'
@@ -31,6 +33,7 @@ export default function WorkflowDetailPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const { hasButton } = usePermission()
+  const message = useMessage()
   const {
     loading, instance, definition, tasks, logs, currentTask, isAssignee, currentUserId,
     formFields, activeFormData, setActiveFormData, masterData, transferOrder,
@@ -116,6 +119,44 @@ export default function WorkflowDetailPage() {
       setActionType(''); setComment('');
     }
     setSubmitting(false)
+  }
+
+  const handleResubmit = async () => {
+    if (!instance?.id) return
+    if (!(await confirm({ title: t('workflow.action.resubmit') || '重新发起', content: t('workflow.confirm.resubmit') || '确认重新发起此流程？' }))) return
+    try {
+      setSubmitting(true)
+      const res = await workflowApi.resubmitInstance(instance.id)
+      if (res.success) {
+        message.success(t('workflow.resubmit_success') || '流程已重新发起')
+        navigate('/approvals/center')
+      } else {
+        message.error(res.error || t('workflow.resubmit_failed') || '重新发起失败')
+      }
+    } catch (e: any) {
+      message.error(e.message || t('workflow.resubmit_failed') || '重新发起失败')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleDeleteInstance = async () => {
+    if (!instance?.id) return
+    if (!(await confirm({ title: t('workflow.action.delete_instance') || '删除流程', content: t('workflow.confirm.delete_instance') || '确定要删除此流程吗？删除后不可恢复。', type: 'danger' }))) return
+    try {
+      setSubmitting(true)
+      const res = await workflowApi.deleteInstance(instance.id)
+      if (res.success) {
+        message.success(t('workflow.delete_success') || '流程已删除')
+        navigate('/approvals/center')
+      } else {
+        message.error(res.error || t('workflow.delete_failed') || '删除失败')
+      }
+    } catch (e: any) {
+      message.error(e.message || t('workflow.delete_failed') || '删除失败')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (loading) return (
@@ -252,6 +293,8 @@ export default function WorkflowDetailPage() {
             t={t}
             onActionClick={(type) => setActionType(type === actionType ? '' : type)}
             onWithdraw={handleWithdraw}
+            onResubmit={handleResubmit}
+            onDeleteInstance={handleDeleteInstance}
             nodeActions={enabledActions}
             documentNo={documentNo}
             applyDate={applyDate}

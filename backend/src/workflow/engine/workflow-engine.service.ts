@@ -417,24 +417,53 @@ export class WorkflowEngineService {
 
       await this.cleanUpInstanceActiveTasks(tx, task.instanceId);
 
+      const instance = await tx.flowInstance.findUnique({ where: { id: task.instanceId } });
+
+      // 驳回后不直接终止流程，而是创建一个新任务给发起人，让发起人可以重新发起或删除
       await tx.flowInstance.update({
         where: { id: task.instanceId },
         data: { flowStatus: 'rejected', updateTime: new Date() }
       });
 
-      const instance = await tx.flowInstance.findUnique({ where: { id: task.instanceId } });
+      // 创建新任务给发起人，标记为 rejected 状态的待办
+      const startNode = await tx.flowNode.findFirst({
+        where: { definitionId: task.definitionId, nodeType: 0 }
+      });
+      const newTaskId = BigInt(Date.now()) + BigInt(Math.floor(Math.random() * 1000000));
+      await tx.flowTask.create({
+        data: {
+          id: newTaskId,
+          definitionId: task.definitionId,
+          instanceId: task.instanceId,
+          nodeCode: startNode?.nodeCode || 'START',
+          nodeName: '重新发起',
+          nodeType: 0,
+          flowStatus: 'todo',
+          createTime: new Date(),
+          updateTime: new Date(),
+        }
+      });
+      // 将发起人设为任务处理人
+      await tx.flowUser.create({
+        data: {
+          id: BigInt(Date.now()) + BigInt(Math.floor(Math.random() * 10000000)),
+          type: '1',
+          processedBy: instance?.createBy || '',
+          associated: newTaskId,
+        }
+      });
 
       this.notify({
         userIds: [instance?.createBy || ''].filter(Boolean),
         title: `【审批驳回】${instance?.businessId || ''}`,
-        content: `您的申请已被「${approver}」驳回。理由: ${comment || '无'}`,
+        content: `您的申请已被「${approver}」驳回，请重新修改后发起或删除。理由: ${comment || '无'}`,
         type: this.NOTIFY.TASK_REJECTED,
         priority: 'high',
         actionUrl: `/approvals/detail/${task.instanceId}`,
         relatedId: task.instanceId.toString(),
       });
 
-      return { success: true, finished: true };
+      return { success: true, finished: false, rejected: true };
     }, { timeout: 10000 });
   }
 
@@ -450,54 +479,137 @@ export class WorkflowEngineService {
     });
     if (!assignee) throw new BadRequestException('您不是当前任务的处理人，无法退回');
 
-    const nodes = await this.prisma.flowNode.findMany({ where: { definitionId: task.definitionId } });
-    let rollbackNode: any;
-
-    if (targetNodeCode && targetNodeCode.trim().length > 0) {
-      rollbackNode = nodes.find(n => n.nodeCode === targetNodeCode);
-      if (!rollbackNode) {
-        throw new BadRequestException(`退回目标节点 [${targetNodeCode}] 不存在`);
-      }
-    } else {
-      const lastHis = await this.prisma.flowHisTask.findFirst({
-        where: { instanceId: task.instanceId, skipType: 'pass' },
-        orderBy: { createTime: 'desc' },
-      });
-      if (lastHis?.nodeCode) rollbackNode = nodes.find(n => n.nodeCode === lastHis.nodeCode);
-    }
-
-    if (!rollbackNode) {
-      const startNode = nodes.find(n => n.nodeType === 0);
-      const skip = await this.prisma.flowSkip.findFirst({ where: { definitionId: task.definitionId, nowNodeCode: startNode?.nodeCode ?? 'START' } });
-      rollbackNode = nodes.find(n => n.nodeCode === skip?.nextNodeCode);
-    }
-
-    if (!rollbackNode) {
-      this.logger.error(`退回失败: 无法确定回退节点 (Instance: ${task.instanceId})`);
-      throw new BadRequestException('退回路径计算失败：未能自动计算出可回退的目标');
-    }
-
     return this.prisma.$transaction(async (tx) => {
       await tx.flowTask.delete({ where: { id: taskId } });
-      await this.archiveTask(tx, task, rollbackNode, approver, 'rollback', comment, null, 1);
+      await this.archiveTask(tx, task, null, approver, 'rollback', comment, null, 1);
       await tx.flowUser.deleteMany({ where: { associated: taskId } });
 
       await this.cleanUpInstanceActiveTasks(tx, task.instanceId);
 
       const instance = await tx.flowInstance.findUnique({ where: { id: task.instanceId } });
 
+      // 回退到发起人，创建新任务让发起人可以重新发起或删除
+      await tx.flowInstance.update({
+        where: { id: task.instanceId },
+        data: { flowStatus: 'rejected', updateTime: new Date() }
+      });
+
+      const startNode = await tx.flowNode.findFirst({
+        where: { definitionId: task.definitionId, nodeType: 0 }
+      });
+      const newTaskId = BigInt(Date.now()) + BigInt(Math.floor(Math.random() * 1000000));
+      await tx.flowTask.create({
+        data: {
+          id: newTaskId,
+          definitionId: task.definitionId,
+          instanceId: task.instanceId,
+          nodeCode: startNode?.nodeCode || 'START',
+          nodeName: '重新发起',
+          nodeType: 0,
+          flowStatus: 'todo',
+          createTime: new Date(),
+          updateTime: new Date(),
+        }
+      });
+      await tx.flowUser.create({
+        data: {
+          id: BigInt(Date.now()) + BigInt(Math.floor(Math.random() * 10000000)),
+          type: '1',
+          processedBy: instance?.createBy || '',
+          associated: newTaskId,
+        }
+      });
+
       this.notify({
         userIds: [instance?.createBy || ''].filter(Boolean),
         title: `【审批退回】${instance?.businessId || ''}`,
-        content: `您的申请已被「${approver}」退回至「${rollbackNode.nodeName}」环节，请重新处理。理由: ${comment || '无'}`,
+        content: `您的申请已被「${approver}」退回，请重新修改后发起或删除。理由: ${comment || '无'}`,
         type: this.NOTIFY.TASK_ROLLBACK,
         priority: 'high',
         actionUrl: `/approvals/detail/${task.instanceId}`,
         relatedId: task.instanceId.toString(),
       });
 
-      return this.moveToNextNode(tx, task.instanceId, rollbackNode, approver, {}, `[退回] ${comment}`);
+      return { success: true, finished: false, rejected: true };
     }, { timeout: 10000 });
+  }
+
+  async resubmitInstance(instanceId: bigint, userId: string) {
+    const instance = await this.prisma.flowInstance.findUnique({ where: { id: instanceId } });
+    if (!instance || instance.flowStatus !== 'rejected') {
+      throw new BadRequestException('流程不存在或状态不允许重新发起');
+    }
+    if (instance.createBy !== userId) {
+      throw new BadRequestException('只有发起人才能重新发起');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      // 删除当前的"重新发起"待办任务
+      const pendingTasks = await tx.flowTask.findMany({
+        where: { instanceId, flowStatus: 'todo' }
+      });
+      for (const t of pendingTasks) {
+        await tx.flowUser.deleteMany({ where: { associated: t.id } });
+        await tx.flowTask.delete({ where: { id: t.id } });
+      }
+
+      // 将流程状态改回 running
+      await tx.flowInstance.update({
+        where: { id: instanceId },
+        data: { flowStatus: 'running', updateTime: new Date() }
+      });
+
+      // 找到第一个审批节点，重新走流程
+      const nodes = await tx.flowNode.findMany({ where: { definitionId: instance.definitionId } });
+      const startNode = nodes.find(n => n.nodeType === 0);
+      const skip = await tx.flowSkip.findFirst({
+        where: { definitionId: instance.definitionId, nowNodeCode: startNode?.nodeCode ?? 'START' }
+      });
+      const firstApprovalNode = nodes.find(n => n.nodeCode === skip?.nextNodeCode);
+
+      if (!firstApprovalNode) {
+        throw new BadRequestException('无法找到审批节点');
+      }
+
+      // 记录重新发起的历史
+      const dummyTask = { id: BigInt(0), definitionId: instance.definitionId, instanceId, nodeCode: startNode?.nodeCode || 'START', nodeName: '重新发起', nodeType: 0 };
+      await this.archiveTask(tx, dummyTask, firstApprovalNode, userId, 'pass', '重新发起', null, 1);
+
+      // 走 moveToNextNode 创建新的审批任务
+      return this.moveToNextNode(tx, instanceId, firstApprovalNode, userId, {}, '重新发起');
+    }, { timeout: 10000 });
+  }
+
+  async deleteInstance(instanceId: bigint, userId: string) {
+    const instance = await this.prisma.flowInstance.findUnique({ where: { id: instanceId } });
+    if (!instance) {
+      throw new BadRequestException('流程不存在');
+    }
+    if (instance.createBy !== userId) {
+      throw new BadRequestException('只有发起人才能删除流程');
+    }
+    if (instance.flowStatus !== 'rejected' && instance.flowStatus !== 'draft') {
+      throw new BadRequestException('只能删除被驳回或草稿状态的流程');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      // 删除所有待办任务和关联用户
+      const pendingTasks = await tx.flowTask.findMany({
+        where: { instanceId }
+      });
+      for (const t of pendingTasks) {
+        await tx.flowUser.deleteMany({ where: { associated: t.id } });
+        await tx.flowTask.delete({ where: { id: t.id } });
+      }
+
+      // 软删除流程实例
+      await tx.flowInstance.update({
+        where: { id: instanceId },
+        data: { delFlag: '1', updateTime: new Date() }
+      });
+
+      return { success: true };
+    });
   }
 
   async transferTask(taskId: bigint, currentUserId: string, targetUserId: string, comment: string = '') {
